@@ -87,28 +87,28 @@ void Simulation_S2029(const std::string& beam = "17F", double T1 = 4.5, double E
 
     // Load SRIM Tables
     auto* srim {new ActPhysics::SRIM()};
-    TString srim_IC_mylar = TString::Format("../Calibrations/SRIM/%s_mylar.txt", beam.c_str());
+    TString srim_IC_mylar = TString::Format("./SRIM/%s_mylar.txt", beam.c_str());
     if (std::ifstream(srim_IC_mylar.Data())) {
         srim->ReadTable("beamInMylar", srim_IC_mylar.Data());
     } else {
         std::cerr << srim_IC_mylar <<" not found!\n";
         return;
     }
-    TString srim_IC_gas = TString::Format("../Calibrations/SRIM/%s_CF4_%0.fmbar.txt", beam.c_str(), pressureIC);
+    TString srim_IC_gas = TString::Format("./SRIM/%s_CF4_%0.fmbar.txt", beam.c_str(), pressureIC);
     if (std::ifstream(srim_IC_gas.Data())) {
         srim->ReadTable("beamInCF4", srim_IC_gas.Data());
     } else {
         std::cerr << srim_IC_gas <<" not found!\n";
         return;
     }
-    TString srim_p1c_mylar = TString::Format("../Calibrations/SRIM/%s_mylar.txt", p1c.GetName().c_str());
+    TString srim_p1c_mylar = TString::Format("./SRIM/%s_mylar.txt", p1c.GetName().c_str());
     if (std::ifstream(srim_p1c_mylar.Data())) {
         srim->ReadTable("ContaminantInMylar", srim_p1c_mylar.Data());
     } else {
         std::cerr << srim_p1c_mylar <<" not found!\n";
         return;
     }
-    TString srim_p1c_IC_gas = TString::Format("../Calibrations/SRIM/17O_CF4_%0.fmbar.txt", pressureIC);
+    TString srim_p1c_IC_gas = TString::Format("./SRIM/17O_CF4_%0.fmbar.txt", pressureIC);
     if (std::ifstream(srim_p1c_IC_gas.Data())) {
         srim->ReadTable("ContaminantInCF4", srim_p1c_IC_gas.Data());
     } else {
