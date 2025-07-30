@@ -10,7 +10,7 @@ namespace HistConfig
 using namespace ROOT::RDF;
 
 const TH1DModel Ex {"hEx", TString::Format("Excitation energy;E_{x} [MeV];Counts / %.f keV", (35. - (-10.)) / 300 * 1e3), 200, -10, 35};
-const TH1DModel dE {"hdE", "Energy Loss;E_{x} [MeV/u];Counts", 200,2,6};
+const TH1DModel dE {"hdE", "Energy Loss;E_{x} [MeV/u];Counts", 200,2,5};
 
 
 template <typename T>

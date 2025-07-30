@@ -16,6 +16,7 @@
 #include <TCanvas.h>
 #include <TLegend.h>
 
+#include <fstream>
 
 #include "../PostAnalysis/HistConfig.h"
 
@@ -36,11 +37,9 @@ double dEthroughIC(const ActPhysics::Particle& particle, double energy, bool app
     }
     
     // 11.5 um mylar
-    auto eneAfterMylar {srim->SlowWithStraggling(tableKey1.Data(), energy, 11.5e-3)}; // 11.5 um mylar in IC 
-    // auto eneAfterMylar {srim->Slow(tableKey1.Data(), energy, 11.5e-3)}; // 11.5 um mylar in IC 
+    auto eneAfterMylar {srim->Slow(tableKey1.Data(), energy, 11.5e-3)}; // 11.5 um mylar in IC 
     // 36 mm CF4 gas
-    auto eneAfterIC {srim->SlowWithStraggling(tableKey2.Data(), eneAfterMylar, 36)};
-    // auto eneAfterIC {srim->Slow(tableKey2.Data(), eneAfterMylar, 36)};
+    auto eneAfterIC {srim->Slow(tableKey2.Data(), eneAfterMylar, 36)};
     
     return eneAfterIC;
 }
@@ -62,11 +61,9 @@ double dEthroughCFA(const ActPhysics::Particle& particle, double energy, bool ap
     }
     
     // 4.8 um mylar
-    auto eneAfterMylar {srim->SlowWithStraggling(tableKey1.Data(), energy, 4.8e-3)};  
-    // auto eneAfterMylar {srim->Slow(tableKey1.Data(), energy, 4.8e-3)}; 
+    auto eneAfterMylar {srim->Slow(tableKey1.Data(), energy, 4.8e-3)}; 
     // 9.6 mm iC4H10 (isobutane) gas
-    auto eneAfterCFA {srim->SlowWithStraggling(tableKey2.Data(), eneAfterMylar, 9.6)};
-    // auto eneAfterCFA {srim->Slow(tableKey2.Data(), eneAfterMylar, 9.6)};
+    auto eneAfterCFA {srim->Slow(tableKey2.Data(), eneAfterMylar, 9.6)};
     
     return eneAfterCFA;
 }
@@ -141,6 +138,10 @@ void Simulation_S2029(const std::string& beam = "17F", double T1 = 4.5, double E
             return;
     }
 
+    // std::ofstream fOut("dE_out.txt"); // Output test file to compare ACTPhysics Slow function with TRIM
+    // fOut << "17F_IC \t 17O_IC \t 17F_CFA \t 17O_CFA \n";  
+
+
     //---- SIMULATION STARTS HERE
     ROOT::EnableImplicitMT();
 
@@ -180,7 +181,6 @@ void Simulation_S2029(const std::string& beam = "17F", double T1 = 4.5, double E
         auto T1Initial {runner.RandomizeBeamEnergy(
                 T1 * p1.GetAMU(),
                 sigmaPercentBeam * T1 * p1.GetAMU())}; // T1 in Mev / u * mass of beam in u = total kinetic energy
-        // std::cout << "T1Initial: " << T1Initial/p1.GetAMU() << '\n';
                 
         hT1Initial->Fill(T1Initial/p1.GetAMU());
         
@@ -205,14 +205,13 @@ void Simulation_S2029(const std::string& beam = "17F", double T1 = 4.5, double E
 
             auto TCAfterCFA {dEthroughCFA(p1c, TCAfterIC, stragglingInCFA, srim)};
             hTCAfterCFA->Fill(TCAfterCFA/p1c.GetAMU());
+
+            // fOut << "" << T1AfterIC/p1.GetAMU() << "\t" << TCAfterIC/p1c.GetAMU() << "\t" << T1AfterCFA/p1.GetAMU() << "\t" << TCAfterCFA/p1c.GetAMU() << "\n";
         }
-
-        // std::cout << "T1AfterIC: " << T1AfterIC/p1.GetAMU() << '\n';
-
     
 
     }
-  
+//    fOut.close();
 
     //plotting
     auto* c0 {new TCanvas("c0", "Canvas for Energy Loss Plots")};
@@ -245,8 +244,8 @@ void Simulation_S2029(const std::string& beam = "17F", double T1 = 4.5, double E
         l0->AddEntry(temp6, TString::Format("%s after CFA @ %.0fmbar",p1c.GetName().c_str(),pressureCFA),"l");
     }
 
-    l0->Draw();
 
+    l0->Draw();
 
     timer.Stop();
     timer.Print();

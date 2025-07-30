@@ -17,13 +17,33 @@ for j,b in enumerate(beams1):
         with open(f'LISEpp_outputs/{b}_{p}mbar_IC.txt') as f:
             clean_lines = (line.replace('-', '0') for line in f)
             ene, y = np.loadtxt(clean_lines, skiprows=4).T
-        axs[0].plot(ene, y, label=f'{b}@{p}mbar',color=c[i],linestyle=lnst[j])
+        axs[0].plot(ene, y/max(y), label=f'{b}@{p}mbar',color=c[i],linestyle=lnst[j])
 
-axs[0].legend(loc='upper left')
 axs[0].set_xlabel('Energy (MeV/u)')
 axs[0].set_ylabel('Counts')
-axs[0].set_ylim(0,4.7e15)
+# axs[0].set_ylim(0,4.7e15)
 axs[0].set_title('For 4.5 MeV/u in IC')
+
+trim_energy=[]
+with open('SRIM/17F_IC_70mbar_TRIM.txt') as f:
+    for line in f:
+        if line.startswith('T'):
+            parts = line.split()
+            trim_energy.append(float(parts[3])*1e-6/17) # TRIM output in eV, convert to MeV/u
+
+axs[0].hist(trim_energy,bins=70,color='skyblue',alpha=0.5,edgecolor='black',label='TRIM 17F@70mbar', weights=np.ones_like(trim_energy) /250)
+
+trim_energy_17o=[]
+with open('SRIM/17O_IC_70mbar_TRIM.txt') as f:
+    for line in f:
+        if line.startswith('T'):
+            parts = line.split()
+            trim_energy_17o.append(float(parts[3])*1e-6/17) # TRIM output in eV, convert to MeV/u
+
+axs[0].hist(trim_energy_17o,bins=50,color='magenta',alpha=0.5,edgecolor='black',label='TRIM 17O@70mbar', weights=np.ones_like(trim_energy_17o) /250)
+
+
+axs[0].legend(loc='upper left')
 
 for j,b in enumerate(beams2):
     for i,p in enumerate(pressure):
