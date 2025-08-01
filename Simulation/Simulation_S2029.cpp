@@ -1,24 +1,29 @@
 // Based Simulation_E796.cpp
 
 #include "ActColors.h"
-// #include "ActCrossSection.h"
-// #include "ActDecayGenerator.h"
-// #include "ActKinematicGenerator.h"
-// #include "ActKinematics.h"
-// #include "ActLine.h"
+#include "ActCrossSection.h"
+#include "ActDecayGenerator.h"
+#include "ActKinematicGenerator.h"
+#include "ActKinematics.h"
+#include "ActLine.h"
 #include "ActParticle.h"
 #include "ActSRIM.h"
 #include "ActSilData.h"
 #include "ActSilSpecs.h"
 #include "ActTPCParameters.h"
-// #include "ActUtils.h"
+#include "ActUtils.h"
+#include <ActRunner.h>
 
 #include <TCanvas.h>
 #include <TLegend.h>
-
+#include <TRandom.h>
+#include <TROOT.h>
+#include <TFile.h>
 #include <fstream>
+#include <TStopwatch.h>
 
 #include "../PostAnalysis/HistConfig.h"
+
 
 double dEthroughIC(const ActPhysics::Particle& particle, double energy, bool applyStraggling, ActPhysics::SRIM* srim) {
     if (!applyStraggling) return energy;
@@ -67,6 +72,8 @@ double dEthroughCFA(const ActPhysics::Particle& particle, double energy, bool ap
     
     return eneAfterCFA;
 }
+
+
 
 void Simulation_S2029(const std::string& beam = "17F", double T1 = 4.5, double Ex = 0){
 
@@ -160,16 +167,16 @@ void Simulation_S2029(const std::string& beam = "17F", double T1 = 4.5, double E
 
 
     //Histograms
-        auto hT1Initial {HistConfig::dE.GetHistogram()};
-        auto hTCInitial {HistConfig::dE.GetHistogram()};
-        auto hT1AfterIC {HistConfig::dE.GetHistogram()};
-        auto hTCAfterIC {HistConfig::dE.GetHistogram()};
-        auto hT1AfterCFA {HistConfig::dE.GetHistogram()};
-        auto hT1AfterACTAREntrance {HistConfig::dE.GetHistogram()};
-        auto hT1ActiveAreaEntrance {HistConfig::dE.GetHistogram()};
-        auto hT1ActiveAreaMid {HistConfig::dE.GetHistogram()};
-        auto hT1ActiveAreaEnd {HistConfig::dE.GetHistogram()};
-        auto hTCAfterCFA {HistConfig::dE.GetHistogram()};
+    auto hT1Initial {HistConfig::dE.GetHistogram()};
+    auto hTCInitial {HistConfig::dE.GetHistogram()};
+    auto hT1AfterIC {HistConfig::dE.GetHistogram()};
+    auto hTCAfterIC {HistConfig::dE.GetHistogram()};
+    auto hT1AfterCFA {HistConfig::dE.GetHistogram()};
+    auto hT1AfterACTAREntrance {HistConfig::dE.GetHistogram()};
+    auto hT1ActiveAreaEntrance {HistConfig::dE.GetHistogram()};
+    auto hT1ActiveAreaMid {HistConfig::dE.GetHistogram()};
+    auto hT1ActiveAreaEnd {HistConfig::dE.GetHistogram()};
+    auto hTCAfterCFA {HistConfig::dE.GetHistogram()};
 
     for(long int reaction = 0; reaction < iterations; reaction++)
     {
