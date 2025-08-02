@@ -11,7 +11,7 @@ files = [['17F after IC TRIM','17F_IC_70mbar_TRIM.txt'],
          ['17O after CFA TRIM','17O_IC70mbar_CFA6mbar_TRIMIN.txt'],
          ]
 
-c = ['b','g','magenta','orange']
+c = ['b','g','magenta','orange','red','purple','cyan','black']
 lnst = ['solid', 'dashed']
 fig, axs = plt.subplots(1, 1, figsize=(8, 6))
 

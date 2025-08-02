@@ -75,7 +75,7 @@ double dEthroughCFA(const ActPhysics::Particle& particle, double energy, bool ap
 
 
 
-void Simulation_S2029(const std::string& beam = "17F", double T1 = 4.5, double Ex = 0){
+void Simulation_S2029(const std::string& beam = "17F", double T1 = 5.5, double Ex = 0){
 
     // Set number of iterations
     const int iterations {static_cast<int>(1e6)};
@@ -139,7 +139,8 @@ void Simulation_S2029(const std::string& beam = "17F", double T1 = 4.5, double E
         {"beamInACTARgas", TString::Format("./SRIM/%s_H2-iC4H10_95-5_%.0fmbar.txt", beam.c_str(), pressureACTAR)},
         {"ContaminantInMylar", TString::Format("./SRIM/%s_mylar.txt", p1c.GetName().c_str())},
         {"ContaminantInCF4", TString::Format("./SRIM/%s_CF4_%.0fmbar.txt", p1c.GetName().c_str(), pressureIC)},
-        {"ContaminantIniC4H10", TString::Format("./SRIM/%s_iC4H10_%.0fmbar.txt", p1c.GetName().c_str(), pressureCFA)}
+        {"ContaminantIniC4H10", TString::Format("./SRIM/%s_iC4H10_%.0fmbar.txt", p1c.GetName().c_str(), pressureCFA)},
+        {"ContaminantInACTARgas", TString::Format("./SRIM/%s_H2-iC4H10_95-5_%.0fmbar.txt", p1c.GetName().c_str(), pressureACTAR)}
     };
 
     for (const auto& [label, path] : tables) {
@@ -167,16 +168,22 @@ void Simulation_S2029(const std::string& beam = "17F", double T1 = 4.5, double E
 
 
     //Histograms
-    auto hT1Initial {HistConfig::dE.GetHistogram()};
-    auto hTCInitial {HistConfig::dE.GetHistogram()};
-    auto hT1AfterIC {HistConfig::dE.GetHistogram()};
-    auto hTCAfterIC {HistConfig::dE.GetHistogram()};
-    auto hT1AfterCFA {HistConfig::dE.GetHistogram()};
-    auto hT1AfterACTAREntrance {HistConfig::dE.GetHistogram()};
-    auto hT1ActiveAreaEntrance {HistConfig::dE.GetHistogram()};
-    auto hT1ActiveAreaMid {HistConfig::dE.GetHistogram()};
-    auto hT1ActiveAreaEnd {HistConfig::dE.GetHistogram()};
-    auto hTCAfterCFA {HistConfig::dE.GetHistogram()};
+    std::map<std::string, TH1*> hSRIM;
+    std::map<std::string, TH1*> hSRIMC; // to follow the contaminant
+    std::vector<std::string> hSRIMLabels = {
+        "TInitial",
+        "TAfterIC",
+        "TAfterCFA",
+        "TAfterFoil",
+        "TActiveAreaEntrance",
+        "TActiveAreaMid",
+        "TActiveAreaEnd"
+    };
+
+    for (const auto& label : hSRIMLabels) {
+        hSRIM[label]=new TH1D(label.c_str(), label.c_str(), 200,0,5.5);
+        hSRIMC[label]=new TH1D((label + "_Cont").c_str(), (label + "_Cont").c_str(), 200,0,5.5);
+    }
 
     for(long int reaction = 0; reaction < iterations; reaction++)
     {
@@ -195,47 +202,53 @@ void Simulation_S2029(const std::string& beam = "17F", double T1 = 4.5, double E
                 T1 * p1.GetAMU(),
                 sigmaPercentBeam * T1 * p1.GetAMU())}; // T1 in Mev / u * mass of beam in u = total kinetic energy
                 
-        hT1Initial->Fill(T1Initial/p1.GetAMU());
-        
+        // hT1Initial->Fill(T1Initial/p1.GetAMU());
+        hSRIM["TInitial"]->Fill(T1Initial/p1.GetAMU());
+
         // Pass beam through IC
         auto T1AfterIC {dEthroughIC(p1, T1Initial, stragglingInIC, srim)};
-        hT1AfterIC->Fill(T1AfterIC/p1.GetAMU());
+        hSRIM["TAfterIC"]->Fill(T1AfterIC/p1.GetAMU());
 
         // Pass beam through CFA
         auto T1AfterCFA {dEthroughCFA(p1, T1AfterIC, stragglingInCFA, srim)};
-        hT1AfterCFA->Fill(T1AfterCFA/p1.GetAMU());
+        hSRIM["TAfterCFA"]->Fill(T1AfterCFA/p1.GetAMU());
 
         // Entrance mylar foil of ACTAR
         auto T1AfterEntranceWindow {srim->Slow("beamInMylar", T1AfterCFA, 12e-3)}; // 12 um mylar in ACTAR entrance window
-        hT1AfterACTAREntrance->Fill(T1AfterEntranceWindow/p1.GetAMU());
+        hSRIM["TAfterFoil"]->Fill(T1AfterEntranceWindow/p1.GetAMU());
 
         // Space before field cage
         auto T1FieldCageEntrance {srim->Slow("beamInACTARgas", T1AfterEntranceWindow, 35)}; // 35 mm space before field cage 
-
-
         auto T1ActiveAreaEntrance {srim->Slow("beamInACTARgas", T1FieldCageEntrance, 18)}; // 18 mm space before field cage 
-        hT1ActiveAreaEntrance->Fill(T1ActiveAreaEntrance/p1.GetAMU());
+        hSRIM["TActiveAreaEntrance"]->Fill(T1ActiveAreaEntrance/p1.GetAMU());
 
         auto T1ActiveAreaMid {srim->Slow("beamInACTARgas", T1ActiveAreaEntrance, 128)};
-        hT1ActiveAreaMid->Fill(T1ActiveAreaMid/p1.GetAMU()); 
+        hSRIM["TActiveAreaMid"]->Fill(T1ActiveAreaMid/p1.GetAMU());
+
         auto T1ActiveAreaEnd {srim->Slow("beamInACTARgas", T1ActiveAreaEntrance, 256)}; 
-        hT1ActiveAreaEnd->Fill(T1ActiveAreaEnd/p1.GetAMU());
+        hSRIM["TActiveAreaEnd"]->Fill(T1ActiveAreaEnd/p1.GetAMU()); 
 
         // If we want to track the contaminant 17O
         if (trackContamination){
-            auto TCInitial {runner.RandomizeBeamEnergy(
-                T1 * p1c.GetAMU(),
-                sigmaPercentBeam * T1 * p1c.GetAMU())}; 
-
-            hTCInitial->Fill(TCInitial/p1c.GetAMU());
+            auto TCInitial {runner.RandomizeBeamEnergy( T1 * p1c.GetAMU(), sigmaPercentBeam * T1 * p1c.GetAMU())}; 
+            hSRIMC["TInitial"]->Fill(TCInitial/p1c.GetAMU());
         
             auto TCAfterIC {dEthroughIC(p1c, TCInitial, stragglingInIC, srim)};
-            hTCAfterIC->Fill(TCAfterIC/p1c.GetAMU());
+            hSRIMC["TAfterIC"]->Fill(TCAfterIC/p1c.GetAMU());
 
             auto TCAfterCFA {dEthroughCFA(p1c, TCAfterIC, stragglingInCFA, srim)};
-            hTCAfterCFA->Fill(TCAfterCFA/p1c.GetAMU());
+            hSRIMC["TAfterCFA"]->Fill(TCAfterCFA/p1c.GetAMU());
 
-            // fOut << "" << T1AfterIC/p1.GetAMU() << "\t" << TCAfterIC/p1c.GetAMU() << "\t" << T1AfterCFA/p1.GetAMU() << "\t" << TCAfterCFA/p1c.GetAMU() << "\n";
+            auto TCAfterEntranceWindow {srim->Slow("ContaminantInMylar", TCAfterCFA, 12e-3)}; // 12 um mylar in ACTAR entrance window
+            hSRIMC["TAfterFoil"]->Fill(TCAfterEntranceWindow/p1c.GetAMU()); 
+
+            auto TCFieldCageEntrance {srim->Slow("ContaminantInACTARgas", TCAfterEntranceWindow, 35)}; // 35 mm space before field cage
+            auto TCActiveAreaEntrance {srim->Slow("ContaminantInACTARgas", TCFieldCageEntrance, 18)}; // 18 mm space before field cage
+            hSRIMC["TActiveAreaEntrance"]->Fill(TCActiveAreaEntrance/p1c.GetAMU());    
+            auto TCActiveAreaMid {srim->Slow("ContaminantInACTARgas", TCActiveAreaEntrance, 128)};
+            hSRIMC["TActiveAreaMid"]->Fill(TCActiveAreaMid/p1c.GetAMU());    
+            auto TCActiveAreaEnd {srim->Slow("ContaminantInACTARgas", TCActiveAreaEntrance, 256)};
+            hSRIMC["TActiveAreaEnd"]->Fill(TCActiveAreaEnd/p1c.GetAMU());
         }
     
 
@@ -243,48 +256,41 @@ void Simulation_S2029(const std::string& beam = "17F", double T1 = 4.5, double E
 //    fOut.close();
 
     //plotting
-    auto* c0 {new TCanvas("c0", "Canvas for Energy Loss Plots")};
-
-    hT1Initial->SetLineColor(kMagenta);
-    hT1Initial->SetStats(0);
-    auto* temp1 = hT1Initial->DrawClone(); // keep clone in temp to reuse in the legend
-    hT1AfterIC->SetLineColor(kRed);
-    auto* temp2 = hT1AfterIC->DrawClone("same");
-    hT1AfterCFA->SetLineColor(kBlue);
-    auto* temp3 = hT1AfterCFA->DrawClone("same");
-    hT1AfterACTAREntrance->SetLineColor(kGreen);
-    auto* temp4 = hT1AfterACTAREntrance->DrawClone("same");
-    hT1ActiveAreaEntrance->SetLineColor(kBlack);
-    auto* temp5= hT1ActiveAreaEntrance->DrawClone("same");
-    hT1ActiveAreaMid->SetLineColor(kCyan);
-    auto* temp6 = hT1ActiveAreaMid->DrawClone("same");
-    hT1ActiveAreaEnd->SetLineColor(kOrange);
-    auto* temp7 = hT1ActiveAreaEnd->DrawClone("same");
-
+    auto* c0 {new TCanvas("c0", "Energy Loss")};
     auto* l0 = new TLegend(0.1,0.7,0.5,0.9); 
-    l0->AddEntry(temp1, "Initial Beam Energy","l");
-    l0->AddEntry(temp2, TString::Format("EBeam after IC @ %.0fmbar",pressureIC),"l");
-    l0->AddEntry(temp3, TString::Format("EBeam after CFA @ %.0fmbar",pressureCFA),"l");
-    l0->AddEntry(temp4, TString::Format("EBeam in After ACTAR Entrance"),"l");
-    l0->AddEntry(temp5, TString::Format("EBeam in Entrance of Active Area"),"l");
-    l0->AddEntry(temp6, TString::Format("EBeam in Mid of Active Area"),"l");
-    l0->AddEntry(temp7, TString::Format("EBeam in End of Active Area"),"l");
 
-    if (trackContamination){
-        hTCInitial->SetLineColor(kMagenta);
-        hTCInitial->SetLineStyle(2);
-        auto* temp4 = hTCInitial->DrawClone("same");
-        hTCAfterIC->SetLineColor(kRed);
-        hTCAfterIC->SetLineStyle(2);
-        auto* temp5 = hTCAfterIC->DrawClone("same");
-        hTCAfterCFA->SetLineColor(kBlue);
-        hTCAfterCFA->SetLineStyle(2);
-        auto* temp6 = hTCAfterCFA->DrawClone("same");
-        l0->AddEntry(temp4, TString::Format("%s Initial Energy",p1c.GetName().c_str()),"l");
-        l0->AddEntry(temp5, TString::Format("%s after IC @ %.0fmbar",p1c.GetName().c_str(),pressureIC),"l");
-        l0->AddEntry(temp6, TString::Format("%s after CFA @ %.0fmbar",p1c.GetName().c_str(),pressureCFA),"l");
+    bool firstDraw = true;
+
+    // Define a set of colors for the histograms
+    std::vector<int> colors = {kRed, kBlue, kGreen+2, kMagenta, kOrange+7, kCyan+2, kBlack};
+    int colorIdx = 0;
+
+    for (const auto& label : hSRIMLabels) {
+        auto* h = hSRIM[label];
+        h->SetStats(0);
+        int color = colors[colorIdx % colors.size()];
+        h->SetLineColor(color);
+        h->SetLineWidth(2);
+
+        if (firstDraw) {
+            h->SetTitle(TString::Format("%s Energy Loss", beam.c_str()));
+            h->DrawClone();
+            firstDraw = false;
+        } else {
+            h->DrawClone("same");
+        }
+        l0->AddEntry(h, label.c_str(), "l");
+
+        if (trackContamination) {
+            auto* hc = hSRIMC[label];
+            hc->SetLineStyle(2);
+            hc->SetLineColor(color);
+            hc->SetLineWidth(2);
+            hc->DrawClone("same");
+            l0->AddEntry(hc, (label + " Cont").c_str(), "l");
+        }
+        ++colorIdx;
     }
-
 
     l0->Draw();
 
