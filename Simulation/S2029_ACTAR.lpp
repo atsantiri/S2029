@@ -1,0 +1,748 @@
+Version 17.12.7
+
+{============================= Main Part ======================================}
+[general]
+                    File = /home/artemis/Documents/LISEcute/files/S2029_ACTAR.lpp
+                    Date = 30-07-2025
+                    Time = 18:03:56
+           Configuration = NSCL/A1900_2019.lcn
+             Optionsfile = FRIB_2024.lopt
+                   Title = NSCL A1900 Fragment Separator 2019
+          BlockStructure = MMMMMMMMMMM
+          NumberOfBlocks = 11
+
+[settings]
+                   A,Z,Q = 17O 8+                                ; Mass ElementName Charge+ Beam
+                  Energy = 5.5                  MeV/u            
+               Intensity = 1                    kW               ; enA,pna,pps,kW
+            RF frequency = 20                   MHz              
+            Bunch length = 1                    ns               
+         Settings on A,Z = 17O                                   ; Mass ElementName Charge+ Beam
+           ReglageOnBeam = 1
+
+[OpticsBeam]
+                      BX = 1                    (+/-)mm          ; one-half the horisontal beam extent (x)
+                      BT = 6                    (+/-)mrad        ; one-half the horisontal beam divergence(x')
+                      BY = 1                    (+/-)mm          ; one-half the vertical beam extent (y)
+                      BF = 8                    (+/-)mrad        ; one-half the vertical beam divergence (y')
+                      BL = 0                    (+/-)mm          
+                      BD = 0.07                 (+/-)%           ; one-half of the momentum spread (dp/p)
+                  ShiftX = 0                    mm               ; beam respect to the spectrometer axis
+                  AngleX = 0                    mrad             ; beam respect to the spectrometer axis
+                  ShiftY = 0                    mm               ; beam respect to the spectrometer axis
+                  AngleY = 0                    mrad             ; beam respect to the spectrometer axis
+            Scheme Angle = 0                    degrees          
+                  ShapeX = 1
+                  ShapeT = 1
+                  ShapeY = 1
+                  ShapeF = 1
+                  ShapeL = 1
+                  ShapeD = 1
+               OptBeam_X = 1                    (+/-)mm          
+               OptBeam_T = 30                   (+/-)mrad        
+               OptBeam_Y = 1                    (+/-)mm          
+               OptBeam_F = 30                   (+/-)mrad        
+               OptBeam_L = 0                    (+/-)mm          
+               OptBeam_D = 1.5                  (+/-)%           
+
+[options]
+               NP simple = 64                                    ; Number of points in distribution
+        NP charge states = 32                                    ; Number of points in distribution
+                NP wedge = 64                                    ; Number of points in distribution
+           Charge states = No                                    ; No  & Yes
+           CutEdgeEffect = 1                                     ; 1-Yes. Default, 0-no - for extended configurations
+       Prim.beam scatter = 0                                     ; 0-without, 1-with
+              Delta peak = 0                                     ; 0-without, 1-with
+             BrhoMeanMax = 1                                     ; 0-Max, 1-Mean
+            BrhoMeMaLeRi = 3                                     ; 0-Max, 1-Mean, 2-Left, 3-Right /for fission/
+              CentralCut = 1                                     ; 0-no, 1-moderate, 2-strong
+
+[target]
+         Target contents = 0,4,1,9.012                           ; Nomer,Z,Atoms,Mass
+        Target thickness = 1,0,1,0,0,0                           ; State,Thickness,density,angle,SolidGas,..
+  Target fusion compound = 0
+   Targ use for Q-states = 1
+           Target Defect = 0,0.1                                 ; [0] choice - % or micron at 0 degree,  [1]=value; 
+       Degrader contents = 0,6,1,12.011                          ; Nomer,Z,Atoms,Mass
+      Degrader thickness = 0,0,1,0,0,0                           ; State,Thickness,density,angle,SolidGas,..
+  Degra use for Q-states = 1
+         Degrader Defect = 0,0.1                                 ; [0] choice - % or micron at 0 degree,  [1]=value; 
+
+[mechanism]
+                Reaction = 0                                     ; 0 - fragm, 1 - fusion-resid, 2 - fusion-fission
+               CalcOther = 1                                     ; calculate other reactions
+           V calculation = 3                                     ; 0 - constant, 1 - Borrel, 2 - Rami, 3-convolution, 4-two body reaction
+             V_opt/Vbeam = 1                                     ; default 1
+         Velocity_exceed = 1                                     ; 0 - without, 1-with - two-body recations velocity corrections
+Binding Energy for Vf/Vp = 8                    MeV              ; Binding energy for Borrel's expression
+    Shift for Vf/Vp calc = 0     
+        Prefragment_Rami = 1
+                  Sigma0 = 90                   MeV/c            ; default 90
+                  SigmaD = 200                  MeV/c            ; default 200
+                  SigmaM = 87                   MeV/c            ; default 87
+               Asymmetry = 0                    %                ; default 0
+          Method v-sigma = 3                                     ; 0 - Goldhaber, 1-Morrissey,2-Friedman,3-Convolution
+               G_Surface = 0.95                 MeV/fm^2         
+ Symmetry around half_Ab = 1
+ Pfaff pickup correction = 1
+     ChargeExchangePfaff = 1                                     ; 1 - exclude, 0-forget
+            Sigma corr 0 = 0                                     ; Coulomb energy
+            Sigma corr 1 = 0                                     ; Projectile mass
+           Friedman mode = 2                                     ; 0-Qgg, 1-Surface, 2-Qgg+Surface
+         Prefragment_Fri = 1
+        Coulomb_Friedman = 1
+                  K_Morr = 8                    MeV/A            ; E/A=8MeV/A default; D.Morrissey coef.
+               K_MorHalf = 8                    MeV/A            ; E/A=8MeV/A default at Afrag=Aproj/2; D.Morrissey coef.
+                 AA_fast = 0
+             AA_Modefast = 3
+               MethodApf = 2                                     ; Prefragment search method: 0-N/Z direction, 1 -  W*EPAX, 2 -  W*CSgeom,
+           ExcitationApf = 1                                     ; Excitation energy for APF search: 0 - dSurface, 1 - dA*Ex
+            BarrierShape = 1                                     ; 0-classical, 1-quantum mech.
+                 H_omega = 3                    MeV              ; default 3
+           Probabilty_CN = 1                                     ; 0/1 use Prbabilty for CN formation
+            UseVanishing = 1
+              VanishMode = 0                                     ; 0-Sierk, 1-Cohen
+           NuclPotential = 1                                     ; 0-Bass, 1-WS
+                   WS_V0 = 105                  MeV              
+                   WS_R0 = 1.12                 fm               
+                    WS_a = 0.75                 fm               
+          FusDiffuseness = 1    
+              Width Coef = 1                                     ; default 1; for Leon's charge state distribution
+          gZt Correction = 1                                     ; default 1;      Leon's C.S.D.
+           PowerCoefLeon = 0.477                                 ; default 0.477; Leon's C.S.D.
+           Cross section = File                                  ; Fit  & File
+           Charge method = 3                                     ; charge calculations method  0-5
+      EPAX Cross Section = 2                                     ; cross section calculations method 0-4
+        SR Cross Section = 1                                     ; EPAX for SR  0-2
+             Energy Loss = 4                                     ; energy loss calculation method 0-3
+     Anglular straggling = 1
+        AngStragInOptics = 0                                     ; 0-LISE, 1-ATIMA
+         StragglingCoef1 = 0.217
+         StragglingCoef2 = 1.12 
+       Energy straggling = 1                                     ; 0-LISE, 1-ATIMA
+       EnergyStragMethod = 1                                     ; 0-integrate, 1-table
+        EnergyStragShape = 0                                     ; 0-Gauss, 1-Landau-Vavilov
+          EquilThickness = 0                                     ; 0-Charge, 1-Global
+          useHybridModel = 0                                     ; 0-no, 1-yes
+                 kHybrid = 2                                     ; number of sigmas
+              MassMethod = 0                                     ; 0-DB+calcul, 1 + just calcul
+            MassDataBase = 0                                     ; 0-A&W, 1-User ME
+            Mass formula = 3                                     ; 0-LDM, 1-Myerer, 2: 1+corrections, 3 ..
+          MassExcessFile = AME2020.lme
+      UseChargeForEnergy = 2                                     ; 0-No, 1-Yes, 2-Auto
+         EnergyValueAuto = 30                                    ; default value 30 MeV/u
+         EquilibriumMode = 0                                     ; 0-Equil, 1-NonEquil
+               UB_Global = 70                                    ; default 70 MeV/u
+             MinZ_Global = 2                                     ; default Z>=29
+        ChargeStateOptim = 1                                     ; 0-No, 1-Yes
+         ZmQ_AfterReactn = 0                                     ; default 0 (full stripped)
+             EPAX_p_Norm = 1
+               EPAX_p_Un = 1.65
+              EPAX_p_Up0 = 1.788
+              EPAX_p_Up1 = 0.004721
+              EPAX_p_Up2 = -1.303e-5
+                EPAX_p_H = 1
+
+[fission]
+         FisAngDistShape = 0                                     ; 0-isotropic; 1-anisotropic
+     FisMomCutForAngDist = 2                                     ; 0-dont use;  1-use just MatrixKinematics; 2-use for all; (default 2)
+      OddEvenCorrections = 1                                     ; 0-dont use;  1-use
+ PostScissionEvaporation = 1                                     ; 0-dont use;  1-use
+   DeexcitFunctionPoints = 0                                     ; 0- average deexcitation energy;  1- 3 points; 2 - manually
+           FisEXmanually = 20                                    ; Excitation energy manually
+           FisCSmanually = 1000                                  ; Cross section manually
+            FisTXEmethod = 0                                     ; 0-from Edissipated, 1 from Q-value
+                   Fis_f = 0.0035                                ; default 0.0045
+              FisEXsigma = 5.5                  MeV              ; default 5.5
+            FisCS_Global = 1e-12
+               FisCS_TKE = 1e-8
+                FisBeta1 = 0.625                                 ; deformation of light fragment
+                FisBeta2 = 0.625                                 ; deformation of heavy fragment
+                FisTKE_d = 2                    fm               ; d-param in Wilkins formula
+              FisBetaFit = 1                                     ; 0-manual, 1-fit
+                      N0 = 83                                    ; default 82
+                     dU0 = -2.65                                 ; default -2.5
+                      C0 = 0.7                                   ; default 1.4
+                   cpol0 = 0.65                                  ; default 0.65
+                  width0 = 0.63                                  ; default 0.63
+                      N1 = 90                                    ; default 90
+                     dU1 = -3.8                                  ; default -5.5
+                      C1 = 0.15                                  ; default 0.16
+                   cpol1 = 0.55                                  ; default 0.55
+                  width1 = 0.97                                  ; default 0.97
+
+[charge_suppression]
+                 FragInd = 1e-3
+               FragTotal = 1e-5
+                 BeamInd = 1e-12
+               BeamTotal = 1e-15
+
+[convolution]
+        Convolution mode = 2                                     ; 0-Qgg, 1-Surface, 2-E* per Abraded nucleon
+             UseGaussian = 1                                     ; use DJM if Es <=0
+                 Sigma_0 = 91.5   
+                 Sigma_1 = 91.5   
+                 Sigma_2 = 160     
+              CoefConv_0 = 3.344 
+              CoefConv_1 = 3     
+              CoefConv_2 = 1     
+             ShiftConv_0 = 0.1581
+             ShiftConv_1 = 0.1487
+             ShiftConv_2 = -1     
+
+[evaporation]
+          NP evaporation = 64                                    ; Number of points in distribution
+               NPevapFis = 8                                     ; Number of points in distribution
+              EvapMethod = 2
+        StateDensityMode = 2                                     ; 0, 1+pairing, 2+shell
+      EvapUnstableNuclei = 1                                     ; 0 - only stable,1 +unstable
+              Tunnelling = 1
+          AvoidUnboundCS = 1
+       ProtectedChannels = 1
+           R_Evaporation = 5.7                  fm               ; correction for the effective Coulomb barrier
+         Mode_Apf_manual = 0                                     ; 1-manual, 0-auto
+             Energy_in_T = 2                                     ; default 2
+     EvaporationVelocity = 0                                     ; 0 - quality, 1 -fast
+        DeltaOddEvenEvap = 12    
+     DeltaOddEvenFission = 14    
+   BreakupTemperature250 = 4.7   
+   BreakupTemperature150 = 5.9   
+   BreakupTemperature050 = 8     
+      BreakupDiffuseness = 0.05  
+      DissipationKramers = 0
+ DissipationStepFunction = 1
+         DissipationBeta = 1                                     ; default 2.0
+                 mode_1n = 1
+                 mode_2n = 0
+                 mode_1p = 1
+                 mode_2p = 0
+                  mode_a = 1
+                  mode_d = 0
+                  mode_t = 0
+                mode_3he = 0
+                mode_fis = 1
+             mode_brk_up = 1
+              mode_gamma = 0
+
+[fission_barrier]
+    FissionBarrierFactor = 1    
+      FissionBarrierMode = 1                                     ; #0-4
+      OddEvenCorrections = 1
+        ShellCorrections = 1
+             FB_InOutMax = 2                                     ; #0-2 - in/out/max
+             ModeForUser = 1                                     ; #0-2
+           NdeltaOddEven = 2.5  
+           ZdeltaOddEven = 9    
+
+[excitation_energy]
+           AbrasionModel = 0                                     ; 0-Geometrical, 1-Exponential
+       GeomAA_Correction = 1                                     ; 0 - don't use,1 - use -default
+          Thermalization = 0
+          ThermaTimeCoef = 3e+0                                  ; 2.1e-22 MeV *s/e(t)
+                  Pickup = 0
+            AbraExpSlope = 0.363 
+                Friction = 0                                     ; 0 - off,1 - on
+          Ev_A_SigmaCoef = 9.6  
+         G_FrictionCoef1 = 6.5  
+         G_FrictionCoef2 = 0.5  
+           G_FactorCoef1 = 1.5  
+           G_FactorCoef2 = 2.5  
+               DepthHole = 40     
+              HoleMethod = 0                                     ; 0-lin,1-exp
+          EnergyCoef_CB0 = 0       
+          EnergyCoef_CB1 = 27       
+          EnergyCoef_CB2 = 0       
+           SigmaCoef_CB0 = 0       
+           SigmaCoef_CB1 = 18       
+           SigmaCoef_CB2 = 0       
+              D_MeanTemp = 20       
+             DN_MeanTemp = 0       
+             DZ_MeanTemp = 0       
+               LN_median = 20       
+             LN_variance = 20       
+              LN2_median = 0       
+            LN2_variance = 0       
+               AA_factor = 1       
+          ApplyLimitTemp = 0
+
+[evapauto]
+                  tun_a0 = 5.142  
+                  tun_a1 = -0.1107 
+                  tun_a2 = 0.04398
+                 A_Bound = 300
+               A_Pairing =   1
+
+[plot]
+            Start target = Detector                              ; Detector & RF      
+            Start of TOF = T1
+            Stop  of TOF = M7
+         dE-detector-1st = M7
+         dE-detector-2nd = M13
+            TKE-detector = M7
+              X-detector = M4
+              Y-detector = M4
+                 Tilting = M1
+                 Stopper = M2
+                RO_Wedge = W1
+          ConditionBlock = A10
+          Plot threshold = 1e-10                pps              ; minimal value for plot scale
+     Shift of TOF for RF = 0                    ns               ; for dE-TOF plot with RF
+  Fraction of RF trigger = 1
+            UseCondition = 0
+         TKE_calibration = 1,1,0,MeV
+
+[cs_file]
+              UserDiffCS = 0                                     ; Number of User Diff CS saved in this file
+         AppendOverwrite = 1
+          AttachedInside = 1
+            ShowCSinPlot = 1
+                    Chi2 = 1
+
+[sec_reactions]
+        NP sec.reactions = 32                                    ; Number of points in distribution
+     Secondary reactions = 0
+         fiss_FilterUse0 = 1
+         fiss_FilterUse1 = 1
+         fiss_FilterUse2 = 1
+            fiss_ellipse = 5
+          fiss_NdeltaTop = 0
+          fiss_ZdeltaTop = 0
+          fiss_NdeltaBot = 25
+          fiss_ZdeltaBot = 20
+         frag_FilterUse0 = 3
+         frag_FilterUse1 = 3
+         frag_FilterUse2 = 3
+            frag_ellipse = 4
+          frag_NdeltaTop = 5
+          frag_ZdeltaTop = 5
+          frag_NdeltaBot = 6
+          frag_ZdeltaBot = 6
+
+[abrasion_fission]
+                HML_show = 7                                     ; HML-bits
+            AF_Ex_choice = 0
+             BoundaryLow = 80                   MeV              
+            BoundaryHigh = 240                  MeV              
+                Velocity = 1                                     ; Calculat. fissioning nuclei speed
+           LowEx_nucleus = 47Ca                                  ; Mass ElementName Charge+ Beam
+                 L_CS_Ex = 3.000e+02 25.00 5.00                  ; mb, MeV, Mev
+           MidEx_nucleus = 42Ar                                  ; Mass ElementName Charge+ Beam
+                 M_CS_Ex = 1.000e+03 100.00 5.00                 ; mb, MeV, Mev
+          HighEx_nucleus = 36S                                   ; Mass ElementName Charge+ Beam
+                 H_CS_Ex = 8.000e+02 250.00 5.00                 ; mb, MeV, Mev
+
+[gamma_detection]
+                   coef0 = 1.39905 
+                   coef1 = 0.69523 
+                   coef2 = -5.921988
+                   coef3 = 1       
+                   coef4 = 0.269   
+                    area = 38.81                cm^2             
+                distance = 20.4                 cm               
+                geom_eff = 1                    %                
+                    mode = 2                                     ; 0-area,1-dist,2-geom
+               threshold = 100                  keV              
+                   start = 0                    mks              
+                    gate = 10                   mks              
+             Energy_cell = 1330                 keV              
+             Refer_GperF = 0.01                 g/f              
+                 UseGeom = 0
+               UseEnergy = 1
+
+[sec_target]
+                     NP2 = 8                                     ; Dimension
+                tertiary = 0
+               showDebug = 1
+                  method = 0                                     ; 0-distribution, 1-gauss, 2-d4
+               threshold = 0.0001
+                   Pr_z0 = 1
+                   Pr_z1 = 100
+                   Pr_n0 = 0
+                   Pr_n1 = 200
+                   Dr_z0 = 1
+                   Dr_z1 = 12
+                   Dr_n0 = 0
+                   Dr_n1 = 8
+
+[cross sections]
+
+[previous]
+                 Lowerst = 28Ar                                  ; Mass ElementName Charge+ Beam
+                 Highest = 39Ar                                  ; Mass ElementName Charge+ Beam
+
+[finger]
+             Diffuseness = 0.01                                  ; default 0.01
+             Suppression = 1e+12                                 ; default 1e12
+           BeamDumpBlock = Beam_Dump
+          BD_usePrevious = 1
+         BD_LongDistance = 0                    mm               
+       BD_distTransverse = 8.34                 mm               
+               BD_Center = 125                  mm               
+                 BD_rays = 1000
+
+[dBE]
+                      k0 = 0.0001 
+                      k1 = 6.276
+                      k2 = 0    
+                      b0 = -29.2  
+                       t = 0   
+                   shift = 0
+
+[MC_options]
+                   dXsel = 0
+                   dYsel = 2
+                   dZsel = 4
+                  dAZQ_X = 1
+                  dAZQ_Y = 5
+                  dAZQ_Z = 7
+                  dVEL_X = 1
+                  dVEL_Y = 0
+                  dVEL_Z = 0
+               dIso_mode = 0
+               strag_ang = 1
+               strag_ene = 1
+               strag_lat = 0
+            MCresolution = 1
+            XYresolution = 1
+                  defect = 1
+                  charge = 0
+           loss_reaction = 1
+            reaction_ang = 0
+            reaction_mom = 0
+               HighOrder = 1
+                  CS_use = 1
+           envelope_show = 0
+                use_bore = 0
+             use_ang_acc = 1
+          XY_orientation = 0
+          Plot_XY_orient = 0
+            outside_cikl = 1
+        MC_outside_sigma = 1
+               dP_option = 0
+              Radialsign = 1
+             ReverseFlag = 0
+              AZQ_Xsigma = 0.1   
+              AZQ_Ysigma = 0.1   
+                 G1_gate = 0 0 -100.0000 100.0000
+                 G2_gate = 0 0 -100.0000 100.0000
+                 G3_gate = 0 0 -100.0000 100.0000
+                 G4_gate = 0 0 -100.0000 100.0000
+            G1_component = 0 0,R1,R1,R1                          ; mode,RF_TOF,BP,TOFstart,TOFstop
+            G2_component = 0 0,R1,R1,R1
+            G3_component = 0 0,R1,R1,R1
+            G4_component = 0 0,R1,R1,R1
+
+[Levmar_fit]
+                   Niter = 10                                    ; # iterations
+               UseBounds = 1
+                 Example = 4                                     ; 0-15
+                    opt0 = 1e-3
+                    opt1 = 1e-15
+                    opt2 = 1e-15
+                    opt3 = 1e-20
+                    opt4 = 1e-6
+
+
+{============================= BLOCK M1 - Material ======================================}
+
+[M1_General]
+                    Name = IC_Mylar,1                            ; Name of Block, Constant name 1/0
+                Official = IC_Mylar
+               Available = 1
+                  Length = 0                    m                ; Length block for optical blocks
+
+[M1_Compound]
+               contents1 = 0,1,8,1.008                           ; Nomer,Z,Atoms,Mass
+               contents2 = 1,6,10,12.011                         ; Nomer,Z,Atoms,Mass
+               contents3 = 2,8,4,15.999                          ; Nomer,Z,Atoms,Mass
+               thickness = 0,11.5,1.397,0,0,0                    ; State,Thickness,density,angle,SolidGas,..
+                  Defect = 1,0                                   ; [0] choice - % or micron at 0 degree,  [1]=value; 
+        Use for Q-states = 1
+             ResolutionE = 0,0.5                                 ; [0] choice - % or MeV,  [1]=value; 
+             Resolution2 = 0.2,1,1              ns,mm,mm         ; Time&X&Y space
+
+[M1_BlockCalibration]
+                     TOF = 1,1,0,ns
+                      dE = 1,1,0,MeV
+                       X = 1,1,0,mm
+                       Y = 1,1,0,mm
+
+[M1_ProdTarget]
+              ProdTarget = 0
+
+
+{============================= BLOCK M2 - Material ======================================}
+
+[M2_General]
+                    Name = IC_gas_CF4,1                          ; Name of Block, Constant name 1/0
+               Available = 1
+                  Length = 0                    m                ; Length block for optical blocks
+
+[M2_Compound]
+               contents1 = 0,6,1,12.011                          ; Nomer,Z,Atoms,Mass
+               contents2 = 1,9,4,18.998                          ; Nomer,Z,Atoms,Mass
+               thickness = 4,36,0.00025,0,1,0                    ; State,Thickness,density,angle,SolidGas,..
+                  Defect = 1,0.012                               ; [0] choice - % or micron at 0 degree,  [1]=value; 
+        Use for Q-states = 1
+             ResolutionE = 0,2                                   ; [0] choice - % or MeV,  [1]=value; 
+             Resolution2 = 0.2,100,100          ns,mm,mm         ; Time&X&Y space
+
+[M2_BlockCalibration]
+                     TOF = 1,1,0,ns
+                      dE = 1,1,0,MeV
+                       X = 1,1,0,mm
+                       Y = 1,1,0,mm
+
+[M2_ProdTarget]
+              ProdTarget = 0
+
+
+{============================= BLOCK M3 - Material ======================================}
+
+[M3_General]
+                    Name = CFA_Mylar,1                           ; Name of Block, Constant name 1/0
+               Available = 1
+                  Length = 0                    m                ; Length block for optical blocks
+
+[M3_Compound]
+               contents1 = 0,1,8,1.008                           ; Nomer,Z,Atoms,Mass
+               contents2 = 1,6,10,12.011                         ; Nomer,Z,Atoms,Mass
+               contents3 = 2,8,4,15.999                          ; Nomer,Z,Atoms,Mass
+               thickness = 0,4.8,1.397,0,0,0                     ; State,Thickness,density,angle,SolidGas,..
+                  Defect = 1,0.5                                 ; [0] choice - % or micron at 0 degree,  [1]=value; 
+        Use for Q-states = 1
+             ResolutionE = 0,0.5                                 ; [0] choice - % or MeV,  [1]=value; 
+             Resolution2 = 0.1,0.3,0.3          ns,mm,mm         ; Time&X&Y space
+
+[M3_BlockCalibration]
+                     TOF = 1,1,0,ns
+                      dE = 1,1,0,MeV
+                       X = 1,1,0,mm
+                       Y = 1,1,0,mm
+
+[M3_ProdTarget]
+              ProdTarget = 0
+
+
+{============================= BLOCK M4 - Material ======================================}
+
+[M4_General]
+                    Name = CFA_gas_iC4H10,1                      ; Name of Block, Constant name 1/0
+               Available = 1
+                  Length = 0                    m                ; Length block for optical blocks
+
+[M4_Compound]
+               contents1 = 0,1,10,1.008                          ; Nomer,Z,Atoms,Mass
+               contents2 = 1,6,4,12.011                          ; Nomer,Z,Atoms,Mass
+               thickness = 4,9.6,1.431e-5,0,1,0                  ; State,Thickness,density,angle,SolidGas,..
+                  Defect = 1,1                                   ; [0] choice - % or micron at 0 degree,  [1]=value; 
+        Use for Q-states = 1
+             ResolutionE = 0,0.5                                 ; [0] choice - % or MeV,  [1]=value; 
+             Resolution2 = 0.1,0.3,0.3          ns,mm,mm         ; Time&X&Y space
+
+[M4_BlockCalibration]
+                     TOF = 1,1,0,ns
+                      dE = 1,1,0,MeV
+                       X = 1,1,0,mm
+                       Y = 1,1,0,mm
+
+[M4_ProdTarget]
+              ProdTarget = 0
+
+
+{============================= BLOCK M5 - Material ======================================}
+
+[M5_General]
+                    Name = Entrance_window,1                     ; Name of Block, Constant name 1/0
+               Available = 1
+                  Length = 0                    m                ; Length block for optical blocks
+
+[M5_Compound]
+               contents1 = 0,1,8,1.008                           ; Nomer,Z,Atoms,Mass
+               contents2 = 1,6,10,12.011                         ; Nomer,Z,Atoms,Mass
+               contents3 = 2,8,4,15.999                          ; Nomer,Z,Atoms,Mass
+               thickness = 0,12,1.397,0,0,0                      ; State,Thickness,density,angle,SolidGas,..
+                  Defect = 1,1                                   ; [0] choice - % or micron at 0 degree,  [1]=value; 
+        Use for Q-states = 1
+             ResolutionE = 0,0.5                                 ; [0] choice - % or MeV,  [1]=value; 
+             Resolution2 = 0.1,0.3,0.3          ns,mm,mm         ; Time&X&Y space
+
+[M5_BlockCalibration]
+                     TOF = 1,1,0,ns
+                      dE = 1,1,0,MeV
+                       X = 1,1,0,mm
+                       Y = 1,1,0,mm
+
+[M5_ProdTarget]
+              ProdTarget = 0
+
+
+{============================= BLOCK M6 - Material ======================================}
+
+[M6_General]
+                    Name = Space_Before_Field_Cage,1             ; Name of Block, Constant name 1/0
+               Available = 1
+                  Length = 0                    m                ; Length block for optical blocks
+
+[M6_Compound]
+               contents1 = 0,1,10,1.008                          ; Nomer,Z,Atoms,Mass
+               contents2 = 1,6,4,12.011                          ; Nomer,Z,Atoms,Mass
+               contents3 = 2,1,38,1.008                          ; Nomer,Z,Atoms,Mass
+               thickness = 4,35,0.00014,0,1,1                    ; State,Thickness,density,angle,SolidGas,..
+                  Defect = 1,1                                   ; [0] choice - % or micron at 0 degree,  [1]=value; 
+            MixMolarMass = 4.820
+        Use for Q-states = 1
+             ResolutionE = 0,0.5                                 ; [0] choice - % or MeV,  [1]=value; 
+             Resolution2 = 0.1,0.3,0.3          ns,mm,mm         ; Time&X&Y space
+
+[M6_BlockCalibration]
+                     TOF = 1,1,0,ns
+                      dE = 1,1,0,MeV
+                       X = 1,1,0,mm
+                       Y = 1,1,0,mm
+
+[M6_ProdTarget]
+              ProdTarget = 0
+
+
+{============================= BLOCK M7 - Material ======================================}
+
+[M7_General]
+                    Name = Empty_before_Active_Area,1            ; Name of Block, Constant name 1/0
+               Available = 1
+                  Length = 0                    m                ; Length block for optical blocks
+
+[M7_Compound]
+               contents1 = 0,1,10,1.008                          ; Nomer,Z,Atoms,Mass
+               contents2 = 1,6,4,12.011                          ; Nomer,Z,Atoms,Mass
+               contents3 = 2,1,38,1.008                          ; Nomer,Z,Atoms,Mass
+               thickness = 4,18,0.00014,0,1,1                    ; State,Thickness,density,angle,SolidGas,..
+                  Defect = 1,1                                   ; [0] choice - % or micron at 0 degree,  [1]=value; 
+            MixMolarMass = 4.820
+        Use for Q-states = 1
+             ResolutionE = 0,0.5                                 ; [0] choice - % or MeV,  [1]=value; 
+             Resolution2 = 0.1,0.3,0.3          ns,mm,mm         ; Time&X&Y space
+
+[M7_BlockCalibration]
+                     TOF = 1,1,0,ns
+                      dE = 1,1,0,MeV
+                       X = 1,1,0,mm
+                       Y = 1,1,0,mm
+
+[M7_ProdTarget]
+              ProdTarget = 0
+
+
+{============================= BLOCK M8 - Material ======================================}
+
+[M8_General]
+                    Name = Mid_Active_Area,1                     ; Name of Block, Constant name 1/0
+               Available = 1
+                  Length = 0                    m                ; Length block for optical blocks
+
+[M8_Compound]
+               contents1 = 0,1,10,1.008                          ; Nomer,Z,Atoms,Mass
+               contents2 = 1,6,4,12.011                          ; Nomer,Z,Atoms,Mass
+               contents3 = 2,1,38,1.008                          ; Nomer,Z,Atoms,Mass
+               thickness = 4,128,0.00014,0,1,1                   ; State,Thickness,density,angle,SolidGas,..
+                  Defect = 1,0                                   ; [0] choice - % or micron at 0 degree,  [1]=value; 
+            MixMolarMass = 4.820
+        Use for Q-states = 1
+             ResolutionE = 1,0.2                                 ; [0] choice - % or MeV,  [1]=value; 
+             Resolution2 = 0.1,0.3,0.3          ns,mm,mm         ; Time&X&Y space
+
+[M8_BlockCalibration]
+                     TOF = 1,1,0,ns
+                      dE = 1,1,0,MeV
+                       X = 1,1,0,mm
+                       Y = 1,1,0,mm
+
+[M8_ProdTarget]
+              ProdTarget = 0
+
+
+{============================= BLOCK M9 - Material ======================================}
+
+[M9_General]
+                    Name = End_Active_Area,1                     ; Name of Block, Constant name 1/0
+               Available = 1
+                  Length = 0                    m                ; Length block for optical blocks
+
+[M9_Compound]
+               contents1 = 0,1,10,1.008                          ; Nomer,Z,Atoms,Mass
+               contents2 = 1,6,4,12.011                          ; Nomer,Z,Atoms,Mass
+               contents3 = 2,1,38,1.008                          ; Nomer,Z,Atoms,Mass
+               thickness = 4,128,0.00014,0,1,1                   ; State,Thickness,density,angle,SolidGas,..
+                  Defect = 1,0                                   ; [0] choice - % or micron at 0 degree,  [1]=value; 
+            MixMolarMass = 4.820
+        Use for Q-states = 1
+             ResolutionE = 1,0.2                                 ; [0] choice - % or MeV,  [1]=value; 
+             Resolution2 = 0.1,0.3,0.3          ns,mm,mm         ; Time&X&Y space
+
+[M9_BlockCalibration]
+                     TOF = 1,1,0,ns
+                      dE = 1,1,0,MeV
+                       X = 1,1,0,mm
+                       Y = 1,1,0,mm
+
+[M9_ProdTarget]
+              ProdTarget = 0
+
+
+{============================= BLOCK M10 - Material ======================================}
+
+[M10_General]
+                    Name = ACTAR_End,1                           ; Name of Block, Constant name 1/0
+               Available = 1
+                  Length = 0                    m                ; Length block for optical blocks
+
+[M10_Compound]
+               contents1 = 0,1,10,1.008                          ; Nomer,Z,Atoms,Mass
+               contents2 = 1,6,4,12.011                          ; Nomer,Z,Atoms,Mass
+               contents3 = 2,1,38,1.008                          ; Nomer,Z,Atoms,Mass
+               thickness = 4,68,0.00014,0,1,1                    ; State,Thickness,density,angle,SolidGas,..
+                  Defect = 1,0                                   ; [0] choice - % or micron at 0 degree,  [1]=value; 
+            MixMolarMass = 4.820
+        Use for Q-states = 1
+             ResolutionE = 1,0.2                                 ; [0] choice - % or MeV,  [1]=value; 
+             Resolution2 = 0.1,0.3,0.3          ns,mm,mm         ; Time&X&Y space
+
+[M10_BlockCalibration]
+                     TOF = 1,1,0,ns
+                      dE = 1,1,0,MeV
+                       X = 1,1,0,mm
+                       Y = 1,1,0,mm
+
+[M10_ProdTarget]
+              ProdTarget = 0
+
+
+{============================= BLOCK M11 - Material ======================================}
+
+[M11_General]
+                    Name = F2_Si,1                               ; Name of Block, Constant name 1/0
+               Available = 1
+                  Length = 0                    m                ; Length block for optical blocks
+
+[M11_Compound]
+               contents1 = 0,14,1,28.086                         ; Nomer,Z,Atoms,Mass
+               thickness = 0,8,2.321,0,0,0                       ; State,Thickness,density,angle,SolidGas,..
+                  Defect = 1,0                                   ; [0] choice - % or micron at 0 degree,  [1]=value; 
+        Use for Q-states = 1
+             ResolutionE = 1,0.2                                 ; [0] choice - % or MeV,  [1]=value; 
+             Resolution2 = 0.1,0.3,0.3          ns,mm,mm         ; Time&X&Y space
+
+[M11_BlockCalibration]
+                     TOF = 1,1,0,ns
+                      dE = 1,1,0,MeV
+                       X = 1,1,0,mm
+                       Y = 1,1,0,mm
+
+[M11_ProdTarget]
+              ProdTarget = 0
+
+
+{============================= Calculations ======================================}
+
+[Calculations]
+17O  8+ =6.6754e+13,6.6754e+13,0,6.6754e+13,1,0,1,5.5000e+00,7.5869e-03,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,0
