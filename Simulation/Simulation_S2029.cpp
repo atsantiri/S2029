@@ -21,6 +21,8 @@
 #include <TFile.h>
 #include <fstream>
 #include <TStopwatch.h>
+#include <TH2D.h>
+#include <TLine.h>
 
 #include "../PostAnalysis/HistConfig.h"
 
@@ -108,7 +110,7 @@ void Simulation_S2029(const std::string& beam = "17F", double T1 = 5.5, double E
     // Kinematics
     ActPhysics::Particle p1 {beam};
     ActPhysics::Particle p1c {"17O"}; // Contaminant 
-    // ActPhysics::Particle p2 {target};
+    ActPhysics::Particle p2 {"1H"};
     // ActPhysics::Particle p3 {arglight};
     // // Automatically compute 4th particle
     // ActPhysics::Kinematics kaux {p1, p2, p3};
@@ -153,7 +155,7 @@ void Simulation_S2029(const std::string& beam = "17F", double T1 = 5.5, double E
 
 
     //---- SIMULATION STARTS HERE
-    ROOT::EnableImplicitMT();
+    //ROOT::EnableImplicitMT(16); // big for loops dont run in parallel
 
     // timer
     TStopwatch timer {};
@@ -179,6 +181,7 @@ void Simulation_S2029(const std::string& beam = "17F", double T1 = 5.5, double E
         "TActiveAreaMid",
         "TActiveAreaEnd"
     };
+    auto hEcm_dist {HistConfig::Ecm_dist.GetHistogram()};
 
     for (const auto& label : hSRIMLabels) {
         hSRIM[label]=new TH1D(label.c_str(), label.c_str(), 200,0,5.5);
@@ -250,8 +253,16 @@ void Simulation_S2029(const std::string& beam = "17F", double T1 = 5.5, double E
             auto TCActiveAreaEnd {srim->Slow("ContaminantInACTARgas", TCActiveAreaEntrance, 256)};
             hSRIMC["TActiveAreaEnd"]->Fill(TCActiveAreaEnd/p1c.GetAMU());
         }
-    
 
+
+        // Find the range in the active are where the 6.15 MeV resonance is reached, should be Ecm = 2.23 MeV -> Tbeam = 2.36 MeV
+        int nsteps = 200;
+        for (int i = 0; i < nsteps; i++) {
+            double x = (i+1) / static_cast<double>(nsteps) * 256; // distance travelled in active area in mm
+            auto currentT {srim->Slow("beamInACTARgas", T1ActiveAreaEntrance, x)};
+            auto Ecm = currentT/p1.GetAMU()*(p1.GetAMU()*p2.GetAMU())/(p1.GetAMU() + p2.GetAMU());
+            hEcm_dist->Fill(x, Ecm);
+        }
     }
 //    fOut.close();
 
@@ -294,6 +305,16 @@ void Simulation_S2029(const std::string& beam = "17F", double T1 = 5.5, double E
 
     l0->Draw();
 
+    auto* c1 {new TCanvas("c1", "Energy in active area")};
+    hEcm_dist->SetStats(0);
+    hEcm_dist->DrawClone("COLZ");
+    TLine* resonance = new TLine(hEcm_dist->GetXaxis()->GetXmin(), 2.23, hEcm_dist->GetXaxis()->GetXmax(), 2.23);
+    resonance->SetLineColor(kRed);
+    resonance->SetLineWidth(2);
+    resonance->SetLineStyle(2); 
+    resonance->Draw("same");
+    c1->SetLogz();
+    c1->SaveAs("17F_energy_in_actar.png");
     timer.Stop();
     timer.Print();
 
