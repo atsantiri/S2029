@@ -64,25 +64,12 @@ void Pipe2_Ex(const std::string& beam, const std::string& target, const std::str
 
     // // Filter on heavy particle hit in the telescope
     auto def {dfVertex};
-    // auto def = dfVertex.Filter([](const ActRoot::MergerData &m)
-    //                            { if(!m.fHeavy.fLayers.empty() && m.fHeavy.fLayers.front() == "f2")
-    //                            {
-    //                                 if(m.fHeavy.fEs[0] > 9.5)
-    //                                 {
-    //                                     return true;
-    //                                 }
-    //                                 else
-    //                                     return false;
-    //                            }
-    //
-    //                            else
-    //                                 return false; }, {"MergerData"});
-    //
+
     // Build beam energy
     def = def.Define("EBeam", [&](const ActRoot::MergerData& d)
-                     { return srim->Slow(beam, 7.5 * pb.GetAMU(), d.fRP.X()); }, {"MergerData"});
+                     { return srim->Slow(beam, 5.5 * pb.GetAMU(), d.fRP.X()); }, {"MergerData"});
 
-    ActPhysics::Kinematics kin {pb, pt, pl, 7.5 * pb.GetAMU()};
+    ActPhysics::Kinematics kin {pb, pt, pl, 5.5 * pb.GetAMU()};
     // Vector of kinematics as one object is needed per
     // processing slot (since we are changing EBeam in each entry)
     std::vector<ActPhysics::Kinematics> vkins {def.GetNSlots()};
@@ -134,10 +121,7 @@ void Pipe2_Ex(const std::string& beam, const std::string& target, const std::str
     auto hExThetaLab {def.Histo2D(HistConfig::ExThetaLab, "fThetaLight", "Ex")};
     auto hExRP {def.Histo2D(HistConfig::ExRPx, "fRP.fCoordinates.fX", "Ex")};
 
-    // Heavy histograms
-    auto hThetaHLLab {def.Histo2D(HistConfig::ChangeTitle(HistConfig::ThetaHeavyLight, "Lab correlations"),
-                                  "fThetaLight", "fThetaHeavy")};
-    // Save!
+     // Save!
     auto outfile {TString::Format("./Outputs/tree_ex_%s_%s_%s.root", beam.c_str(), target.c_str(), light.c_str())};
     def.Snapshot("Final_Tree", outfile);
     std::cout << "Saving Final_Tree in " << outfile << '\n';
