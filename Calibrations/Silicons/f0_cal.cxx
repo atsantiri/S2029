@@ -69,19 +69,15 @@ void f0_cal()
     std::string which {"f0"};
     std::string label {"F0"};
     // Read data
-    auto hs {ReadData("../../Macros/Outputs/SiWall_gated_entry_run4.root", "F0", label)};
+    auto hs {ReadData("./Inputs/Si_calib_histos_run001.root", "F0", label)};
     // Pick only necessary
-    int isil {};
+    int isil {}; 
     std::vector<int> adcChannels {};
     for(auto it = hs.begin(); it != hs.end();)
     {
-        // if(isil < 2 || isil > 6 || isil == 4)
-        //     it = hs.erase(it);
-        // else
-        // {
+
         adcChannels.push_back(isil);
         it++;
-        // }
         isil++;
     }
     // hs = {hs[2], hs[3], hs[5], hs[6]};
@@ -91,7 +87,7 @@ void f0_cal()
     // source.Print();
 
     // Correct by energy losses in Al dead layer
-    ActPhysics::SRIM srim {"al", "./Inputs/4He_silicon.txt"};
+    ActPhysics::SRIM srim {"al", "./Inputs/4He_Silicon.txt"};
     CorrectSource(&source, &srim, "al", 0.5e-3); // 0.5 um to mm
     // source.Print();
 
@@ -110,7 +106,7 @@ void f0_cal()
     auto* gr {new TGraphErrors};
     gr->SetNameTitle("g", "Resolution;;#sigma ^{241}Am [keV]");
     // Save
-    std::ofstream streamer {"./Outputs/s2384_" + which + ".dat"};
+    std::ofstream streamer {"./Outputs/s2029_" + which + ".dat"};
     streamer << std::fixed << std::setprecision(8);
     std::vector<std::shared_ptr<TH1D>> hfs;
     for(int s = 0; s < hsrebin.size(); s++)
@@ -125,10 +121,8 @@ void f0_cal()
         runners.emplace_back(&source, hsrebin[s], hs[s], false);
         auto& run {runners.back()};
         run.SetGaussPreWidth(60);
-        run.SetRange(1200, 1500);
+        run.SetRange(2100, 3200);
         run.DisableXErrors();
-        // if(s == 11)
-        //     run.SetMaxSigma(0.1);
         run.DoIt();
         auto* c {new TCanvas};
         run.Draw(c);
