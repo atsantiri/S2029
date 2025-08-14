@@ -162,11 +162,6 @@ void Pipe2_Ex(const std::string& beam, const std::string& target, const std::str
     hExRP->DrawClone("colz");
 
     auto* c23 {new TCanvas {"c23", "Pipe2 canvas 3"}};
-    c23->DivideSquare(4);
-    c23->cd(1);
-    hThetaHLLab->DrawClone("colz");
-    c23->cd(2);
     hThetaCMLab->DrawClone("colz");
-    c23->cd(3);
 }
 #endif
