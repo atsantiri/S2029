@@ -15,15 +15,10 @@
 #include <map>
 #include <string>
 
-void Pipe1_PID(const std::string& beam, const std::string& target, const std::string& light)
+void Pipe1_PID(const std::string& beam="17F", const std::string& target="1H", const std::string& light="1H")
 {
     std::string dataconf {};
-    // if(beam == "11Li")
-        dataconf = "./../configs/data.conf";
-    // else if(beam == "7Li")
-    //     dataconf = "./../configs/data_7Li.conf";
-    // else
-    //     throw std::runtime_error("Beam cannot differ from 11Li or 7Li");
+    dataconf = "./../configs/data.conf";
 
     // Read data
     ActRoot::DataManager dataman {dataconf, ActRoot::ModeType::EMerge};
@@ -171,22 +166,22 @@ void Pipe1_PID(const std::string& beam, const std::string& target, const std::st
         p++;
     }
     c0->cd(5);
-    hl1.Merge()->DrawClone("colz");
-    cuts.DrawCut("l1");
-    c0->cd(6);
-    hl1theta.Merge()->DrawClone("colz");
+    // hl1.Merge()->DrawClone("colz");
+    // cuts.DrawCut("l1");
+    // c0->cd(6);
+    // hl1theta.Merge()->DrawClone("colz");
 
-    auto* c2 {new TCanvas {"c2", "Pipe1 PID canvas 2"}};
-    c2->DivideSquare(4);
-    c2->cd(1);
-    hl1.GetAtSlot(0)->DrawClone("colz");
-    c2->cd(2);
-    hl1theta.GetAtSlot(0)->DrawClone("colz");
-    c2->cd(3);
-    hl1thetaCorr.Merge()->DrawClone("colz");
-    // auto* gtheo {ActPhysics::Kinematics(TString::Format("%s(d,p)@82.5", beam.c_str()).Data()).GetTheta3vs4Line()};
+    // auto* c2 {new TCanvas {"c2", "Pipe1 PID canvas 2"}};
+    // c2->DivideSquare(4);
+    // c2->cd(1);
+    // hl1.GetAtSlot(0)->DrawClone("colz");
+    // c2->cd(2);
+    // hl1theta.GetAtSlot(0)->DrawClone("colz");
+    // c2->cd(3);
+    // hl1thetaCorr.Merge()->DrawClone("colz");
+    // // auto* gtheo {ActPhysics::Kinematics(TString::Format("%s(d,p)@82.5", beam.c_str()).Data()).GetTheta3vs4Line()};
     // gtheo->SetLineColor(46);
     // gtheo->Draw("l");
-    c2->cd(4);
-    hl1Gated.Merge()->DrawClone("colz");
+    // c2->cd(4);
+    // hl1Gated.Merge()->DrawClone("colz");
 }

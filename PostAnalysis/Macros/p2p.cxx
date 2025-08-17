@@ -14,7 +14,7 @@
 void p2p()
 {
     // the three body vertices exist only in the filter data. So we start from there.
-    ActRoot::DataManager dataman {"./configs/data.conf", ActRoot::ModeType::EFilter};
+    ActRoot::DataManager dataman {"./../configs/data.conf", ActRoot::ModeType::EFilter};
     auto chain {dataman.GetChain()};
     // The run numbers and event entry exist in the merger data so we want that too.
     auto chain2 {dataman.GetChain(ActRoot::ModeType::EMerge)};
