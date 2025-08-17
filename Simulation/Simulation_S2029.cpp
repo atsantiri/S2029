@@ -258,7 +258,7 @@ void Simulation_S2029(const std::string& beam = "17F", double T1 = 5.5, double E
 
 
         // Find the range in the active are where the 6.15 MeV resonance is reached, should be Ecm = 2.23 MeV -> Tbeam = 2.36 MeV
-        int nsteps = 100;
+        int nsteps = 250;
         for (int i = 0; i < nsteps; i++) {
             double x = (i+1) / static_cast<double>(nsteps) * 256; // distance travelled in active area in mm
             auto currentT {srim->Slow("beamInACTARgas", T1ActiveAreaEntrance, x)};
@@ -320,7 +320,7 @@ void Simulation_S2029(const std::string& beam = "17F", double T1 = 5.5, double E
     resonance->SetLineStyle(2); 
     resonance->Draw("same");
     c1->SetLogz();
-    c1->SaveAs("17F_energy_in_actar.png");
+    c1->SaveAs(TString::Format("17F_energy_in_actar_%.0fmbar.png",pressureACTAR));
     timer.Stop();
     timer.Print();
 
