@@ -15,7 +15,7 @@
 #include <map>
 #include <string>
 
-void Pipe1_PID(const std::string& beam="17F", const std::string& target="1H", const std::string& light="1H")
+void Pipe1_PID(const std::string& beam, const std::string& target, const std::string& light)
 {
     std::string dataconf {};
     dataconf = "./../configs/data.conf";
@@ -59,6 +59,9 @@ void Pipe1_PID(const std::string& beam="17F", const std::string& target="1H", co
     hstwo.emplace("f0-f1", *hTwoSils);
     hstwo["f0-f1"]->SetTitle("f0-f1");
     ROOT::TThreadedObject<TH2D> hl1 {"hl1", "L1 PID;Raw TL [au];Q_{total} [au]", 200, 0, 120, 2000, 0, 3e5};
+    ROOT::TThreadedObject<TH1D> hCHIO {"hCHIO", "CHIO;Channel [adc];Counts [au]", 1000, 0, 16384};
+    ROOT::TThreadedObject<TH2D> hTACCFA {"hTACCFA", "CFA TAC; CHIO Channel [adc]; TAC [adc]", 1000,0,16384, 1000, 0, 16384};
+
     ROOT::TThreadedObject<TH2D> hl1Gated {"hl1", "L1 PID > 100#circ;Raw TL [au];Q_{total} [au]", 200, 0, 120, 2000, 0,
                                           3e5};
     ROOT::TThreadedObject<TH2D> hl1theta {
@@ -91,6 +94,10 @@ void Pipe1_PID(const std::string& beam="17F", const std::string& target="1H", co
             {
                 hstwo["f0-f1"]->Fill(m.fLight.fEs[0], m.fLight.fEs[1]);
             }
+
+            hCHIO->Fill(mod.Get("CHIO"));
+            hTACCFA->Fill(mod.fLeaves["CHIO"],mod.fLeaves["TAC_CFA_HF"]);
+            
             
         },
         {"MergerData", "ModularData"});
@@ -98,10 +105,10 @@ void Pipe1_PID(const std::string& beam="17F", const std::string& target="1H", co
     // If cuts are present, apply them
     ActRoot::CutsManager<std::string> cuts;
     // Gas PID
-    // cuts.ReadCut("l0", TString::Format("./Cuts/pid_%s_l0_%s.root", light.c_str(), beam.c_str()).Data());
-    // cuts.ReadCut("r0", TString::Format("./Cuts/pid_%s_r0_%s.root", light.c_str(), beam.c_str()).Data());
-    // cuts.ReadCut("f0", TString::Format("./Cuts/pid_%s_f0_%s.root", light.c_str(), beam.c_str()).Data());
-    // cuts.ReadCut("l1", TString::Format("./Cuts/pid_%s_l1_%s.root", light.c_str(), beam.c_str()).Data());
+    cuts.ReadCut("l0", TString::Format("./Cuts/pid_%s_l0_%s.root", light.c_str(), beam.c_str()).Data());
+    cuts.ReadCut("r0", TString::Format("./Cuts/pid_%s_r0_%s.root", light.c_str(), beam.c_str()).Data());
+    cuts.ReadCut("f0", TString::Format("./Cuts/pid_%s_f0_%s.root", light.c_str(), beam.c_str()).Data());
+    cuts.ReadCut("l1", TString::Format("./Cuts/pid_%s_l1_%s.root", light.c_str(), beam.c_str()).Data());
     
     
     // Two sils PID
@@ -155,7 +162,7 @@ void Pipe1_PID(const std::string& beam="17F", const std::string& target="1H", co
     for(auto& [layer, h] : hsgas)
     {
         c0->cd(p);
-        h.Merge()->DrawClone("colz");
+        h.Merge()->DrawClone("colz"); //merge histograms written by all threads
         cuts.DrawCut(layer);
         p++;
     }
@@ -184,4 +191,13 @@ void Pipe1_PID(const std::string& beam="17F", const std::string& target="1H", co
     // gtheo->Draw("l");
     // c2->cd(4);
     // hl1Gated.Merge()->DrawClone("colz");
+
+
+
+    auto* c3 {new TCanvas {"c3", "Pipe1 IC and CFA TAC"}};
+    c3->DivideSquare(2);
+    c3->cd(1);
+    hCHIO.Merge()->DrawClone();
+    c3->cd(2);
+    hTACCFA.Merge()->DrawClone("COLZ");
 }
