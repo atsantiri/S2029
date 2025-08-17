@@ -26,7 +26,7 @@ void p2p()
 
     // Gate on candidates for (p,2p)
     auto gated {df.Filter([](ActRoot::TPCData& tpc) { return (tpc.fClusters.size() == 4) && (tpc.fRPs.size() == 1); }, // we want the cluster 
-                          {"TPC"})};
+                          {"TPCData"})};
     // And also gate on X values
     auto gateRPx {gated.Filter(
         [](ActRoot::TPCData& tpc)
