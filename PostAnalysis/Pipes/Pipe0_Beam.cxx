@@ -10,15 +10,10 @@
 #include <atomic>
 #include <stdexcept>
 
-void Pipe0_Beam(const std::string& beam)
+void Pipe0_Beam(const std::string& beam="17F")
 {
     std::string dataconf {};
-    // if(beam == "11Li")
-        dataconf = "./../configs/data.conf";
-    // else if(beam == "7Li")
-    //     dataconf = "./../configs/data_7Li.conf";
-    // else
-    //     throw std::runtime_error("Beam cannot differ from 11Li or 7Li");
+    dataconf = "./../configs/data.conf";
 
     ROOT::EnableImplicitMT();
     // Read data

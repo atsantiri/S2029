@@ -92,7 +92,7 @@ void Simulation_S2029(const std::string& beam = "17F", double T1 = 5.5, double E
     bool stragglingInCFA {true};  // If true beam will be propagated through CFA
     double pressureCFA {6}; // Pressure in mbar    
     double pressureACTAR {600}; // Pressure in mbar    
-    bool trackContamination {false}; // If true the 17O contaminant will be propagated along with the 17F primary beam
+    bool trackContamination {true}; // If true the 17O contaminant will be propagated along with the 17F primary beam
 
     // Initialize detectors
     // TPC
@@ -139,10 +139,10 @@ void Simulation_S2029(const std::string& beam = "17F", double T1 = 5.5, double E
         {"beamInCF4", TString::Format("./SRIM/%s_CF4_%.0fmbar.txt", beam.c_str(), pressureIC)},
         {"beamIniC4H10", TString::Format("./SRIM/%s_iC4H10_%.0fmbar.txt", beam.c_str(), pressureCFA)},
         {"beamInACTARgas", TString::Format("./SRIM/%s_H2-iC4H10_95-5_%.0fmbar.txt", beam.c_str(), pressureACTAR)},
-        // {"ContaminantInMylar", TString::Format("./SRIM/%s_mylar.txt", p1c.GetName().c_str())},
-        // {"ContaminantInCF4", TString::Format("./SRIM/%s_CF4_%.0fmbar.txt", p1c.GetName().c_str(), pressureIC)},
-        // {"ContaminantIniC4H10", TString::Format("./SRIM/%s_iC4H10_%.0fmbar.txt", p1c.GetName().c_str(), pressureCFA)},
-        // {"ContaminantInACTARgas", TString::Format("./SRIM/%s_H2-iC4H10_95-5_%.0fmbar.txt", p1c.GetName().c_str(), pressureACTAR)}
+        {"ContaminantInMylar", TString::Format("./SRIM/%s_mylar.txt", p1c.GetName().c_str())},
+        {"ContaminantInCF4", TString::Format("./SRIM/%s_CF4_%.0fmbar.txt", p1c.GetName().c_str(), pressureIC)},
+        {"ContaminantIniC4H10", TString::Format("./SRIM/%s_iC4H10_%.0fmbar.txt", p1c.GetName().c_str(), pressureCFA)},
+        {"ContaminantInACTARgas", TString::Format("./SRIM/%s_H2-iC4H10_95-5_%.0fmbar.txt", p1c.GetName().c_str(), pressureACTAR)}
     };
 
     for (const auto& [label, path] : tables) {
@@ -179,7 +179,8 @@ void Simulation_S2029(const std::string& beam = "17F", double T1 = 5.5, double E
         "TAfterFoil",
         "TActiveAreaEntrance",
         "TActiveAreaMid",
-        "TActiveAreaEnd"
+        "TActiveAreaEnd",
+        "TSiWall"
     };
     auto hEcm_dist {HistConfig::Ecm_dist.GetHistogram()};
     auto xmin {256};
@@ -254,11 +255,14 @@ void Simulation_S2029(const std::string& beam = "17F", double T1 = 5.5, double E
             hSRIMC["TActiveAreaMid"]->Fill(TCActiveAreaMid/p1c.GetAMU());    
             auto TCActiveAreaEnd {srim->Slow("ContaminantInACTARgas", TCActiveAreaEntrance, 256)};
             hSRIMC["TActiveAreaEnd"]->Fill(TCActiveAreaEnd/p1c.GetAMU());
+            auto TCSiWall {srim->Slow("ContaminantInACTARgas", TCActiveAreaEnd, 95.4)};
+            hSRIMC["TSiWall"]->Fill(TCSiWall/p1c.GetAMU());
+
         }
 
 
         // Find the range in the active are where the 6.15 MeV resonance is reached, should be Ecm = 2.23 MeV -> Tbeam = 2.36 MeV
-        int nsteps = 250;
+        int nsteps = 10;
         for (int i = 0; i < nsteps; i++) {
             double x = (i+1) / static_cast<double>(nsteps) * 256; // distance travelled in active area in mm
             auto currentT {srim->Slow("beamInACTARgas", T1ActiveAreaEntrance, x)};
