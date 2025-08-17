@@ -91,7 +91,7 @@ void Simulation_S2029(const std::string& beam = "17F", double T1 = 5.5, double E
     double pressureIC {70}; // Pressure in mbar    
     bool stragglingInCFA {true};  // If true beam will be propagated through CFA
     double pressureCFA {6}; // Pressure in mbar    
-    double pressureACTAR {700}; // Pressure in mbar    
+    double pressureACTAR {600}; // Pressure in mbar    
     bool trackContamination {false}; // If true the 17O contaminant will be propagated along with the 17F primary beam
 
     // Initialize detectors
