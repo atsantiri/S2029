@@ -4,3 +4,19 @@
 
 configs/data.conf
 compile_flags.txt
+.clang-format
+
+# CMake things
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+
+/build/
+/out/
+/bin/
+/lib/
+
+*.so
+*.so.*
+*.dylib
