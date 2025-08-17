@@ -24,7 +24,7 @@ void vDriftfromAlpha()
 {
     ROOT::EnableImplicitMT();
     // Get the data run 123
-    auto df{ROOT::RDataFrame("GETTree", "../../RootFiles/Cluster/Clusters_Run_0009.root")};
+    auto df{ROOT::RDataFrame("GETTree", "../../RootFiles/Cluster/Clusters_Run_0011.root")};
 
     // df.Describe().Print();
 
@@ -215,12 +215,12 @@ void vDriftfromAlpha()
     f3->SetLineColor(kBlue);
     f3->DrawClone("same");
     // Text of the fit parameters
-    auto t1 = new TLatex(100, 23000, TString::Format("First peak: Vdrift = %.2f  ", TMath::Sqrt(-f1->GetParameter(1))));
-    auto t2 = new TLatex(100, 21000, TString::Format("Second peak: Vdrift = %.2f  ", TMath::Sqrt(-f2->GetParameter(1))));
-    auto t3 = new TLatex(100, 19000, TString::Format("Third peak: Vdrift = %.2f ", TMath::Sqrt(-f3->GetParameter(1))));
+    auto t1 = new TLatex(50, 30000, TString::Format("First peak: Vdrift = %.2f#pm%.2f ", TMath::Sqrt(-f1->GetParameter(1)),TMath::Sqrt(f1->GetParError(1))));
+    auto t2 = new TLatex(50, 28000, TString::Format("Second peak: Vdrift = %.2f#pm%.2f", TMath::Sqrt(-f2->GetParameter(1)),TMath::Sqrt(f2->GetParError(1))));
+    auto t3 = new TLatex(50, 25000, TString::Format("Third peak: Vdrift = %.2f#pm%.2f", TMath::Sqrt(-f3->GetParameter(1)),TMath::Sqrt(f3->GetParError(1))));
     t1->DrawClone();
     t2->DrawClone();
     t3->DrawClone();
 
-    
+   
 }

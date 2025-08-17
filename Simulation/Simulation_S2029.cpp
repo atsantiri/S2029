@@ -91,16 +91,16 @@ void Simulation_S2029(const std::string& beam = "17F", double T1 = 5.5, double E
     double pressureIC {70}; // Pressure in mbar    
     bool stragglingInCFA {true};  // If true beam will be propagated through CFA
     double pressureCFA {6}; // Pressure in mbar    
-    double pressureACTAR {640}; // Pressure in mbar    
+    double pressureACTAR {700}; // Pressure in mbar    
     bool trackContamination {false}; // If true the 17O contaminant will be propagated along with the 17F primary beam
 
     // Initialize detectors
     // TPC
     ActRoot::TPCParameters tpc {"Actar"};
     // Silicons
-    auto* sils {new ActPhysics::SilSpecs};
-    sils->ReadFile("../configs/silspecs.conf");
-    sils->Print();
+    // auto* sils {new ActPhysics::SilSpecs};
+    // sils->ReadFile("../configs/silspecs.conf");
+    // sils->Print();
 
     // Resolutions
     const double sigmaSil {0.060 / 2.355};
@@ -182,6 +182,8 @@ void Simulation_S2029(const std::string& beam = "17F", double T1 = 5.5, double E
         "TActiveAreaEnd"
     };
     auto hEcm_dist {HistConfig::Ecm_dist.GetHistogram()};
+    auto xmin {256};
+    auto xmax {0};
 
     for (const auto& label : hSRIMLabels) {
         hSRIM[label]=new TH1D(label.c_str(), label.c_str(), 200,0,5.5);
@@ -245,8 +247,8 @@ void Simulation_S2029(const std::string& beam = "17F", double T1 = 5.5, double E
             auto TCAfterEntranceWindow {srim->Slow("ContaminantInMylar", TCAfterCFA, 12e-3)}; // 12 um mylar in ACTAR entrance window
             hSRIMC["TAfterFoil"]->Fill(TCAfterEntranceWindow/p1c.GetAMU()); 
 
-            auto TCFieldCageEntrance {srim->Slow("ContaminantInACTARgas", TCAfterEntranceWindow, 35)}; // 35 mm space before field cage
-            auto TCActiveAreaEntrance {srim->Slow("ContaminantInACTARgas", TCFieldCageEntrance, 18)}; // 18 mm space before field cage
+            auto TCFieldCageEntrance {srim->Slow("ContaminantInACTARgas", TCAfterEntranceWindow, 31.6)}; // 35 mm space before field cage
+            auto TCActiveAreaEntrance {srim->Slow("ContaminantInACTARgas", TCFieldCageEntrance, 20.4)}; // (12.8+7.6) mm space before field cage
             hSRIMC["TActiveAreaEntrance"]->Fill(TCActiveAreaEntrance/p1c.GetAMU());    
             auto TCActiveAreaMid {srim->Slow("ContaminantInACTARgas", TCActiveAreaEntrance, 128)};
             hSRIMC["TActiveAreaMid"]->Fill(TCActiveAreaMid/p1c.GetAMU());    
@@ -262,6 +264,10 @@ void Simulation_S2029(const std::string& beam = "17F", double T1 = 5.5, double E
             auto currentT {srim->Slow("beamInACTARgas", T1ActiveAreaEntrance, x)};
             auto Ecm = currentT/p1.GetAMU()*(p1.GetAMU()*p2.GetAMU())/(p1.GetAMU() + p2.GetAMU());
             hEcm_dist->Fill(x, Ecm);
+            if (Ecm<2.24 && Ecm>2.22){
+                if (x<xmin){xmin=x;}
+                if (x>xmax){xmax=x;}
+            }
         }
     }
 //    fOut.close();
@@ -304,7 +310,7 @@ void Simulation_S2029(const std::string& beam = "17F", double T1 = 5.5, double E
     }
 
     l0->Draw();
-
+    std::cout<<"\n Resonance region: "<<xmin<<" to "<<xmax<<" mm"<<std::endl;
     auto* c1 {new TCanvas("c1", "Energy in active area")};
     hEcm_dist->SetStats(0);
     hEcm_dist->DrawClone("COLZ");
