@@ -42,7 +42,8 @@ void Pipe2_Ex(const std::string& beam, const std::string& target, const std::str
         srimName = "3He";
     else if(light == "4He")
         srimName = "4He";
-    srim->ReadTable(light, TString::Format("../Simulation/SRIM/%s_H2-iC4H10_95-5_700mbar.txt", srimName.c_str()).Data());
+    srim->ReadTable(light,
+                    TString::Format("../Simulation/SRIM/%s_H2-iC4H10_95-5_700mbar.txt", srimName.c_str()).Data());
     srim->ReadTable(beam, TString::Format("../Simulation/SRIM/%s_H2-iC4H10_95-5_700mbar.txt", beam.c_str()).Data());
     // Build energy at vertex
     auto dfVertex = df.Define("EVertex",
@@ -55,21 +56,31 @@ void Pipe2_Ex(const std::string& beam, const std::string& target, const std::str
                                       ret = srim->EvalEnergy(light, d.fLight.fTL);
                                   return ret;
                               },
-                              {"MergerData"}); 
+                              {"MergerData"});
 
     // Init particles
     ActPhysics::Particle pb {beam};
     ActPhysics::Particle pt {target};
     ActPhysics::Particle pl {light};
 
+    // Initial energy of beam at pad plane entrance
+    double EBeamIni {2.9}; // AMeV
+
     // // Filter on heavy particle hit in the telescope
     auto def {dfVertex};
 
     // Build beam energy
-    def = def.Define("EBeam", [&](const ActRoot::MergerData& d)
-                     { return srim->Slow(beam, 5.5 * pb.GetAMU(), d.fRP.X()); }, {"MergerData"});
+    def = def.Define("EBeam",
+                     [&](const ActRoot::MergerData& d)
+                     {
+                         auto ret {srim->Slow(beam, EBeamIni * pb.GetAMU(), d.fRP.X())};
+                         if(ret <= 0)
+                             ret = 1111111;
+                         return ret;
+                     },
+                     {"MergerData"});
 
-    ActPhysics::Kinematics kin {pb, pt, pl, 5.5 * pb.GetAMU()};
+    ActPhysics::Kinematics kin {pb, pt, pl, EBeamIni * pb.GetAMU()};
     // Vector of kinematics as one object is needed per
     // processing slot (since we are changing EBeam in each entry)
     std::vector<ActPhysics::Kinematics> vkins {def.GetNSlots()};
@@ -92,6 +103,10 @@ void Pipe2_Ex(const std::string& beam, const std::string& target, const std::str
                                   TMath::RadToDeg();
                        },
                        {"MergerData", "EVertex", "EBeam"});
+    def = def.DefineSlot(
+        "RecEBeam", [&](unsigned int slot, const ActRoot::MergerData& d, double EVertex)
+        { return vkins[slot].ReconstructBeamEnergyFromLabKinematics(EVertex, d.fThetaLight * TMath::DegToRad()); },
+        {"MergerData", "EVertex"});
 
 
     // Book new histograms
@@ -120,8 +135,13 @@ void Pipe2_Ex(const std::string& beam, const std::string& target, const std::str
     auto hExThetaCM {def.Histo2D(HistConfig::ExThetaCM, "ThetaCM", "Ex")};
     auto hExThetaLab {def.Histo2D(HistConfig::ExThetaLab, "fThetaLight", "Ex")};
     auto hExRP {def.Histo2D(HistConfig::ExRPx, "fRP.fCoordinates.fX", "Ex")};
+    auto hExSPz {def.Histo2D(HistConfig::ExZ, "fLight.fSP.fCoordinates.fZ", "Ex")};
 
-     // Save!
+    // Beam energy against RP.X
+    auto hEBeamRPx {def.Histo2D({"hEBeamRPx", "EBeam assuming elastic;RP.X [mm];EBeam", 300, 0, 260, 300, 0, 300},
+                                "fRP.fCoordinates.fX", "RecEBeam")};
+
+    // Save!
     auto outfile {TString::Format("./Outputs/tree_ex_%s_%s_%s.root", beam.c_str(), target.c_str(), light.c_str())};
     def.Snapshot("Final_Tree", outfile);
     std::cout << "Saving Final_Tree in " << outfile << '\n';
@@ -152,16 +172,22 @@ void Pipe2_Ex(const std::string& beam, const std::string& target, const std::str
     c21->cd(2);
     hExSil->DrawClone();
     c21->cd(3);
-    hKinCM->DrawClone("colz");
-    c21->cd(4);
     hExL1->DrawClone();
+    // hKinCM->DrawClone("colz");
+    c21->cd(4);
+    // hExL1->DrawClone();
     // hExThetaLab->DrawClone("colz");
+    hExSPz->DrawClone("colz");
     c21->cd(5);
     hExThetaCM->DrawClone("colz");
     c21->cd(6);
     hExRP->DrawClone("colz");
 
     auto* c23 {new TCanvas {"c23", "Pipe2 canvas 3"}};
+    c23->DivideSquare(4);
+    c23->cd(1);
     hThetaCMLab->DrawClone("colz");
+    c23->cd(2);
+    hEBeamRPx->DrawClone("colz");
 }
 #endif
