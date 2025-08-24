@@ -37,11 +37,16 @@ const TH2DModel ExThetaLab {
     "hExThetaLab", "E_{x} vs #theta_{Lab};#theta_{Lab} [#circ];E_{x} [MeV]", 400, 0, 60, 200, -10, 20};
 
 const TH2DModel ExRPx {"hExRPX", "E_{x} vs RP.X;RP.X() [mm];E_{x} [MeV]", 200, -10, 300, 200, -10, 20};
+
+const TH2DModel EcnThetaCM {"hEcnThetaCM", "E_{CN} vs ThetaCM; E_{CN} [MeV];ThetaCM [#circ]", 200, 4., 8., 200, 0, 180};
+
 const TH2DModel ThetaCMLab {
     "hThetaCMLab", "CM vs Lab correlations;#theta_{Lab} [#circ];#theta_{CM} [#circ]", 400, 0, 90, 400, 0, 90};
 
 const TH2DModel RPxThetaCM {
     "hRPxThetaCM", "RP.X vs #theta_{CM} correlations;RP.X [mm];#theta_{CM} [#circ]", 200, 0, 300, 100, 0, 60};
+
+const TH1DModel Ecn {"hEcn", TString::Format("Compound Nucleus energy;E_{x} [MeV];Counts / %.f keV", (35. - (-10.)) / 300 * 1e3), 200, 4, 8};
 
 
 template <typename T>

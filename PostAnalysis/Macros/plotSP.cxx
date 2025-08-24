@@ -1,3 +1,4 @@
+#include "ActDataManager.h"
 #include "ActMergerData.h"
 
 #include "ROOT/RDataFrame.hxx"
@@ -9,7 +10,9 @@
 
 void plotSP()
 {
-    ROOT::RDataFrame df {"Final_Tree", "../Outputs/tree_ex_17F_p_p.root"};
+    ActRoot::DataManager dataman {"../../configs/data.conf", ActRoot::ModeType::EMerge};
+    auto chain {dataman.GetChain()};
+    ROOT::RDataFrame df {*chain};
 
     // Fill histograms
     int nsils {12};
@@ -27,6 +30,8 @@ void plotSP()
     df.Foreach(
         [&](ActRoot::MergerData& m)
         {
+            if(m.fLight.GetNLayers() != 1)
+                return;
             // No need to check for SP, it has already been done in Filter
             auto layer {m.fLight.fLayers.front()}; // ensured to have at least size >= 1
             auto n {m.fLight.fNs.front()};
@@ -44,7 +49,7 @@ void plotSP()
         },
         {"MergerData"});
 
-    // Draw
+    //// Draw
     auto* c0 {new TCanvas {"c0", "SP canvas"}};
     c0->DivideSquare(4);
     int p {1};

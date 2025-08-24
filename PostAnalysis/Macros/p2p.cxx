@@ -32,7 +32,7 @@ void p2p()
         [](ActRoot::TPCData& tpc)
         {
             auto& rp {tpc.fRPs[0]};
-            double min {45};// modify based on resonance location
+            double min {40};// modify based on resonance location
             double max {90};
             return (min <= rp.X()) && (rp.X() <= max);
         },
@@ -43,7 +43,7 @@ void p2p()
                    .Histo1D({"hRPx", "RP x histo;RP.X [mm or pads, check];Counts", 300, 0, 256}, "RPx")};
 
     // Write to file: run and entry numbers that passed the cuts for 3-body vertices within min and max RPx
-    std::ofstream streamer {"./p2p_list.txt"};
+    std::ofstream streamer {"Outputs/p2p_list.txt"};
     gateRPx.Foreach([&](ActRoot::MergerData& mer) { mer.Stream(streamer); }, {"MergerData"});
     streamer.close();
 

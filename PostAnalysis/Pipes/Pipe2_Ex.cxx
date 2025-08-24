@@ -43,8 +43,8 @@ void Pipe2_Ex(const std::string& beam, const std::string& target, const std::str
     else if(light == "4He")
         srimName = "4He";
     srim->ReadTable(light,
-                    TString::Format("../Simulation/SRIM/%s_H2-iC4H10_95-5_700mbar.txt", srimName.c_str()).Data());
-    srim->ReadTable(beam, TString::Format("../Simulation/SRIM/%s_H2-iC4H10_95-5_700mbar.txt", beam.c_str()).Data());
+                    TString::Format("../Simulation/SRIM/%s_H2-iC4H10_95-5_760mbar.txt", srimName.c_str()).Data());
+    srim->ReadTable(beam, TString::Format("../Simulation/SRIM/%s_H2-iC4H10_95-5_760mbar.txt", beam.c_str()).Data());
     // Build energy at vertex
     auto dfVertex = df.Define("EVertex",
                               [&](const ActRoot::MergerData& d)
@@ -64,7 +64,7 @@ void Pipe2_Ex(const std::string& beam, const std::string& target, const std::str
     ActPhysics::Particle pl {light};
 
     // Initial energy of beam at pad plane entrance
-    double EBeamIni {2.9}; // AMeV
+    double EBeamIni {3.95}; // AMeV
 
     // // Filter on heavy particle hit in the telescope
     auto def {dfVertex};
@@ -79,6 +79,16 @@ void Pipe2_Ex(const std::string& beam, const std::string& target, const std::str
                          return ret;
                      },
                      {"MergerData"});
+
+    // Find excitation energy of compound nucleus
+    double p_thresh {3.923};
+    def = def.Define("ECN",
+                    [&](double EBeam)
+                    {
+                        auto lab_to_com {pb.GetAMU() / (pb.GetAMU()+pl.GetAMU())};
+                        return (EBeam/pb.GetAMU() * lab_to_com + p_thresh);   
+                    },
+                    {"EBeam"});
 
     ActPhysics::Kinematics kin {pb, pt, pl, EBeamIni * pb.GetAMU()};
     // Vector of kinematics as one object is needed per
@@ -137,6 +147,9 @@ void Pipe2_Ex(const std::string& beam, const std::string& target, const std::str
     auto hExRP {def.Histo2D(HistConfig::ExRPx, "fRP.fCoordinates.fX", "Ex")};
     auto hExSPz {def.Histo2D(HistConfig::ExZ, "fLight.fSP.fCoordinates.fZ", "Ex")};
 
+    auto hEcnThetaCM {def.Histo2D(HistConfig::EcnThetaCM,"ECN","ThetaCM")};
+    auto hEcn {def.Histo1D(HistConfig::Ecn,"ECN")};
+
     // Beam energy against RP.X
     auto hEBeamRPx {def.Histo2D({"hEBeamRPx", "EBeam assuming elastic;RP.X [mm];EBeam", 300, 0, 260, 300, 0, 300},
                                 "fRP.fCoordinates.fX", "RecEBeam")};
@@ -189,5 +202,10 @@ void Pipe2_Ex(const std::string& beam, const std::string& target, const std::str
     hThetaCMLab->DrawClone("colz");
     c23->cd(2);
     hEBeamRPx->DrawClone("colz");
+    c23->cd(3);
+    hEcnThetaCM->DrawClone("colz");
+    c23->cd(4);
+    hEcn->DrawClone();
+
 }
 #endif

@@ -1,4 +1,4 @@
-// Code from IBC fro s2384 to calculate drift velocity
+// Code from s2384 to calculate drift velocity
 
 #include "ActDataManager.h"
 #include "ActSilData.h"
@@ -24,9 +24,8 @@ void vDriftfromAlpha()
 {
     ROOT::EnableImplicitMT();
     // Get the data run 123
-    auto df{ROOT::RDataFrame("GETTree", "../../RootFiles/Cluster/Clusters_Run_0021.root")};
-
-    // df.Describe().Print();
+    // auto df{ROOT::RDataFrame("GETTree", "../../RootFiles/Cluster/Clusters_Run_0021.root")};
+    auto df{ROOT::RDataFrame("GETTree", "../../RootFiles/Cluster/Clusters_Run_0062.root")};
 
     // Define last point of cluster in x y z, as the projection of the alpha track
     auto dfLastPoint = df.Define("fLastPoint", [](ActRoot::TPCData &d)
@@ -49,7 +48,7 @@ void vDriftfromAlpha()
 
     // Define other point
     auto dfOtherPoint = dfLastPoint.Define("fOtherPoint", [](ActRoot::TPCData &d)
-    {
+                                           {
         if(d.fClusters.size() != 1)
         {
             ROOT::Math::XYZPointF otherPoint {-1000, -1000, -2000};
@@ -59,7 +58,7 @@ void vDriftfromAlpha()
         {
             auto cluster {d.fClusters[0]};
             auto line {cluster.GetRefToLine()};
-            auto otherPoint {line.MoveToX(-50)};
+            auto otherPoint {line.MoveToX(-50)}; // !!!!
             return otherPoint;
         } }, {"TPCData"});
 
@@ -91,10 +90,10 @@ void vDriftfromAlpha()
         {"fOtherX", "fOtherY", "fLastX", "fLastY"});
 
     // With the plot I guess the alpha source is at (-27, 41)
-    float xSource{-28.};
+    float xSource{-29.};
     float ySource{39.};
 
-    auto dfDrift = dfXY.Define("fDeltaZ", [&](ActRoot::TPCData &d)
+    auto dfDrift = dfXY.Define("fDeltaZ", [&](ActRoot::TPCData &d, ROOT::Math::XYZPointF& otherPoint)
                                {
         if(d.fClusters.size() != 1)
             return -1000.;
@@ -102,6 +101,7 @@ void vDriftfromAlpha()
         {
             auto cluster {d.fClusters[0]};
             auto line {cluster.GetRefToLine()};
+            line.AlignUsingPoint(otherPoint);
             auto dir {line.GetDirection()};
             cluster.SortAlongDir(dir);
             //auto firstVoxel {cluster.GetRefToVoxels().front()};
@@ -111,8 +111,8 @@ void vDriftfromAlpha()
             auto zSource {line.MoveToX(xSource).Z()};
             double deltaZ = projectionLastPointLine.Z() - zSource;
             return deltaZ *0.32; // Conversion factor from bin time bucket to micro seconds. 4 time buckets in 1 bin time bucket. 1 time bucket is 12.5MHz.
-        } }, {"TPCData"})
-                       .Define("fLxy", [&](ActRoot::TPCData &d)
+        } }, {"TPCData", "fOtherPoint"})
+        .Define("fLxy", [&](ActRoot::TPCData &d)
                                {
         if(d.fClusters.size() != 1)
             return -1000.;
@@ -127,19 +127,18 @@ void vDriftfromAlpha()
             double lxy = TMath::Sqrt(TMath::Power(projectionPointLine.X() - xSource, 2) + TMath::Power(projectionPointLine.Y() - ySource, 2));
             return lxy * 2; // Conversion factor from pads to mm
         } }, {"TPCData"})
-                       .Define("fDeltaZSquare", "fDeltaZ * fDeltaZ")
-                       .Define("fLxySquare", "fLxy * fLxy");
+        .Define("fDeltaZSquare", "fDeltaZ * fDeltaZ")
+        .Define("fLxySquare", "fLxy * fLxy");
 
     // Plot the DeltaZ and lxy
     auto graphDrift = dfDrift.Graph("fDeltaZ", "fLxy");
     graphDrift->SetTitle("Delta Z vs Lxy;#Delta Z [#mus]; Lxy [mm]");
-    graphDrift->GetXaxis()->SetRangeUser(-40,40);
-    graphDrift->GetYaxis()->SetRangeUser(-50,300);
+    graphDrift->GetXaxis()->SetRangeUser(-40, 40);
+    graphDrift->GetYaxis()->SetRangeUser(-50, 300);
 
     // Linearize the graph
     auto graphDriftLinear = dfDrift.Graph("fDeltaZSquare", "fLxySquare");
     graphDriftLinear->SetTitle("Delta Z^2 vs Lxy^2;#Delta Z^2 [#mus^2]; Lxy^2 [mm^2]");
-
 
     auto c1 = new TCanvas("c1", "Delta Z vs Lxy", 1400, 800);
     c1->DivideSquare(2);
@@ -151,14 +150,16 @@ void vDriftfromAlpha()
     // Cuts for good events (no broad region) and for each line
     ActRoot::CutsManager<std::string> cuts;
     // Gas PID
-    cuts.ReadCut("goodEvents", "./cut_DriftVelocity_GoodAlphaEvents.root");
-    cuts.ReadCut("first", "./cut_firstPeak_run17.root");
-    cuts.ReadCut("second", "./cut_secondPeak_run17.root");
-    cuts.ReadCut("third", "./cut_thirdPeak_run17.root");
+    cuts.ReadCut("goodEvents", "./cut_DriftVelocity_GoodAlphaEvents_run62.root");
+    cuts.ReadCut("first", "./cut_firstPeak_run62.root");
+    cuts.ReadCut("second", "./cut_secondPeak_run62.root");
+    cuts.ReadCut("third", "./cut_thirdPeak_run62.root");
+    c1->cd(1);
+    cuts.DrawCut("goodEvents");
 
     auto dfFiltered = dfDrift.Filter([&](double lxy, double deltaZ)
-                                { return cuts.IsInside("goodEvents", deltaZ, lxy); },
-                                {"fLxy", "fDeltaZ"});
+                                     { return cuts.IsInside("goodEvents", deltaZ, lxy); },
+                                     {"fLxy", "fDeltaZ"});
 
     auto graphDriftFiltered = dfFiltered.Graph("fDeltaZ", "fLxy");
     graphDriftFiltered->SetTitle("Delta Z vs Lxy ;#Delta Z [#mus]; Lxy [mm]");
@@ -173,28 +174,28 @@ void vDriftfromAlpha()
 
     // Do graphs for each peak
     auto dfFirst = dfFiltered.Filter([&](double lxy2, double deltaZ2)
-                                { return cuts.IsInside("first", deltaZ2, lxy2); },
-                                {"fLxySquare", "fDeltaZSquare"});
+                                     { return cuts.IsInside("first", deltaZ2, lxy2); },
+                                     {"fLxySquare", "fDeltaZSquare"});
     auto graphDriftLineFirst = dfFirst.Graph("fDeltaZSquare", "fLxySquare");
     graphDriftLineFirst->SetTitle("Delta Z^2 vs Lxy^2 (first peak);#Delta Z^2 [#mus^2];Lxy^2 [mm^2]");
     graphDriftLineFirst->Fit("pol1");
-    auto f1 {graphDriftLineFirst->GetFunction("pol1")};
+    auto f1{graphDriftLineFirst->GetFunction("pol1")};
     f1->SetLineColor(kRed);
     auto dfSecond = dfFiltered.Filter([&](double lxy2, double deltaZ2)
-                                { return cuts.IsInside("second", deltaZ2,lxy2); },
-                                {"fLxySquare", "fDeltaZSquare"});
+                                      { return cuts.IsInside("second", deltaZ2, lxy2); },
+                                      {"fLxySquare", "fDeltaZSquare"});
     auto graphDriftLineSecond = dfSecond.Graph("fDeltaZSquare", "fLxySquare");
     graphDriftLineSecond->SetTitle("Delta Z^2 vs Lxy^2 (second peak);#Delta Z^2 [#mus^2];Lxy^2 [mm^2]");
     graphDriftLineSecond->Fit("pol1");
-    auto f2 {graphDriftLineSecond->GetFunction("pol1")};
+    auto f2{graphDriftLineSecond->GetFunction("pol1")};
     auto dfThird = dfFiltered.Filter([&](double lxy2, double deltaZ2)
-                                { return cuts.IsInside("third", deltaZ2,lxy2); },
-                                {"fLxySquare", "fDeltaZSquare"});
+                                     { return cuts.IsInside("third", deltaZ2, lxy2); },
+                                     {"fLxySquare", "fDeltaZSquare"});
     auto graphDriftLineThird = dfThird.Graph("fDeltaZSquare", "fLxySquare");
     graphDriftLineThird->SetTitle("Delta Z^2 vs Lxy^2 (third peak);#Delta Z^2 [#mus^2];Lxy^2 [mm^2]");
     graphDriftLineThird->Fit("pol1");
-    auto f3 {graphDriftLineThird->GetFunction("pol1")};
-    
+    auto f3{graphDriftLineThird->GetFunction("pol1")};
+
     auto c3 = new TCanvas("c3", "Delta Z vs Lxy lines", 2100, 700);
     c3->DivideSquare(3);
     c3->cd(1);
@@ -215,11 +216,10 @@ void vDriftfromAlpha()
     f3->SetLineColor(kBlue);
     f3->DrawClone("same");
     // Text of the fit parameters
-    auto t1 = new TLatex(50, 30000, TString::Format("First peak: Vdrift = %.2f#pm%.2f ", TMath::Sqrt(-f1->GetParameter(1)),TMath::Sqrt(f1->GetParError(1))));
-    auto t2 = new TLatex(50, 28000, TString::Format("Second peak: Vdrift = %.2f#pm%.2f", TMath::Sqrt(-f2->GetParameter(1)),TMath::Sqrt(f2->GetParError(1))));
-    auto t3 = new TLatex(50, 25000, TString::Format("Third peak: Vdrift = %.2f#pm%.2f", TMath::Sqrt(-f3->GetParameter(1)),TMath::Sqrt(f3->GetParError(1))));
+    auto t1 = new TLatex(50, 30000, TString::Format("First peak: Vdrift = %.2f#pm%.2f ", TMath::Sqrt(-f1->GetParameter(1)), TMath::Sqrt(f1->GetParError(1))));
+    auto t2 = new TLatex(50, 28000, TString::Format("Second peak: Vdrift = %.2f#pm%.2f", TMath::Sqrt(-f2->GetParameter(1)), TMath::Sqrt(f2->GetParError(1))));
+    auto t3 = new TLatex(50, 25000, TString::Format("Third peak: Vdrift = %.2f#pm%.2f", TMath::Sqrt(-f3->GetParameter(1)), TMath::Sqrt(f3->GetParError(1))));
     t1->DrawClone();
     t2->DrawClone();
     t3->DrawClone();
-
 }

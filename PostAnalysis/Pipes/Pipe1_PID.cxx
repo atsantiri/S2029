@@ -87,8 +87,9 @@ void Pipe1_PID(const std::string& beam, const std::string& target, const std::st
             if(lambdaOne(m)) // Gas-E0 PID
             {
                 auto layer {m.fLight.GetLayer(0)};
-                if(hsgas.count(layer))
+                if(hsgas.count(layer)){
                     hsgas[layer]->Fill(m.fLight.fEs.front(), m.fLight.fQave);
+                }
             }
             else if(lambdaTwo(m)) // E0-E1 PID
             {
@@ -178,26 +179,26 @@ void Pipe1_PID(const std::string& beam, const std::string& target, const std::st
     // c0->cd(6);
     // hl1theta.Merge()->DrawClone("colz");
 
-    // auto* c2 {new TCanvas {"c2", "Pipe1 PID canvas 2"}};
-    // c2->DivideSquare(4);
-    // c2->cd(1);
-    // hl1.GetAtSlot(0)->DrawClone("colz");
-    // c2->cd(2);
-    // hl1theta.GetAtSlot(0)->DrawClone("colz");
-    // c2->cd(3);
-    // hl1thetaCorr.Merge()->DrawClone("colz");
-    // // auto* gtheo {ActPhysics::Kinematics(TString::Format("%s(d,p)@82.5", beam.c_str()).Data()).GetTheta3vs4Line()};
+    auto* c2 {new TCanvas {"c2", "Pipe1 PID canvas 2"}};
+    c2->DivideSquare(4);
+    c2->cd(1);
+    hl1.GetAtSlot(0)->DrawClone("colz");
+    c2->cd(2);
+    hl1theta.GetAtSlot(0)->DrawClone("colz");
+    c2->cd(3);
+    hl1thetaCorr.Merge()->DrawClone("colz");
+    // auto* gtheo {ActPhysics::Kinematics(TString::Format("%s(d,p)@82.5", beam.c_str()).Data()).GetTheta3vs4Line()};
     // gtheo->SetLineColor(46);
     // gtheo->Draw("l");
-    // c2->cd(4);
-    // hl1Gated.Merge()->DrawClone("colz");
+    c2->cd(4);
+    hl1Gated.Merge()->DrawClone("colz");
 
 
 
-    auto* c3 {new TCanvas {"c3", "Pipe1 IC and CFA TAC"}};
-    c3->DivideSquare(2);
-    c3->cd(1);
-    hCHIO.Merge()->DrawClone();
-    c3->cd(2);
-    hTACCFA.Merge()->DrawClone("COLZ");
+    // auto* c3 {new TCanvas {"c3", "Pipe1 IC and CFA TAC"}};
+    // c3->DivideSquare(2);
+    // c3->cd(1);
+    // hCHIO.Merge()->DrawClone();
+    // c3->cd(2);
+    // hTACCFA.Merge()->DrawClone("COLZ");
 }
