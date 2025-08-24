@@ -2,7 +2,7 @@
 *.png
 *.root
 
-configs/data.conf
+# configs/data.conf
 compile_flags.txt
 .clang-format
 
