@@ -10,7 +10,7 @@
 #include <atomic>
 #include <stdexcept>
 
-void Pipe0_Beam(const std::string& beam)
+void Pipe0_Beam(const std::string& beam="17F")
 {
     std::string dataconf {};
     dataconf = "./../configs/data.conf";

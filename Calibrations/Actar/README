@@ -1,0 +1,5 @@
+LookUpTable identifies each electronic channel in the GET electronic system: 
+CoBo (0-15), AsAd (0-3 per CoBo), AGET (0-3 per AsAd) and then channel number, 64 + 4 Fix Pattern Noise channels needed for noise substraction
+
+Format:
+CoBo#   AsAd#   AGET#   Ch#     x       y

@@ -17,10 +17,7 @@ void plot_pad_alignment()
     int p {1};
 
     for (int run=12; run<=16; ++run) {
-        ActRoot::DataManager dataman {"../../configs/data.conf", ActRoot::ModeType::EReadTPC};
-        dataman.SetRuns(run,run);
-        auto chain {dataman.GetChain()};
-        ROOT::RDataFrame df {*chain};
+        auto df{ROOT::RDataFrame("GETTree", TString::Format("../../../RootFiles/Cluster/Clusters_Run_00%d.root",run))};
 
         // auto* hq {new TH1D {"hq", "pulser run;pad ID ; Qave", 16384, 0, 16383}};
         auto hq {new TProfile(TString::Format("hq%d", run), TString::Format("Pulser run %d;pad ID;Average Q(ch)",run), 16384, 0, 16383)}; //TProfile computes avrages instead of sum

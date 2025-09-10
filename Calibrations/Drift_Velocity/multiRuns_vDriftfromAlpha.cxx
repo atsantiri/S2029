@@ -25,7 +25,7 @@ double vDriftfromAlpha(int run)
 {
     ROOT::EnableImplicitMT();
     // Get the data run 123
-    auto df{ROOT::RDataFrame("GETTree", TString::Format("../../RootFiles/Cluster/Clusters_Run_%04d.root",run))};
+    auto df{ROOT::RDataFrame("GETTree", TString::Format("../../../RootFiles/Cluster/Clusters_Run_%04d.root",run))};
     auto vdrift {0.};
     // df.Describe().Print();
     std::cout<<"Processing Run "<<run<<std::endl;
@@ -153,10 +153,10 @@ double vDriftfromAlpha(int run)
     // Cuts for good events (no broad region) and for each line
     ActRoot::CutsManager<std::string> cuts;
     // Gas PID
-    cuts.ReadCut("goodEvents", "./cut_DriftVelocity_GoodAlphaEvents.root");
-    cuts.ReadCut("first", "./cut_firstPeak_run17.root");
-    cuts.ReadCut("second", "./cut_secondPeak_run17.root");
-    cuts.ReadCut("third", "./cut_thirdPeak_run17.root");
+    // cuts.ReadCut("goodEvents", "./cut_DriftVelocity_GoodAlphaEvents.root");
+    // cuts.ReadCut("first", "./cut_firstPeak_run17.root");
+    // cuts.ReadCut("second", "./cut_secondPeak_run17.root");
+    // cuts.ReadCut("third", "./cut_thirdPeak_run17.root");
 
     auto dfFiltered = dfDrift.Filter([&](double lxy, double deltaZ)
                                 { return cuts.IsInside("goodEvents", deltaZ, lxy); },

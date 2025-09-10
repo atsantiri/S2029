@@ -133,8 +133,8 @@ void vDriftfromAlpha()
     // Plot the DeltaZ and lxy
     auto graphDrift = dfDrift.Graph("fDeltaZ", "fLxy");
     graphDrift->SetTitle("Delta Z vs Lxy;#Delta Z [#mus]; Lxy [mm]");
-    graphDrift->GetXaxis()->SetRangeUser(-40, 40);
-    graphDrift->GetYaxis()->SetRangeUser(-50, 300);
+    graphDrift->GetXaxis()->SetRangeUser(-20, 10);
+    graphDrift->GetYaxis()->SetRangeUser(-0, 300);
 
     // Linearize the graph
     auto graphDriftLinear = dfDrift.Graph("fDeltaZSquare", "fLxySquare");
@@ -222,4 +222,6 @@ void vDriftfromAlpha()
     t1->DrawClone();
     t2->DrawClone();
     t3->DrawClone();
+
+    
 }
