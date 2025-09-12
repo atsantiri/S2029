@@ -5,6 +5,7 @@
 
 #include "TCanvas.h"
 #include "TLine.h"
+#include "TFile.h"
 
 // I want to get two energy spectra of alpha particles. One extraced from the track lengths, and one from the total
 // collected charge along the tracks. I want to compare the resolution of the two methods. Track length resolution
@@ -57,6 +58,7 @@ void inspectAlignment()
             .Define("lastPY", "lastPoint.Y()")
             .Define("firstPX", "firstPoint.X()")
             .Define("firstPY", "firstPoint.Y()")
+            .Define("dY","lastPY-firstPY")
             .Define("Lxy",
                     [&](ROOT::Math::XYZPointF& lastPoint)
                     {
@@ -111,8 +113,13 @@ void inspectAlignment()
     gdZLxy->GetYaxis()->SetRangeUser(-0, 200);
     gdZLxy->DrawClone("AP");
 
+    auto dzmin {-2.};
+    auto dzmax {2.};
+    auto dymin {-5.};
+    auto dymax {5.};
+
     // Get horizontal tracks so I don't need a Z correction and define a total accumulated charge column
-    auto dfconstZ = dfPoints.Filter([&](double dZ) { return (dZ >= -2 && dZ < 2); }, {"dZ"})
+    auto dfconstZ = dfPoints.Filter([&](double dZ, float dY) { return (dZ >= dzmin && dZ <= dzmax && dY >= dymin && dY <= dymax); }, {"dZ","dY"})
                             .Define("Qtot",
                             [](ActRoot::TPCData& tpc){
                                 auto cl {tpc.fClusters[0]};
@@ -124,12 +131,17 @@ void inspectAlignment()
                             },{"TPCData"});
 
 
-    auto hLxy {dfconstZ.Histo1D({"hLxy", "Alphas for dZ~0 ;Range [mm];Counts", 100, 0, 200}, "Lxy")};
+    auto hLxy {dfconstZ.Histo1D({"hLxy", TString::Format("dZ in (%.1f,%.1f) & dY in (%.1f,%.1f);Range [mm];Counts",dzmin,dzmax,dymin,dymax), 100, 0, 200}, "Lxy")};
     c->cd(3);
     hLxy->DrawClone();
-    auto hQtot {dfconstZ.Histo1D({"hQtot", "Alphas for dZ~0 ;Total Charge [a.u.];Counts", 250, 0, 120000}, "Qtot")};
+    auto hQtot {dfconstZ.Histo1D({"hQtot", TString::Format("dZ in (%.1f,%.1f) & dY in (%.1f,%.1f);Total Charge [a.u.];Counts",dzmin,dzmax,dymin,dymax), 200, 0, 120000}, "Qtot")};
     c->cd(4);
     hQtot->DrawClone();
+
+    // TFile out("my_alignment_histos.root","RECREATE");
+    // hLxy->Write();
+    // hQtot->Write();
+    // out.Close();
 
     c->SaveAs("alphas_chargeResolution_trackLengthResolution.png");
 }
