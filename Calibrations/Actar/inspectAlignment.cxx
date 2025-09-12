@@ -4,8 +4,9 @@
 #include "ROOT/RDataFrame.hxx"
 
 #include "TCanvas.h"
-#include "TLine.h"
+#include "TF1.h"
 #include "TFile.h"
+#include "TLine.h"
 
 // I want to get two energy spectra of alpha particles. One extraced from the track lengths, and one from the total
 // collected charge along the tracks. I want to compare the resolution of the two methods. Track length resolution
@@ -58,7 +59,7 @@ void inspectAlignment()
             .Define("lastPY", "lastPoint.Y()")
             .Define("firstPX", "firstPoint.X()")
             .Define("firstPY", "firstPoint.Y()")
-            .Define("dY","lastPY-firstPY")
+            .Define("dY", "lastPY-firstPY")
             .Define("Lxy",
                     [&](ROOT::Math::XYZPointF& lastPoint)
                     {
@@ -113,35 +114,67 @@ void inspectAlignment()
     gdZLxy->GetYaxis()->SetRangeUser(-0, 200);
     gdZLxy->DrawClone("AP");
 
+
     auto dzmin {-2.};
     auto dzmax {2.};
-    auto dymin {-5.};
-    auto dymax {5.};
+    auto dymin {-7.}; // for about 5 degrees
+    auto dymax {7.};
 
     // Get horizontal tracks so I don't need a Z correction and define a total accumulated charge column
-    auto dfconstZ = dfPoints.Filter([&](double dZ, float dY) { return (dZ >= dzmin && dZ <= dzmax && dY >= dymin && dY <= dymax); }, {"dZ","dY"})
-                            .Define("Qtot",
-                            [](ActRoot::TPCData& tpc){
-                                auto cl {tpc.fClusters[0]};
-                                auto vxs {cl.GetVoxels()};
-                                auto qtot {0.};
-                                for (const auto &vx: vxs)
-                                    qtot += vx.GetCharge();
-                                return qtot;
-                            },{"TPCData"});
+    auto dfconstZ = dfPoints
+                        .Filter([&](double dZ, float dY)
+                                { return (dZ >= dzmin && dZ <= dzmax && dY >= dymin && dY <= dymax); }, {"dZ", "dY"})
+                        .Define("Qtot",
+                                [](ActRoot::TPCData& tpc)
+                                {
+                                    auto cl {tpc.fClusters[0]};
+                                    auto vxs {cl.GetVoxels()};
+                                    auto qtot {0.};
+                                    for(const auto& vx : vxs)
+                                        qtot += vx.GetCharge();
+                                    return qtot;
+                                },
+                                {"TPCData"});
 
 
-    auto hLxy {dfconstZ.Histo1D({"hLxy", TString::Format("dZ in (%.1f,%.1f) & dY in (%.1f,%.1f);Range [mm];Counts",dzmin,dzmax,dymin,dymax), 100, 0, 200}, "Lxy")};
+    auto hLxy {dfconstZ.Histo1D(
+        {"hLxy", TString::Format("dZ in (%.1f,%.1f) & dY in (%.1f,%.1f);Range [mm];Counts", dzmin, dzmax, dymin, dymax),
+         100, 0, 200},
+        "Lxy")};
     c->cd(3);
-    hLxy->DrawClone();
-    auto hQtot {dfconstZ.Histo1D({"hQtot", TString::Format("dZ in (%.1f,%.1f) & dY in (%.1f,%.1f);Total Charge [a.u.];Counts",dzmin,dzmax,dymin,dymax), 200, 0, 120000}, "Qtot")};
-    c->cd(4);
-    hQtot->DrawClone();
 
-    // TFile out("my_alignment_histos.root","RECREATE");
-    // hLxy->Write();
-    // hQtot->Write();
-    // out.Close();
+    TF1* fLxy = new TF1("fLxy", "gaus(0)+gaus(3)+gaus(6)", 120, 180);
+    fLxy->SetParameters(160, 140, 2, 120, 150, 2, 50, 170, 2);
+    hLxy->Fit(fLxy, "R");
+
+    hLxy->DrawClone();
+    // if(fLxy)
+    //     fLxy->Draw("same");
+
+    auto hQtot {dfconstZ.Histo1D({"hQtot",
+                                  TString::Format("dZ in (%.1f,%.1f) & dY in (%.1f,%.1f);Total Charge [a.u.];Counts",
+                                                  dzmin, dzmax, dymin, dymax),
+                                  200, 0, 120000},
+                                 "Qtot")};
+    c->cd(4);
+    TF1* fQ = new TF1("fQ", "gaus(0)+gaus(3)+gaus(6)", 65000, 95000);
+    fQ->SetParameters(70, 72000, 1200, 40, 82000, 1400, 25, 90000, 1400);
+    hQtot->Fit(fQ, "R");
+
+    hQtot->DrawClone();
+    // if(fQ)
+    //     fQ->Draw("same");
 
     c->SaveAs("alphas_chargeResolution_trackLengthResolution.png");
+
+    std::cout << "Range spectrum resolution: " << std::setprecision(2)
+              << 2.355 * fLxy->GetParameter(2) / fLxy->GetParameter(1) * 100 << " %, "
+              << 2.355 * fLxy->GetParameter(5) / fLxy->GetParameter(4) * 100 << " %, and "
+              << 2.355 * fLxy->GetParameter(8) / fLxy->GetParameter(7) * 100 << " %" << std::endl;
+
+
+    std::cout << "Charge spectrum resolution: " << std::setprecision(2)
+              << 2.355 * fQ->GetParameter(2) / fQ->GetParameter(1) * 100 << " %, "
+              << 2.355 * fQ->GetParameter(5) / fQ->GetParameter(4) * 100 << " %, and "
+              << 2.355 * fQ->GetParameter(8) / fQ->GetParameter(7) * 100 << " %" << std::endl;
 }
