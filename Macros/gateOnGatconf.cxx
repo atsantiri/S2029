@@ -9,7 +9,7 @@
 
 void gateOnGatconf()
 {
-    ActRoot::DataManager dataman {"../../configs/data.conf", ActRoot::ModeType::EReadSilMod};
+    ActRoot::DataManager dataman {"../configs/data.conf", ActRoot::ModeType::EReadSilMod};
     auto chain {dataman.GetChain()};
     auto chainMerger {dataman.GetChain(ActRoot::ModeType::EMerge)};
     chain->AddFriend(chainMerger.get());

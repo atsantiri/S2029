@@ -10,7 +10,7 @@
 
 void plotSP()
 {
-    ActRoot::DataManager dataman {"../../configs/data.conf", ActRoot::ModeType::EMerge};
+    ActRoot::DataManager dataman {"../configs/data.conf", ActRoot::ModeType::EMerge};
     auto chain {dataman.GetChain()};
     ROOT::RDataFrame df {*chain};
 

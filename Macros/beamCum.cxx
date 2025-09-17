@@ -11,7 +11,7 @@
 
 void beamCum()
 {
-    ActRoot::DataManager dataman {"../../configs/data.conf", ActRoot::ModeType::EMerge};
+    ActRoot::DataManager dataman {"../configs/data.conf", ActRoot::ModeType::EMerge};
     auto chain {dataman.GetChain()};
     auto chain2 {dataman.GetChain(ActRoot::ModeType::EFilter)};
     auto chain3 {dataman.GetChain(ActRoot::ModeType::EReadSilMod)};

@@ -74,7 +74,7 @@ void f0_cal()
     int isil {}; 
     std::vector<int> adcChannels {};
     for(auto it = hs.begin(); it != hs.end();)
-    {
+    {false
 
         adcChannels.push_back(isil);
         it++;

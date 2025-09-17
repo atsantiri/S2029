@@ -1,4 +1,5 @@
 #include "ActDataManager.h"
+#include "ActSRIM.h"
 #include "ActTPCData.h"
 
 #include "ROOT/RDataFrame.hxx"
@@ -12,7 +13,7 @@
 // collected charge along the tracks. I want to compare the resolution of the two methods. Track length resolution
 // should in pronciple be better than collected charge (Fig.7. Pancin NIMA 2014)
 
-void inspectAlignment()
+void alphasResolution()
 {
     ActRoot::DataManager dataman {"../../configs/data.conf", ActRoot::ModeType::EReadTPC};
     dataman.SetRuns(62, 62);
@@ -22,8 +23,8 @@ void inspectAlignment()
 
     auto df {d.Filter([](ActRoot::TPCData& tpc) { return (tpc.fClusters.size() == 1); }, {"TPCData"})};
 
-    // found during drift velocity calculation
-    float xSource {-29.};
+    // found during drift velocity calculation -- not very accurate and will affect the energy reconstruction later on
+    float xSource {-30.};
     float ySource {39.};
 
     auto dfPoints =
@@ -145,7 +146,7 @@ void inspectAlignment()
 
     TF1* fLxy = new TF1("fLxy", "gaus(0)+gaus(3)+gaus(6)", 120, 180);
     fLxy->SetParameters(160, 140, 2, 120, 150, 2, 50, 170, 2);
-    hLxy->Fit(fLxy, "R");
+    hLxy->Fit(fLxy, "Q");
 
     hLxy->DrawClone();
     // if(fLxy)
@@ -159,13 +160,13 @@ void inspectAlignment()
     c->cd(4);
     TF1* fQ = new TF1("fQ", "gaus(0)+gaus(3)+gaus(6)", 65000, 95000);
     fQ->SetParameters(70, 72000, 1200, 40, 82000, 1400, 25, 90000, 1400);
-    hQtot->Fit(fQ, "R");
+    hQtot->Fit(fQ, "Q");
 
     hQtot->DrawClone();
     // if(fQ)
     //     fQ->Draw("same");
 
-    c->SaveAs("alphas_chargeResolution_trackLengthResolution.png");
+    c->SaveAs("./Outputs/alphas_chargeResolution_trackLengthResolution.png");
 
     std::cout << "Range spectrum resolution: " << std::setprecision(2)
               << 2.355 * fLxy->GetParameter(2) / fLxy->GetParameter(1) * 100 << " %, "
@@ -177,4 +178,30 @@ void inspectAlignment()
               << 2.355 * fQ->GetParameter(2) / fQ->GetParameter(1) * 100 << " %, "
               << 2.355 * fQ->GetParameter(5) / fQ->GetParameter(4) * 100 << " %, and "
               << 2.355 * fQ->GetParameter(8) / fQ->GetParameter(7) * 100 << " %" << std::endl;
+
+    // Express track length as energy with SRIM
+    auto* srim {new ActPhysics::SRIM()};
+    srim->ReadTable("alphasInGas", "../../Simulation/SRIM/4He_H2-iC4H10_95-5_755mbar.txt");
+
+    auto dfEne = dfconstZ.Define("Ene",
+                                 [&](double Lxy)
+                                 {
+                                     double eneMeV {srim->EvalInitialEnergy("alphasInGas", 0, Lxy)};
+                                     return eneMeV * 1000.;
+                                 },
+                                 {"Lxy"});
+    auto hEne {dfEne.Histo1D({"hEne", "Reconstructed alpha energy; Energy [keV];Counts", 200, 3000, 7000}, "Ene")};
+    auto c1 = new TCanvas("c1", "c1");
+    c1->cd();
+    TF1* fEne = new TF1("fEne", "gaus(0)+gaus(3)+gaus(6)", 4800, 6000);
+    fEne->SetParameters(100, 5100, 10, 60, 5400, 10, 50, 5700, 10);
+    hEne->Fit(fEne, "Q");
+    hEne->DrawClone();
+    std::cout << "Alpha Energy: " << std::fixed << std::setprecision(0) << fEne->GetParameter(1) << " ("
+              << std::setprecision(2) << 2.355 * fEne->GetParameter(2) / fEne->GetParameter(1) * 100 << " %), "
+              << std::setprecision(0) << fEne->GetParameter(4) << " (" << std::setprecision(2)
+              << 2.355 * fEne->GetParameter(5) / fEne->GetParameter(4) * 100 << " %), and " << std::setprecision(0)
+              << fEne->GetParameter(7) << " (" << std::setprecision(2)
+              << 2.355 * fEne->GetParameter(8) / fEne->GetParameter(7) * 100 << " %)" << std::endl;
+
 }

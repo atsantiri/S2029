@@ -2,6 +2,7 @@
 #include "ActMergerData.h"
 #include "ActTPCData.h"
 #include "ActTypes.h"
+#include "ActModularData.h"
 
 #include "ROOT/RDF/RInterface.hxx"
 #include "ROOT/RDataFrame.hxx"
@@ -14,19 +15,22 @@
 void p2p()
 {
     // the three body vertices exist only in the filter data. So we start from there.
-    ActRoot::DataManager dataman {"./../configs/data.conf", ActRoot::ModeType::EFilter};
+    ActRoot::DataManager dataman {"../configs/data.conf", ActRoot::ModeType::EFilter};
     auto chain {dataman.GetChain()};
     // The run numbers and event entry exist in the merger data so we want that too.
     auto chain2 {dataman.GetChain(ActRoot::ModeType::EMerge)};
     // We make the two chains friends so we can access the run and entry numbers from the filter data.
     chain->AddFriend(chain2.get());
+    auto chain3 {dataman.GetChain(ActRoot::ModeType::EReadSilMod)};
+    chain->AddFriend(chain3.get());
+
 
     // ROOT::EnableImplicitMT();
     ROOT::RDataFrame df {*chain};
 
     // Gate on candidates for (p,2p)
-    auto gated {df.Filter([](ActRoot::TPCData& tpc) { return (tpc.fClusters.size() == 4) && (tpc.fRPs.size() == 1); }, // we want the cluster 
-                          {"TPCData"})};
+    auto gated {df.Filter([](ActRoot::TPCData& tpc, ActRoot::ModularData& m) { return (tpc.fClusters.size() == 4) && (tpc.fRPs.size() == 1) && (m.Get("GATCONF")==8); }, // we want the cluster & maybe from ModularData L1Ok??
+                          {"TPCData", "ModularData"})};
     // And also gate on X values
     auto gateRPx {gated.Filter(
         [](ActRoot::TPCData& tpc)
