@@ -15,11 +15,7 @@
 
 void alphasResolution()
 {
-    ActRoot::DataManager dataman {"../../configs/data.conf", ActRoot::ModeType::EReadTPC};
-    dataman.SetRuns(62, 62);
-    auto chain {dataman.GetChain()};
-
-    ROOT::RDataFrame d {*chain};
+    auto d{ROOT::RDataFrame("GETTree", "../../RootFiles/Cluster/Clusters_Run_0062.root")};
 
     auto df {d.Filter([](ActRoot::TPCData& tpc) { return (tpc.fClusters.size() == 1); }, {"TPCData"})};
 
@@ -190,7 +186,7 @@ void alphasResolution()
                                      return eneMeV * 1000.;
                                  },
                                  {"Lxy"});
-    auto hEne {dfEne.Histo1D({"hEne", "Reconstructed alpha energy; Energy [keV];Counts", 200, 3000, 7000}, "Ene")};
+    auto hEne {dfEne.Histo1D({"hEne", "Reconstructed truealpha energy; Energy [keV];Counts", 200, 3000, 7000}, "Ene")};
     auto c1 = new TCanvas("c1", "c1");
     c1->cd();
     TF1* fEne = new TF1("fEne", "gaus(0)+gaus(3)+gaus(6)", 4800, 6000);

@@ -1,8 +1,8 @@
 #include "ActDataManager.h"
 #include "ActMergerData.h"
+#include "ActModularData.h"
 #include "ActTPCData.h"
 #include "ActTypes.h"
-#include "ActModularData.h"
 
 #include "ROOT/RDF/RInterface.hxx"
 #include "ROOT/RDataFrame.hxx"
@@ -29,14 +29,33 @@ void p2p()
     ROOT::RDataFrame df {*chain};
 
     // Gate on candidates for (p,2p)
-    auto gated {df.Filter([](ActRoot::TPCData& tpc, ActRoot::ModularData& m) { return (tpc.fClusters.size() == 4) && (tpc.fRPs.size() == 1) && (m.Get("GATCONF")==8); }, // we want the cluster & maybe from ModularData L1Ok??
-                          {"TPCData", "ModularData"})};
+    auto gated {df.Filter(
+                      [](ActRoot::TPCData& tpc, ActRoot::ModularData& m)
+                      {
+                          return (tpc.fClusters.size() == 4) && (tpc.fRPs.size() == 1) && (m.Get("GATCONF") == 8);
+                      }, // we want the cluster of 4 (1beam + 3products) with one reaction point && from ModularData L1Ok trigger.
+                      {"TPCData", "ModularData"})
+                    .Define("Line",
+                            [](ActRoot::TPCData& tpc)
+                            {
+                                auto cl {tpc.fClusters[0]};
+                                auto l {cl.GetRefToLine()};
+                                return l;
+                            },
+                            {"TPCData"})
+                    .Filter(
+                        [&](ActRoot::Line& l)
+                        {
+                            auto p {l.MoveToX(0)};
+                            return (p.Z() >= 30) && (p.Z() <= 55);
+                        }, // when looking at beam emittance I saw our L1Ok blob was in this Z range
+                        {"Line"})};
     // And also gate on X values
     auto gateRPx {gated.Filter(
         [](ActRoot::TPCData& tpc)
         {
             auto& rp {tpc.fRPs[0]};
-            double min {40};// modify based on resonance location
+            double min {40}; // modify based on resonance location
             double max {90};
             return (min <= rp.X()) && (rp.X() <= max);
         },
@@ -47,7 +66,7 @@ void p2p()
                    .Histo1D({"hRPx", "RP x histo;RP.X [mm or pads, check];Counts", 300, 0, 256}, "RPx")};
 
     // Write to file: run and entry numbers that passed the cuts for 3-body vertices within min and max RPx
-    std::ofstream streamer {"Outputs/p2p_list.txt"};
+    std::ofstream streamer {"Outputs/p2p_list_Zrange.txt"};
     gateRPx.Foreach([&](ActRoot::MergerData& mer) { mer.Stream(streamer); }, {"MergerData"});
     streamer.close();
 

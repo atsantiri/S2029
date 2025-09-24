@@ -24,7 +24,7 @@ void beamCum()
                           { return (mod.Get("GATCONF") == 64) && (tpc.fClusters.size() == 1); },
                           {"TPCData", "ModularData"})};
 
-    auto* h2d {new TH2D {"hPad", "Pad plane;X;Y", 128, 0, 128, 128, 0, 128}};
+    auto* h2d {new TH2D {"hPad", "Pad plane;X [pad];Y [pad]", 128, 0, 128, 128, 0, 128}};
     gated.Foreach(
         [&](ActRoot::TPCData& tpc)
         {
