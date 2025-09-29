@@ -109,7 +109,7 @@ void Pipe1_PID(const std::string& beam, const std::string& target, const std::st
     // cuts.ReadCut("l0", TString::Format("./Cuts/pid_%s_l0_%s.root", light.c_str(), beam.c_str()).Data());
     // cuts.ReadCut("r0", TString::Format("./Cuts/pid_%s_r0_%s.root", light.c_str(), beam.c_str()).Data());
     // cuts.ReadCut("f0", TString::Format("./Cuts/pid_%s_f0_%s.root", light.c_str(), beam.c_str()).Data());
-    // cuts.ReadCut("l1", TString::Format("./Cuts/pid_%s_l1_%s.root", light.c_str(), beam.c_str()).Data());
+    cuts.ReadCut("l1", TString::Format("./Cuts/pid_%s_l1_%s.root", light.c_str(), beam.c_str()).Data());
     
     
     // Two sils PID
@@ -174,15 +174,16 @@ void Pipe1_PID(const std::string& beam, const std::string& target, const std::st
         p++;
     }
     c0->cd(5);
-    // hl1.Merge()->DrawClone("colz");
-    // cuts.DrawCut("l1");
-    // c0->cd(6);
-    // hl1theta.Merge()->DrawClone("colz");
+    hl1.Merge()->DrawClone("colz");
+    cuts.DrawCut("l1");
+    c0->cd(6);
+    hl1theta.Merge()->DrawClone("colz");
 
     auto* c2 {new TCanvas {"c2", "Pipe1 PID canvas 2"}};
     c2->DivideSquare(4);
     c2->cd(1);
     hl1.GetAtSlot(0)->DrawClone("colz");
+    // cuts.DrawCut("l1");
     c2->cd(2);
     hl1theta.GetAtSlot(0)->DrawClone("colz");
     c2->cd(3);

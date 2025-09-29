@@ -1,3 +1,9 @@
+//////////////////////////////////////////////////////////////////////////////////////////
+// Script to investigate dE/dx from 17O and 17F beams from the two runs where the pads  //
+// were polarized near the entrance of ACTAR                                            //
+//////////////////////////////////////////////////////////////////////////////////////////
+
+
 #include "ActDataManager.h"
 #include "ActMergerData.h"
 #include "ActModularData.h"
@@ -16,7 +22,6 @@
 
 #include <fstream>
 
-
 TH1D* make_dE(int run, TCanvas* c, TLegend* l, int pad)
 {
     ActRoot::DataManager dataman {"../configs/data.conf", ActRoot::ModeType::EMerge};
@@ -33,7 +38,8 @@ TH1D* make_dE(int run, TCanvas* c, TLegend* l, int pad)
     auto gated {df.Filter(
                       [](ActRoot::TPCData& tpc, ActRoot::ModularData& mod, ActRoot::MergerData& mer)
                       {
-                          return (mod.Get("GATCONF") == 64) && (tpc.fClusters.size() == 1) && (mer.fEntry > 500) && (mer.fEntry < 1354);
+                          return (mod.Get("GATCONF") == 64) && (tpc.fClusters.size() == 1) && (mer.fEntry > 500) &&
+                                 (mer.fEntry < 1354);
                       },
                       {"TPCData", "ModularData", "MergerData"})
                     .Define("GATCONF", [](ActRoot::ModularData& mod)

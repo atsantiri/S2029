@@ -87,12 +87,12 @@ void Simulation_S2029(const std::string& beam = "17F", double T1 = 5.5, double E
 
 
     // Set parameters to include
-    bool stragglingInIC {true};   // If true beam will be propagated through IC
+    bool stragglingInIC {false};   // If true beam will be propagated through IC
     double pressureIC {70}; // Pressure in mbar    
     bool stragglingInCFA {true};  // If true beam will be propagated through CFA
     double pressureCFA {6}; // Pressure in mbar    
-    double pressureACTAR {600}; // Pressure in mbar    
-    bool trackContamination {true}; // If true the 17O contaminant will be propagated along with the 17F primary beam
+    double pressureACTAR {760}; // Pressure in mbar    
+    bool trackContamination {false}; // If true the 17O contaminant will be propagated along with the 17F primary beam
 
     // Initialize detectors
     // TPC
@@ -139,10 +139,10 @@ void Simulation_S2029(const std::string& beam = "17F", double T1 = 5.5, double E
         {"beamInCF4", TString::Format("./SRIM/%s_CF4_%.0fmbar.txt", beam.c_str(), pressureIC)},
         {"beamIniC4H10", TString::Format("./SRIM/%s_iC4H10_%.0fmbar.txt", beam.c_str(), pressureCFA)},
         {"beamInACTARgas", TString::Format("./SRIM/%s_H2-iC4H10_95-5_%.0fmbar.txt", beam.c_str(), pressureACTAR)},
-        {"ContaminantInMylar", TString::Format("./SRIM/%s_mylar.txt", p1c.GetName().c_str())},
-        {"ContaminantInCF4", TString::Format("./SRIM/%s_CF4_%.0fmbar.txt", p1c.GetName().c_str(), pressureIC)},
-        {"ContaminantIniC4H10", TString::Format("./SRIM/%s_iC4H10_%.0fmbar.txt", p1c.GetName().c_str(), pressureCFA)},
-        {"ContaminantInACTARgas", TString::Format("./SRIM/%s_H2-iC4H10_95-5_%.0fmbar.txt", p1c.GetName().c_str(), pressureACTAR)}
+        // {"ContaminantInMylar", TString::Format("./SRIM/%s_mylar.txt", p1c.GetName().c_str())},
+        // {"ContaminantInCF4", TString::Format("./SRIM/%s_CF4_%.0fmbar.txt", p1c.GetName().c_str(), pressureIC)},
+        // {"ContaminantIniC4H10", TString::Format("./SRIM/%s_iC4H10_%.0fmbar.txt", p1c.GetName().c_str(), pressureCFA)},
+        // {"ContaminantInACTARgas", TString::Format("./SRIM/%s_H2-iC4H10_95-5_%.0fmbar.txt", p1c.GetName().c_str(), pressureACTAR)}
     };
 
     for (const auto& [label, path] : tables) {
@@ -266,7 +266,7 @@ void Simulation_S2029(const std::string& beam = "17F", double T1 = 5.5, double E
         for (int i = 0; i < nsteps; i++) {
             double x = (i+1) / static_cast<double>(nsteps) * 256; // distance travelled in active area in mm
             auto currentT {srim->Slow("beamInACTARgas", T1ActiveAreaEntrance, x)};
-            auto Ecm = currentT/p1.GetAMU()*(p1.GetAMU()*p2.GetAMU())/(p1.GetAMU() + p2.GetAMU());
+            auto Ecm = currentT * p2.GetAMU()/(p1.GetAMU() + p2.GetAMU());
             hEcm_dist->Fill(x, Ecm);
             if (Ecm<2.24 && Ecm>2.22){
                 if (x<xmin){xmin=x;}

@@ -55,15 +55,15 @@ void p2p()
         [](ActRoot::TPCData& tpc)
         {
             auto& rp {tpc.fRPs[0]};
-            double min {40}; // modify based on resonance location
-            double max {90};
+            double min {50}; // modify based on resonance location
+            double max {70};
             return (min <= rp.X()) && (rp.X() <= max);
         },
         {"TPCData"})};
 
     // Plot histogram of RPx for event with 3 vertices. Is there some structure here we could use??
     auto hRPx {gated.Define("RPx", [](ActRoot::TPCData& tpc) { return tpc.fRPs[0].X(); }, {"TPCData"})
-                   .Histo1D({"hRPx", "RP x histo;RP.X [mm or pads, check];Counts", 300, 0, 256}, "RPx")};
+                   .Histo1D({"hRPx", "RP x histo;RP.X [pads, check];Counts", 128, 0, 128}, "RPx")};
 
     // Write to file: run and entry numbers that passed the cuts for 3-body vertices within min and max RPx
     std::ofstream streamer {"Outputs/p2p_list_Zrange.txt"};

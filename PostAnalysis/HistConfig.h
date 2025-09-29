@@ -9,7 +9,7 @@ namespace HistConfig
 {
 using namespace ROOT::RDF;
 
-const TH1DModel Ex {"hEx", TString::Format("Excitation energy;E_{x} [MeV];Counts / %.f keV", (35. - (-10.)) / 300 * 1e3), 200, -10, 35};
+const TH1DModel Ex {"hEx", TString::Format("Excitation energy;E_{x} [MeV];Counts / %.f keV", (35. - (-10.)) / 300 * 1e3), 200, -10, 20};
 const TH1DModel dE {"hdE", "Energy Loss;E_{x} [MeV/u];Counts", 200,0,5.5};
 const TH2DModel Ecm_dist {"hEcm_dist","Energy along active area;Distance [mm];E_{CM} [MeV/u]",200,0,256,200,0,4.0};
 

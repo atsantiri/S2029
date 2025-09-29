@@ -64,7 +64,7 @@ void Pipe2_Ex(const std::string& beam, const std::string& target, const std::str
     ActPhysics::Particle pl {light};
 
     // Initial energy of beam at pad plane entrance
-    double EBeamIni {3.95}; // AMeV
+    double EBeamIni {3.84}; // AMeV
 
     // // Filter on heavy particle hit in the telescope
     auto def {dfVertex};
@@ -81,16 +81,18 @@ void Pipe2_Ex(const std::string& beam, const std::string& target, const std::str
                      {"MergerData"});
 
     // Find excitation energy of compound nucleus
-    double p_thresh {3.923};
-    def = def.Define("ECN",
-                    [&](double EBeam)
-                    {
-                        auto lab_to_com {pb.GetAMU() / (pb.GetAMU()+pl.GetAMU())};
-                        return (EBeam/pb.GetAMU() * lab_to_com + p_thresh);   
-                    },
-                    {"EBeam"});
+    double p_thresh {0.};
+    // def = def.Define("ECN",
+    //                 [&](double EBeam))
+        srimName = "3He";
+    //                 {
+    //                     auto lab_to_com {pb.GetAMU() / (pb.GetAMU()+pl.GetAMU())};
+    //                     return (EBeam * lab_to_com + p_thresh);   
+    //                 },
+    //                 {"EBeam"});
 
     ActPhysics::Kinematics kin {pb, pt, pl, EBeamIni * pb.GetAMU()};
+    kin.Print();
     // Vector of kinematics as one object is needed per
     // processing slot (since we are changing EBeam in each entry)
     std::vector<ActPhysics::Kinematics> vkins {def.GetNSlots()};
@@ -147,8 +149,8 @@ void Pipe2_Ex(const std::string& beam, const std::string& target, const std::str
     auto hExRP {def.Histo2D(HistConfig::ExRPx, "fRP.fCoordinates.fX", "Ex")};
     auto hExSPz {def.Histo2D(HistConfig::ExZ, "fLight.fSP.fCoordinates.fZ", "Ex")};
 
-    auto hEcnThetaCM {def.Histo2D(HistConfig::EcnThetaCM,"ECN","ThetaCM")};
-    auto hEcn {def.Histo1D(HistConfig::Ecn,"ECN")};
+    // auto hEcnThetaCM {def.Histo2D(HistConfig::EcnThetaCM,"ECN","ThetaCM")};
+    // auto hEcn {def.Histo1D(HistConfig::Ecn,"ECN")};
 
     // Beam energy against RP.X
     auto hEBeamRPx {def.Histo2D({"hEBeamRPx", "EBeam assuming elastic;RP.X [mm];EBeam", 300, 0, 260, 300, 0, 300},
@@ -202,10 +204,10 @@ void Pipe2_Ex(const std::string& beam, const std::string& target, const std::str
     hThetaCMLab->DrawClone("colz");
     c23->cd(2);
     hEBeamRPx->DrawClone("colz");
-    c23->cd(3);
-    hEcnThetaCM->DrawClone("colz");
-    c23->cd(4);
-    hEcn->DrawClone();
+    // c23->cd(3);
+    // hEcnThetaCM->DrawClone("colz");
+    // c23->cd(4);
+    // hEcn->DrawClone();
 
 }
 #endif
