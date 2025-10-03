@@ -52,4 +52,10 @@ void Runner(TString what = "")
     //     gROOT->LoadMacro(path + func + ext);
     //     gROOT->ProcessLine(func + args);
     // }
+    if(what.Contains("L"))
+    {
+        func = "L1_Pipe1_PID";
+        gROOT->LoadMacro(path + func + ext);
+        gROOT->ProcessLine(func + "()");
+    }
 }

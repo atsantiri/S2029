@@ -11,6 +11,7 @@
 #include "TCanvas.h"
 #include "TH2.h"
 #include "TString.h"
+#include "TLegend.h"
 
 #include <map>
 #include <string>
@@ -59,9 +60,6 @@ void Pipe1_PID(const std::string& beam, const std::string& target, const std::st
     hstwo.emplace("f0-f1", *hTwoSils);
     hstwo["f0-f1"]->SetTitle("f0-f1");
     ROOT::TThreadedObject<TH2D> hl1 {"hl1", "L1 PID;Raw TL [au];Q_{total} [au]", 200, 0, 120, 2000, 0, 3e5};
-    ROOT::TThreadedObject<TH1D> hCHIO {"hCHIO", "CHIO;Channel [adc];Counts [au]", 1000, 0, 16384};
-    ROOT::TThreadedObject<TH2D> hTACCFA {"hTACCFA", "CFA TAC; CHIO Channel [adc]; TAC [adc]", 1000,0,16384, 1000, 0, 16384};
-
     ROOT::TThreadedObject<TH2D> hl1Gated {"hl1", "L1 PID > 100#circ;Raw TL [au];Q_{total} [au]", 200, 0, 120, 2000, 0,
                                           3e5};
     ROOT::TThreadedObject<TH2D> hl1theta {
@@ -95,22 +93,18 @@ void Pipe1_PID(const std::string& beam, const std::string& target, const std::st
             {
                 hstwo["f0-f1"]->Fill(m.fLight.fEs[0], m.fLight.fEs[1]);
             }
-
-            hCHIO->Fill(mod.Get("CHIO"));
-            hTACCFA->Fill(mod.fLeaves["CHIO"],mod.fLeaves["TAC_CFA_HF"]);
-            
-            
         },
         {"MergerData", "ModularData"});
 
     // If cuts are present, apply them
     ActRoot::CutsManager<std::string> cuts;
+
     // Gas PID
     // cuts.ReadCut("l0", TString::Format("./Cuts/pid_%s_l0_%s.root", light.c_str(), beam.c_str()).Data());
     // cuts.ReadCut("r0", TString::Format("./Cuts/pid_%s_r0_%s.root", light.c_str(), beam.c_str()).Data());
     // cuts.ReadCut("f0", TString::Format("./Cuts/pid_%s_f0_%s.root", light.c_str(), beam.c_str()).Data());
-    cuts.ReadCut("l1", TString::Format("./Cuts/pid_%s_l1_%s.root", light.c_str(), beam.c_str()).Data());
-    
+    // cuts.ReadCut("l1", TString::Format("./Cuts/pid_%s_l1_%s.root", light.c_str(), beam.c_str()).Data());
+    // cuts.ReadCut("l1", TString::Format("./Cuts/grass.root").Data());
     
     // Two sils PID
     // cuts.ReadCut("f0-f1", TString::Format("./Cuts/pid_%s_f0_f1_%s.root", light.c_str(), beam.c_str()).Data());
@@ -150,14 +144,15 @@ void Pipe1_PID(const std::string& beam, const std::string& target, const std::st
                     return false;
             },
             {"MergerData", "ModularData"})};
-        auto name {TString::Format("./Outputs/tree_pid_%s_%s_%s.root", beam.c_str(), target.c_str(), light.c_str())};
+        auto name {TString::Format("./Outputs/grass.root")};
+        // auto name {TString::Format("./Outputs/tree_pid_%s_%s_%s.root", beam.c_str(), target.c_str(), light.c_str())};
         std::cout << "Saving PID_Tree in file : " << name << '\n';
         gated.Snapshot("PID_Tree", name.Data());
     }
 
     // Draw
-    auto* c0 {new TCanvas {"c0", "Pipe 1 PID canvas 0"}};
-    c0->DivideSquare(6);
+    auto* c0 {new TCanvas {"c0", "Pipe 1 PID Si"}};
+    c0->DivideSquare(4);
     int p {1};
     c0->cd(1);
     for(auto& [layer, h] : hsgas)
@@ -173,33 +168,26 @@ void Pipe1_PID(const std::string& beam, const std::string& target, const std::st
         h.Merge()->DrawClone("colz");
         p++;
     }
-    c0->cd(5);
-    hl1.Merge()->DrawClone("colz");
-    cuts.DrawCut("l1");
-    c0->cd(6);
-    hl1theta.Merge()->DrawClone("colz");
 
-    auto* c2 {new TCanvas {"c2", "Pipe1 PID canvas 2"}};
+    auto* c2 {new TCanvas {"c2", "Pipe1 PID L1"}};
     c2->DivideSquare(4);
     c2->cd(1);
-    hl1.GetAtSlot(0)->DrawClone("colz");
-    // cuts.DrawCut("l1");
+    hl1.Merge()->DrawClone("colz");
+    cuts.DrawCut("l1");
     c2->cd(2);
-    hl1theta.GetAtSlot(0)->DrawClone("colz");
+    hl1theta.Merge()->DrawClone("colz");
     c2->cd(3);
     hl1thetaCorr.Merge()->DrawClone("colz");
-    // auto* gtheo {ActPhysics::Kinematics(TString::Format("%s(d,p)@82.5", beam.c_str()).Data()).GetTheta3vs4Line()};
-    // gtheo->SetLineColor(46);
-    // gtheo->Draw("l");
+    auto* gtheo {ActPhysics::Kinematics(TString::Format("%s(p,p)@65.2", beam.c_str()).Data()).GetTheta3vs4Line()};
+    gtheo->SetLineColor(46);
+    gtheo->Draw("l");
+    auto* gtheo2 {ActPhysics::Kinematics(TString::Format("%s(p,4He)@65.2", beam.c_str()).Data()).GetTheta3vs4Line()};
+    gtheo2->SetLineColor(3);
+    gtheo2->Draw("l");
+    auto l = new TLegend(0.6, 0.7, 0.9, 0.9);
+    l->AddEntry(gtheo, gtheo->GetTitle());
+    l->AddEntry(gtheo2, gtheo2->GetTitle());
+    l->Draw();
+
     c2->cd(4);
-    hl1Gated.Merge()->DrawClone("colz");
-
-
-
-    // auto* c3 {new TCanvas {"c3", "Pipe1 IC and CFA TAC"}};
-    // c3->DivideSquare(2);
-    // c3->cd(1);
-    // hCHIO.Merge()->DrawClone();
-    // c3->cd(2);
-    // hTACCFA.Merge()->DrawClone("COLZ");
 }
