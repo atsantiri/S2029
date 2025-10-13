@@ -23,7 +23,7 @@ void ActAlgorithm::UserAction::UserAction::ReadConfiguration(std::shared_ptr<Act
     if(block->CheckTokenExists("CylinderR"))
         fCylinderR = block->GetDouble("CylinderR");
 }
-
+// There were in the 17O data tracks that were broken near the end. This will pick up small clusters that belong to the beam and merge them together with the rest of the beam.
 void ActAlgorithm::UserAction::Run()
 {
     auto& clusters {fTPCData->fClusters};

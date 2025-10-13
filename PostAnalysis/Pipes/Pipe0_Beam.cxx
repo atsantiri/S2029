@@ -33,7 +33,7 @@ void Pipe0_Beam(const std::string& beam="17F")
     def.Foreach(
         [&](const int& gatconf)
         {
-            if(gatconf == 64)
+            if(gatconf == 8)
                 cfa++;
         },
         {"GATCONF"});
@@ -44,6 +44,6 @@ void Pipe0_Beam(const std::string& beam="17F")
 
     // Print report
     std::cout << "===== GATCONF report =====" << '\n';
-    std::cout << "-> CFA/div = " << cfa << '\n';
+    std::cout << "-> CFA/div = L1Ok " << cfa << '\n';
     std::cout << "==========================" << '\n';
 }

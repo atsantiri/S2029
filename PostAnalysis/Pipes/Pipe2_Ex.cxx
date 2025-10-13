@@ -84,37 +84,48 @@ void Pipe2_Ex(const std::string& beam, const std::string& target, const std::str
     double p_thresh {0.};
     // def = def.Define("ECN",
     //                 [&](double EBeam))
-        srimName = "3He";
+    // srimName = "3He";
     //                 {
     //                     auto lab_to_com {pb.GetAMU() / (pb.GetAMU()+pl.GetAMU())};
-    //                     return (EBeam * lab_to_com + p_thresh);   
+    //                     return (EBeam * lab_to_com + p_thresh);
     //                 },
     //                 {"EBeam"});
 
     ActPhysics::Kinematics kin {pb, pt, pl, EBeamIni * pb.GetAMU()};
+    auto beamThreshold {kin.GetT1Thresh()};
     kin.Print();
     // Vector of kinematics as one object is needed per
     // processing slot (since we are changing EBeam in each entry)
     std::vector<ActPhysics::Kinematics> vkins {def.GetNSlots()};
     for(auto& k : vkins)
         k = kin;
-    def =
-        def.DefineSlot("Ex",
-                       [&](unsigned int slot, const ActRoot::MergerData& d, double EVertex, double EBeam)
-                       {
-                           vkins[slot].SetBeamEnergy(EBeam);
-                           return vkins[slot].ReconstructExcitationEnergy(EVertex, (d.fThetaLight) * TMath::DegToRad());
-                       },
-                       {"MergerData", "EVertex", "EBeam"});
-    def =
-        def.DefineSlot("ThetaCM",
-                       [&](unsigned int slot, const ActRoot::MergerData& d, double EVertex, double EBeam)
-                       {
-                           vkins[slot].SetBeamEnergy(EBeam);
-                           return vkins[slot].ReconstructTheta3CMFromLab(EVertex, (d.fThetaLight) * TMath::DegToRad()) *
-                                  TMath::RadToDeg();
-                       },
-                       {"MergerData", "EVertex", "EBeam"});
+    def = def.DefineSlot("Ex",
+                         [&](unsigned int slot, const ActRoot::MergerData& d, double EVertex, double EBeam)
+                         {
+                             if(EBeam < beamThreshold)
+                                 return -1.;
+                             else
+                             {
+                                 vkins[slot].SetBeamEnergy(EBeam);
+                                 return vkins[slot].ReconstructExcitationEnergy(EVertex,
+                                                                                (d.fThetaLight) * TMath::DegToRad());
+                             }
+                         },
+                         {"MergerData", "EVertex", "EBeam"});
+    def = def.DefineSlot("ThetaCM",
+                         [&](unsigned int slot, const ActRoot::MergerData& d, double EVertex, double EBeam)
+                         {
+                             if(EBeam < beamThreshold)
+                                 return -1.;
+                             else
+                             {
+                                 vkins[slot].SetBeamEnergy(EBeam);
+                                 return vkins[slot].ReconstructTheta3CMFromLab(EVertex,
+                                                                               (d.fThetaLight) * TMath::DegToRad()) *
+                                        TMath::RadToDeg();
+                             }
+                         },
+                         {"MergerData", "EVertex", "EBeam"});
     def = def.DefineSlot(
         "RecEBeam", [&](unsigned int slot, const ActRoot::MergerData& d, double EVertex)
         { return vkins[slot].ReconstructBeamEnergyFromLabKinematics(EVertex, d.fThetaLight * TMath::DegToRad()); },
@@ -208,6 +219,5 @@ void Pipe2_Ex(const std::string& beam, const std::string& target, const std::str
     // hEcnThetaCM->DrawClone("colz");
     // c23->cd(4);
     // hEcn->DrawClone();
-
 }
 #endif
