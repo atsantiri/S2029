@@ -23,7 +23,7 @@
 #include <string>
 #include <vector>
 
-const std::string layer {"f0"};
+const std::string layer {"r0"};
 
 std::vector<TH1D*> ReadData(const std::string& file, const std::string& dir, const std::string& label)
 {
@@ -71,7 +71,7 @@ void r0_cal()
     std::string which {"r0"};
     std::string label {"R0"};
     // Read data
-    auto hs {ReadData("./Inputs/Si_calib_histos_run001.root", "R0", label)};
+    auto hs {ReadData("./Inputs/Si_calib_histos_run0066.root", "R0", label)};
     // Pick only necessary
     int isil {};
     std::vector<int> adcChannels {};
@@ -113,7 +113,7 @@ void r0_cal()
     auto* gr {new TGraphErrors};
     gr->SetNameTitle("g", "Resolution;;#sigma ^{241}Am [keV]");
     // Save
-    std::ofstream streamer {"./Outputs/s2029_" + which + ".dat"};
+    std::ofstream streamer {"./Outputs/s2029_" + which + "_run66.dat"};
     streamer << std::fixed << std::setprecision(8);
     std::vector<std::shared_ptr<TH1D>> hfs;
     for(int s = 0; s < hsrebin.size(); s++)

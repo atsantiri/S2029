@@ -6,7 +6,7 @@
 void extractHistos(){
 
     auto* chain = new TChain("VXITree");
-    chain->Add("../../RootFiles/Data/Data_Run_0001.root");
+    chain->Add("../../RootFiles/Data/Data_Run_0066.root");
     ROOT::RDataFrame df {*chain};
 
     std::map<std::string, std::vector<TH1D*>> hs;
@@ -41,12 +41,13 @@ void extractHistos(){
         c->DivideSquare(vec.size());
         for(int i =0;i <vec.size(); i++){
             c->cd(i + 1);
+            // gPad->SetLogy();
             vec[i]->Draw();
         }
     }
 
     //Write histograms to file
-    auto fout {std::make_shared<TFile>("./Inputs/Si_calib_histos_run001.root", "recreate")};
+    auto fout {std::make_shared<TFile>("./Inputs/Si_calib_histos_run0066.root", "recreate")};
     // F0
     fout->mkdir("Raw/F0");
     fout->cd("Raw/F0");

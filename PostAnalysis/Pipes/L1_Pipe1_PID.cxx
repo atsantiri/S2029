@@ -64,7 +64,7 @@ void L1_Pipe1_PID()
 
 
     ActRoot::CutsManager<std::string> cuts;
-    std::string cutname {"pid_other_diagonal"};
+    std::string cutname {"pid_l1_what_is_this"};
     cuts.ReadCut("l1", TString::Format("./Cuts/%s.root", cutname.c_str()).Data());
 
     auto gated {df.Filter(

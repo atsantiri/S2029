@@ -71,7 +71,7 @@ void l0_cal()
     std::string which {"l0"};
     std::string label {"L0"};
     // Read data
-    auto hs {ReadData("./Inputs/Si_calib_histos_run001.root", "L0", label)};
+    auto hs {ReadData("./Inputs/Si_calib_histos_run0066.root", "L0", label)};
     // Pick only necessary
     int isil {};
     std::vector<int> adcChannels {};
@@ -112,7 +112,7 @@ void l0_cal()
     auto* gr {new TGraphErrors};
     gr->SetNameTitle("g", "Resolution;;#sigma ^{241}Am [keV]");
     // Save
-    std::ofstream streamer {"./Outputs/s2029_" + which + ".dat"};
+    std::ofstream streamer {"./Outputs/s2029_" + which + "_run66.dat"};
     streamer << std::fixed << std::setprecision(8);
     std::vector<std::shared_ptr<TH1D>> hfs;
     for(int s = 0; s < hsrebin.size(); s++)
@@ -123,29 +123,44 @@ void l0_cal()
         auto idxStr {name.substr(it + 1)};
         int idx {std::stoi(idxStr)};
 
-        const auto& adcChannel {adcChannels[s]};
-        runners.emplace_back(&source, hsrebin[s], hs[s], false);
-        auto& run {runners.back()};
-        run.SetGaussPreWidth(80);
-        run.SetRange(3500, 5000);
-        run.DisableXErrors();
-        run.DoIt();
-        auto* c {new TCanvas};
-        run.Draw(c);
-        std::cout << "Sil index : " << s << " hist name : " << hs[s]->GetName() << '\n';
-        run.PrintRes();
-        std::cout << '\n';
-        gr->SetPoint(s, adcChannel, runners.back().GetRes("241Am") * 1e3);
-        gr->SetPointError(s, 0, runners.back().GetURes("241Am") * 1e3);
-        hfs.push_back(run.GetHistFinal());
+        if(idx!=10 && idx!=3 && idx!=0) // L0_10 is not available in either run & in run 66 0 and 3 are noisy
+        {
+            const auto& adcChannel {adcChannels[s]};
+            runners.emplace_back(&source, hsrebin[s], hs[s], false);
+            auto& run {runners.back()};
+            run.SetGaussPreWidth(80);
+            run.SetRange(3500, 5000);
+            run.DisableXErrors();
+            run.DoIt();
+            auto* c {new TCanvas};
+            run.Draw(c);
+            std::cout << "Sil index : " << s << " hist name : " << hs[s]->GetName() << '\n';
+            run.PrintRes();
+            std::cout << '\n';
+            gr->SetPoint(s, adcChannel, runners.back().GetRes("241Am") * 1e3);
+            gr->SetPointError(s, 0, runners.back().GetURes("241Am") * 1e3);
+            hfs.push_back(run.GetHistFinal());
 
-        // Save calibration in file
-        auto label {TString::Format("Sil_%s_%d_E", which.c_str(), idx)};
-        auto labelp {TString::Format("Sil_%s_%d_P", which.c_str(), idx)};
-        auto [p0, p1] {runners.back().GetParameters()};
-        streamer << label << " " << p0 << " " << p1 << '\n';
-        auto [ped, peds] {runners.back().GetPedestal()};
-        streamer << labelp << " " << ped << " " << peds << '\n';
+            // Save calibration in file
+            auto label {TString::Format("Sil_%s_%d_E", which.c_str(), idx)};
+            auto labelp {TString::Format("Sil_%s_%d_P", which.c_str(), idx)};
+            auto [p0, p1] {runners.back().GetParameters()};
+            streamer << label << " " << p0 << " " << p1 << '\n';
+            auto [ped, peds] {runners.back().GetPedestal()};
+            streamer << labelp << " " << ped << " " << peds << '\n';
+        }
+        else
+        {
+            gr->SetPoint(s, idx, 0.0);
+            gr->SetPointError(s, 0, 0.0);
+            auto htemp = std::make_shared<TH1D>("htemp", "htemp", 600, 0, 3000);
+            hfs.push_back(htemp);
+
+            auto label {TString::Format("Sil_%s_%d_E", which.c_str(), idx)};
+            auto labelp {TString::Format("Sil_%s_%d_P", which.c_str(), idx)};
+            streamer << label << " 0.00000000 0.00000000 \n";
+            streamer << labelp << " 20000 0 \n";
+        }
     }
     streamer.close();
 
@@ -177,7 +192,7 @@ void l0_cal()
     for(int p = 0; p < hfs.size(); p++)
     {
         c2->cd(p + 1);
-        hfs[p]->SetTitle(TString::Format("%s_%d", label.c_str(), p + 1));
+        hfs[p]->SetTitle(TString::Format("%s_%d", label.c_str(), p ));
         hfs[p]->DrawClone();
         for(auto* o : *(hfs[p]->GetListOfFunctions()))
             if(o)

@@ -16,7 +16,7 @@ const TH2DModel Ecm_dist {"hEcm_dist","Energy along active area;Distance [mm];E_
 const TH2DModel Kin {"hKin", "Kinematics;#theta_{Lab} [#circ];E_{Vertex} [MeV]", 250, 0, 60, 250, 0, 20};
 const TH2DModel KinEl {"hKinEl", "Kinematics;#theta_{Lab} [#circ];E_{Vertex} [MeV]", 600, 0, 180, 400, 0, 20};
 const TH2DModel KinCM {"hKinCM", "CM kinematics;#theta_{CM} [#circ];E_{Vertex} [MeV]", 400, 0, 60, 400, 0, 20};
-const TH1DModel RPx {"hRPx", "RPx;X [mm];Counts", 200, -10, 300};
+const TH1DModel RPx {"hRPx", "RPx;X [mm];Counts", 100, -10, 300};
 const TH2DModel RP {"hRP", "RP;X [mm];Y [mm]", 200, -10, 300, 200, -10, 300};
 
 const TH2DModel PID {"hPID", "PID;E_{Sil} [MeV];Q_{ave} [mm^{-1}]", 400, 0, 40, 800, 0, 2000};
@@ -46,7 +46,16 @@ const TH2DModel ThetaCMLab {
 const TH2DModel RPxThetaCM {
     "hRPxThetaCM", "RP.X vs #theta_{CM} correlations;RP.X [mm];#theta_{CM} [#circ]", 200, 0, 300, 100, 0, 60};
 
-const TH1DModel Ecn {"hEcn", TString::Format("Compound Nucleus energy;E_{x} [MeV];Counts / %.f keV", (35. - (-10.)) / 300 * 1e3), 200, 4, 8};
+const TH1DModel ECN {"hEcn","Compound Nucleus energy;E_{x} [MeV];Counts ", 200,3.5, 8};
+
+const TH1DModel EBeam {"hEBeam", "Beam energy;E_{Beam} [MeV]", 100, 0, 80};
+const TH1DModel ELight {"hELight", "Alpha energy;E_{a} [MeV]", 100, 0, 4};
+const TH1DModel EHeavy {"hEHeavy", "Heavy energy;E [MeV]", 100, 0, 70};
+
+const TH2DModel ELightTL {"hELight", "Alpha energy vs Track Length;TL [mm];E_{a} [MeV];",100,0,50, 100, 0, 4 };
+
+const TH1DModel ECM {"hECM", "E_{CM};E_{CM} [MeV];Counts / 25 keV", 100, 0, 5};
+const TH2DModel RPxECM {"hRPxECM", "ECM vs RP.X;RP.X [mm];E_{CM} [MeV]", 200, 0, 300, 150, 0, 15};
 
 
 template <typename T>

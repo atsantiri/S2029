@@ -10,7 +10,7 @@ void Runner(TString what = "")
 {
     std::string beam {"17F"};
     std::string target {"p"};
-    std::string light {"4He"};
+    std::string light {"p"};
 
     std::cout << BOLDGREEN << "···· Runner ····" << '\n';
     std::cout << "-> Beam   : " << beam << '\n';
@@ -41,7 +41,11 @@ void Runner(TString what = "")
     // Kin + Ex
     if(what.Contains("2"))
     {
-        func = "Pipe2_Ex";
+        if(light == "4He")
+            func = "Pipe2_Ex_alpha";
+        else
+            func = "Pipe2_Ex_p";
+
         gROOT->LoadMacro(path + func + ext);
         gROOT->ProcessLine(func + args);
     }

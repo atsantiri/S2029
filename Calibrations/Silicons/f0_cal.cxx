@@ -69,12 +69,12 @@ void f0_cal()
     std::string which {"f0"};
     std::string label {"F0"};
     // Read data
-    auto hs {ReadData("./Inputs/Si_calib_histos_run001.root", "F0", label)};
+    auto hs {ReadData("./Inputs/Si_calib_histos_run0066.root", "F0", label)};
     // Pick only necessary
-    int isil {}; 
+    int isil {};
     std::vector<int> adcChannels {};
     for(auto it = hs.begin(); it != hs.end();)
-    {false
+    {
 
         adcChannels.push_back(isil);
         it++;
@@ -106,7 +106,7 @@ void f0_cal()
     auto* gr {new TGraphErrors};
     gr->SetNameTitle("g", "Resolution;;#sigma ^{241}Am [keV]");
     // Save
-    std::ofstream streamer {"./Outputs/s2029_" + which + ".dat"};
+    std::ofstream streamer {"./Outputs/s2029_" + which + "_run66.dat"};
     streamer << std::fixed << std::setprecision(8);
     std::vector<std::shared_ptr<TH1D>> hfs;
     for(int s = 0; s < hsrebin.size(); s++)
@@ -117,31 +117,46 @@ void f0_cal()
         auto idxStr {name.substr(it + 1)};
         int idx {std::stoi(idxStr)};
 
-        const auto& adcChannel {adcChannels[s]};
-        runners.emplace_back(&source, hsrebin[s], hs[s], false);
-        auto& run {runners.back()};
-        run.SetGaussPreWidth(60);
-        run.SetRange(2100, 3200);
-        run.DisableXErrors();
-        run.DoIt();
-        auto* c {new TCanvas};
-        run.Draw(c);
-        std::cout << "Sil index : " << s << " hist name : " << hs[s]->GetName() << '\n';
-        run.PrintRes();
-        std::cout << '\n';
-        auto sigma {run.GetRes("241Am")};
-        auto usigma {run.GetURes("241Am")};
-        gr->SetPoint(s, adcChannel, (sigma < 0 ? 0 : sigma) * 1e3);
-        gr->SetPointError(s, 0, (usigma < 0 ? 0 : usigma) * 1e3);
-        hfs.push_back(run.GetHistFinal());
+        if(idx != 7 && idx != 5)
+        {
+            const auto& adcChannel {adcChannels[s]};
+            runners.emplace_back(&source, hsrebin[s], hs[s], false);
+            auto& run {runners.back()};
+            run.SetGaussPreWidth(60);
+            run.SetRange(2100, 3200);
+            run.DisableXErrors();
+            run.DoIt();
+            auto* c {new TCanvas};
+            run.Draw(c);
+            std::cout << "Sil index : " << s << " hist name : " << hs[s]->GetName() << '\n';
+            run.PrintRes();
+            std::cout << '\n';
+            auto sigma {run.GetRes("241Am")};
+            auto usigma {run.GetURes("241Am")};
+            gr->SetPoint(s, adcChannel, (sigma < 0 ? 0 : sigma) * 1e3);
+            gr->SetPointError(s, 0, (usigma < 0 ? 0 : usigma) * 1e3);
+            hfs.push_back(run.GetHistFinal());
 
-        // Save calibration in file
-        auto label {TString::Format("Sil_%s_%d_E", which.c_str(), idx)};
-        auto labelp {TString::Format("Sil_%s_%d_P", which.c_str(), idx)};
-        auto [p0, p1] {runners.back().GetParameters()};
-        streamer << label << " " << p0 << " " << p1 << '\n';
-        auto [ped, peds] {runners.back().GetPedestal()};
-        streamer << labelp << " " << ped << " " << peds << '\n';
+            // Save calibration in file
+            auto label {TString::Format("Sil_%s_%d_E", which.c_str(), idx)};
+            auto labelp {TString::Format("Sil_%s_%d_P", which.c_str(), idx)};
+            auto [p0, p1] {runners.back().GetParameters()};
+            streamer << label << " " << p0 << " " << p1 << '\n';
+            auto [ped, peds] {runners.back().GetPedestal()};
+            streamer << labelp << " " << ped << " " << peds << '\n';
+        }
+        else
+        {
+            gr->SetPoint(s, idx, 0.0);
+            gr->SetPointError(s, 0, 0.0);
+            auto htemp = std::make_shared<TH1D>("htemp", "htemp", 600, 0, 3000);
+            hfs.push_back(htemp);
+
+            auto label {TString::Format("Sil_%s_%d_E", which.c_str(), idx)};
+            auto labelp {TString::Format("Sil_%s_%d_P", which.c_str(), idx)};
+            streamer << label << " 0.00000000 0.00000000 \n";
+            streamer << labelp << " 20000 0 \n";
+        }
     }
     streamer.close();
 
@@ -152,7 +167,7 @@ void f0_cal()
     {
         c0->cd(i + 1);
         gPad->SetLogy();
-        hs[i]->GetXaxis()->SetRangeUser(0, 3000);
+        hs[i]->GetXaxis()->SetRangeUser(0, 5000);
         hs[i]->Draw();
     }
 

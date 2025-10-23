@@ -16,7 +16,7 @@ void extractEvtNumber()
     // light.c_str())};
 
 
-    std::string cutname {"pid_other_diagonal"};
+    std::string cutname {"pid_l1_what_is_this"};
     auto filename {TString::Format("../Outputs/%s.root",cutname.c_str())};
 
     ROOT::RDataFrame df("PID_Tree", filename);
