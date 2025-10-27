@@ -71,7 +71,7 @@ void l0_cal()
     std::string which {"l0"};
     std::string label {"L0"};
     // Read data
-    auto hs {ReadData("./Inputs/Si_calib_histos_run0066.root", "L0", label)};
+    auto hs {ReadData("./Inputs/Si_calib_histos_run0001.root", "L0", label)};
     // Pick only necessary
     int isil {};
     std::vector<int> adcChannels {};
@@ -112,7 +112,7 @@ void l0_cal()
     auto* gr {new TGraphErrors};
     gr->SetNameTitle("g", "Resolution;;#sigma ^{241}Am [keV]");
     // Save
-    std::ofstream streamer {"./Outputs/s2029_" + which + "_run66.dat"};
+    std::ofstream streamer {"./Outputs/s2029_" + which + "_run1.dat"};
     streamer << std::fixed << std::setprecision(8);
     std::vector<std::shared_ptr<TH1D>> hfs;
     for(int s = 0; s < hsrebin.size(); s++)
@@ -123,7 +123,8 @@ void l0_cal()
         auto idxStr {name.substr(it + 1)};
         int idx {std::stoi(idxStr)};
 
-        if(idx!=10 && idx!=3 && idx!=0) // L0_10 is not available in either run & in run 66 0 and 3 are noisy
+        if(idx!=10) 
+        // if(idx!=10 && idx!=3 && idx!=0) // L0_10 is not available in either run & in run 66 0 and 3 are noisy
         {
             const auto& adcChannel {adcChannels[s]};
             runners.emplace_back(&source, hsrebin[s], hs[s], false);

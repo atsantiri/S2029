@@ -57,7 +57,7 @@ int comparison(const char* det_type)
             intDiff.push_back(inter);
         else{
             intDiff.push_back(0);
-            std::cout<<"Det "<<det_type<<"_"<<i<<" large intercept diff"<<std::endl;
+            // std::cout<<"Det "<<det_type<<"_"<<i<<" large intercept diff "<<inter<<"%"<<std::endl;
         }
 
 
@@ -66,7 +66,7 @@ int comparison(const char* det_type)
             slDiff.push_back(slope);
         else{
             slDiff.push_back(0);
-            std::cout<<"Det "<<det_type<<"_"<<i<<" large slope diff"<<std::endl;
+            std::cout<<"Det "<<det_type<<"_"<<i<<" large slope diff "<<slope<<"%"<<std::endl;
         }
     }
 

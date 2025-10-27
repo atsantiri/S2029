@@ -2,11 +2,13 @@
 #include "ROOT/RDataFrame.hxx"
 #include "ActSilData.h"
 #include "TCanvas.h"
+#include "TString.h"
 
 void extractHistos(){
 
     auto* chain = new TChain("VXITree");
-    chain->Add("../../RootFiles/Data/Data_Run_0066.root");
+    const int run {66};
+    chain->Add(TString::Format("../../RootFiles/Data/Data_Run_00%02d.root",run));
     ROOT::RDataFrame df {*chain};
 
     std::map<std::string, std::vector<TH1D*>> hs;
@@ -47,7 +49,7 @@ void extractHistos(){
     }
 
     //Write histograms to file
-    auto fout {std::make_shared<TFile>("./Inputs/Si_calib_histos_run0066.root", "recreate")};
+    auto fout {std::make_shared<TFile>(TString::Format("./Inputs/Si_calib_histos_run00%02d.root",run), "recreate")};
     // F0
     fout->mkdir("Raw/F0");
     fout->cd("Raw/F0");
