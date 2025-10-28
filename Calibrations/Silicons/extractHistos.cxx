@@ -1,49 +1,61 @@
-#include "TChain.h"
-#include "ROOT/RDataFrame.hxx"
 #include "ActSilData.h"
+
+#include "ROOT/RDataFrame.hxx"
+
 #include "TCanvas.h"
+#include "TChain.h"
 #include "TString.h"
 
-void extractHistos(){
+void extractHistos()
+{
 
     auto* chain = new TChain("VXITree");
     const int run {66};
-    chain->Add(TString::Format("../../RootFiles/Data/Data_Run_00%02d.root",run));
+    chain->Add(TString::Format("../../RootFiles/Data/Data_Run_00%02d.root", run));
     ROOT::RDataFrame df {*chain};
 
     std::map<std::string, std::vector<TH1D*>> hs;
     int nsils {12};
     for(const auto& layer : {"r0", "l0", "f0"})
     {
-        for(int i =0; i < nsils; i++){
-            auto* h = new TH1D(TString::Format("h%s%d", layer, i), TString::Format("%s_%d;Channel;Counts", layer, i), 16384, 0, 16384);
+        for(int i = 0; i < nsils; i++)
+        {
+            auto* h = new TH1D(TString::Format("h%s%d", layer, i), TString::Format("%s_%d;Channel;Counts", layer, i),
+                               16384, 0, 16384);
             auto aux {TString(layer)};
             aux.ToUpper();
-            auto name {aux+"_"+TString::Format("%d",i)};
-            h->SetNameTitle(name,name);
+            auto name {aux + "_" + TString::Format("%d", i)};
+            h->SetNameTitle(name, name);
             hs[layer].push_back(h);
         }
     }
 
     df.Foreach([&](ActRoot::SilData& sil){ // the [&] is to inherit the elemets from the previous for loop
+        // sil.Print();
+
         for(const auto& [layer, ns] : sil.fSiN){
             if(!hs.count(layer))
                 continue;//account for f1 that doean't exist
             for(int i = 0; i < ns.size(); i++){
                 auto n = ns[i];
                 auto e = sil.fSiE[layer][i];
-                hs[layer][i]->Fill(e);
+                // hs[layer][i]->Fill(e); // not correct since idx number and order of silicons in ACTIONS file is not the same
+                hs[layer][n]->Fill(e);
             }
         }
     }, {"SilData"});
 
-    //Draw one layer per canvas
-    for(auto& [layer, vec] : hs){
+    // Draw one layer per canvas
+    for(auto& [layer, vec] : hs)
+    {
         auto* c = new TCanvas(TString::Format("c%s", layer.c_str()), layer.c_str());
         c->DivideSquare(vec.size());
-        for(int i =0;i <vec.size(); i++){
+        for(int i = 0; i < vec.size(); i++)
+        {
             c->cd(i + 1);
             // gPad->SetLogy();
+            (layer == "f0") ? vec[i]->GetXaxis()->SetRangeUser(1000, 4000)
+                            : vec[i]->GetXaxis()->SetRangeUser(3000, 7000);
             vec[i]->Draw();
         }
     }

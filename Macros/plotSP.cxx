@@ -18,7 +18,7 @@ void plotSP()
     int nsils {12};
     std::map<std::string, std::map<int, ROOT::TThreadedObject<TH2D>>> hs;
     // Histogram model
-    auto* h2d {new TH2D {"h2d", "SP;X or Y [pad];Z [btb]", 300, 0, 300, 500, 0, 500}};
+    auto* h2d {new TH2D {"h2d", ";X or Y [pad];Z [btb]", 300, 0, 300, 500, 0, 500}};
     for(const auto& layer : {"f0", "l0", "r0"})
     {
         for(int s = 0; s < nsils; s++)
@@ -50,41 +50,39 @@ void plotSP()
         {"MergerData"});
 
     //// Draw
-    auto* c0 {new TCanvas {"c0", "SP canvas"}};
-    c0->DivideSquare(4);
-    int p {1};
     int canvasIdx {0};
     for(auto& [layer, hsils] : hs)
     {
-        // Crear un nuevo canvas para cada histograma
-        auto cname = Form("c%d", canvasIdx++);
-        auto c = new TCanvas {cname, Form("SP canvas %d", canvasIdx), 800, 600};
+        auto lname {TString(layer)};
+        lname.ToUpper();
+        auto c = new TCanvas {lname, lname, 800, 600};
+
         if(layer == "l0" || layer == "r0")
             c->Divide(3, 4);
         if(layer == "f0")
             c->Divide(4, 3);
         // c0->cd(p);
         int idx {};
-        std::cout << hsils.size() << " histograms for layer " << layer << std::endl;
+        std::cout << hsils.size() << " histograms for layer " << lname << std::endl;
         for(auto& [s, h] : hsils)
         {
             c->cd(idx + 1);
             auto color {idx + 1};
             if(color == 10) // 10 is white, as well as 0
                 color = 46;
-            auto opts {(idx == 0) ? "scat" : "scat same"};
+            auto opts {(idx == 0) ? "BOX" : "BOX same"};
             // Merge histos from threads
             h.Merge();
             // Set color
             h.GetAtSlot(0)->SetMarkerColor(color);
+            h.GetAtSlot(0)->SetLineColor(color);
             // Set size
             h.GetAtSlot(0)->SetMarkerStyle(6);
             // Set title
-            h->SetTitle(TString::Format("Layer %s, S%d", layer.c_str(), s));
+            h->SetTitle(TString::Format("%s_%d", lname.Data(), s));
             // Draw
-            h.GetAtSlot(0)->DrawClone("scat");
+            h.GetAtSlot(0)->DrawClone("BOX");
             idx++;
         }
-        p++;
     }
 }
