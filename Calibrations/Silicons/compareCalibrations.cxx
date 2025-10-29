@@ -37,25 +37,57 @@ std::pair<std::vector<double>, std::vector<double>> readFile(TString fIn)
     return {inter, sl};
 }
 
+std::pair<std::vector<double>, std::vector<double>> readRes(TString fIn)
+{
+    std::ifstream file(fIn);
+    if(!file.is_open())
+    {
+        std::cerr << "Could not open " << fIn << "\n";
+        return {};
+    }
+
+    std::vector<double> res, err;
+    std::string name, temp1, temp2;
+    double n1, n2;
+    int line = 0;
+
+    while(file >> name >> n1 >> temp1 >> n2 >> temp2)
+    {
+        res.push_back(n1);
+        err.push_back(n2);
+        ++line;
+    }
+
+    return {res, err};
+}
+
+
 int comparison(const char* det_type)
 {
 
-    auto [int1, sl1] = readFile(TString::Format("Outputs/s2029_%s_redo.dat", det_type));
+    auto [int1, sl1] = readFile(TString::Format("Outputs/s2029_%s_run1.dat", det_type));
     auto [int2, sl2] = readFile(TString::Format("Outputs/s2029_%s_run66.dat", det_type));
 
-    if((int1.empty() && sl1.empty()) || (int2.empty() && sl2.empty()))
+    auto [res1, err1] = readRes(TString::Format("Outputs/resolution_%s_run1.dat", det_type));
+    auto [res2, err2] = readRes(TString::Format("Outputs/resolution_%s_run66.dat", det_type));
+
+
+    if((int1.empty() && sl1.empty()) || (int2.empty() && sl2.empty()) || (res1.empty() && err1.empty()) ||
+       (res2.empty() && err2.empty()))
         return -1;
 
     std::vector<double> slDiff, intDiff;
     for(size_t i = 0; i < int1.size(); ++i)
     {
         // std::cout << i << ": i1= " << int1[i] << ", s1= " << sl1[i] << "\n";
+        // std::cout << i << ": i1= " << res1[i] << ", s1= " << err1[i] << "\n";
 
 
         double inter {(int1[i] - int2[i]) * 200 / (int1[i] + int2[i])};
         if(abs(inter) <= 100)
             intDiff.push_back(inter);
-        else{
+        else
+        {
             intDiff.push_back(0);
             // std::cout<<"Det "<<det_type<<"_"<<i<<" large intercept diff "<<inter<<"%"<<std::endl;
         }
@@ -64,36 +96,26 @@ int comparison(const char* det_type)
         double slope {(sl1[i] - sl2[i]) * 200 / (sl1[i] + sl2[i])};
         if(abs(slope) <= 100)
             slDiff.push_back(slope);
-        else{
+        else
+        {
             slDiff.push_back(0);
-            std::cout<<"Det "<<det_type<<"_"<<i<<" large slope diff "<<slope<<"%"<<std::endl;
+            std::cout << "Det " << det_type << "_" << i << " large slope diff " << slope << "%" << std::endl;
         }
+
+        double res_diff {abs(res1[i] - res2[i])};
+        if(abs(res_diff) >= 5)
+        {
+            std::cout << "Det " << det_type << "_" << i << " large resolution diff "<< res1[i]<<" vs "<<res2[i] << std::endl;
+        }
+
+        if(res1[i] > 0 && res2[i] > 0 && res1[i] < res2[i])
+            std::cout << "For Det " << det_type << "_" << i << " use run 1" << std::endl;
+        else if(res1[i] > 0 && res2[i] > 0 && res1[i] > res2[i])
+            std::cout << "For Det " << det_type << "_" << i << " use run 66" << std::endl;
+        else
+            std::cout << "For Det " << det_type << "_" << i << " I'm confused" << std::endl;
+
     }
-
-    TCanvas* c = new TCanvas(TString::Format("c%s", det_type), det_type, 800, 400);
-    c->DivideSquare(2);
-    std::vector<double> det(intDiff.size());
-    for(size_t i = 0; i < intDiff.size(); ++i)
-        det[i] = i;
-
-
-    c->cd(1);
-    TGraph* gSl = new TGraph(det.size(), det.data(), slDiff.data());
-    gSl->SetTitle("Relative Slope Diff;Detector # ;Diff %");
-    gSl->SetMarkerStyle(20);
-    gSl->SetLineColor(kBlue);
-    gSl->GetYaxis()->SetRangeUser(*std::min_element(slDiff.begin(), slDiff.end()) * 0.8,
-                                  *std::max_element(slDiff.begin(), slDiff.end()) * 1.1);
-    gSl->Draw("APL");
-
-    c->cd(2);
-    TGraph* gInt = new TGraph(det.size(), det.data(), intDiff.data());
-    gInt->SetTitle("Relative Intercept Diff;Detector # ;Diff %");
-    gInt->SetMarkerStyle(21);
-    gInt->SetLineColor(kRed);
-    gInt->GetYaxis()->SetRangeUser(*std::min_element(intDiff.begin(), intDiff.end()) * .8,
-                                   *std::max_element(intDiff.begin(), intDiff.end()) * 1.1);
-    gInt->Draw("APL");
 
 
     return 0;
@@ -102,10 +124,13 @@ int comparison(const char* det_type)
 int compareCalibrations()
 {
     int ret = 0;
+    std::cout<<"================ F0 ================"<<std::endl;
     if(comparison("f0") != 0)
         ret |= 1 << 0; // bit 0 = f0
+    std::cout<<"================ L0 ================"<<std::endl;
     if(comparison("l0") != 0)
         ret |= 1 << 1; // bit 1 = l0
+    std::cout<<"================ R0 ================"<<std::endl;
     if(comparison("r0") != 0)
         ret |= 1 << 2; // bit 2 = r0
     return ret;

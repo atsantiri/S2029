@@ -71,7 +71,9 @@ void r0_cal()
     std::string which {"r0"};
     std::string label {"R0"};
     // Read data
-    auto hs {ReadData("./Inputs/Si_calib_histos_run0066.root", "R0", label)};
+    int run {66};
+    std::string fIn = TString::Format("./Inputs/Si_calib_histos_run00%02d.root", run).Data();
+    auto hs {ReadData(fIn, "R0", label)};
     // Pick only necessary
     int isil {};
     std::vector<int> adcChannels {};
@@ -86,7 +88,6 @@ void r0_cal()
         // }
         isil++;
     }
-    // hs = {hs[2], hs[3], hs[5], hs[6]};
 
     // Source of ganil
     Calibration::Source source {};
@@ -113,8 +114,10 @@ void r0_cal()
     auto* gr {new TGraphErrors};
     gr->SetNameTitle("g", "Resolution;;#sigma ^{241}Am [keV]");
     // Save
-    std::ofstream streamer {"./Outputs/s2029_" + which + "_run66.dat"};
+    std::ofstream streamer {"./Outputs/s2029_" + which + "_run"+run+".dat"};
+    std::ofstream res_streamer {"./Outputs/resolution_" + which + "_run"+run+".dat"};
     streamer << std::fixed << std::setprecision(8);
+    res_streamer << std::fixed << std::setprecision(2);
     std::vector<std::shared_ptr<TH1D>> hfs;
     for(int s = 0; s < hsrebin.size(); s++)
     {
@@ -151,8 +154,11 @@ void r0_cal()
         streamer << label << " " << p0 << " " << p1 << '\n';
         auto [ped, peds] {runners.back().GetPedestal()};
         streamer << labelp << " " << ped << " " << peds << '\n';
+        res_streamer << label << " " << runners.back().GetRes("241Am") * 1e3 << " +/- " << runners.back().GetURes("241Am") * 1e3 << " % \n";
+
     }
     streamer.close();
+    res_streamer.close();
 
     // Plot
     auto* c0 {new TCanvas {"c0", "Raw silicon data"}};

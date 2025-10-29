@@ -68,7 +68,7 @@ void f0_cal()
 {
     std::string which {"f0"};
     std::string label {"F0"};
-    int run {66};
+    int run {1};
     std::string fIn = TString::Format("./Inputs/Si_calib_histos_run00%02d.root",run).Data();
     // Read data
     auto hs {ReadData(fIn, "F0", label)};
@@ -109,7 +109,9 @@ void f0_cal()
     gr->SetNameTitle("g", "Resolution;;#sigma ^{241}Am [keV]");
     // Save
     std::ofstream streamer {"./Outputs/s2029_" + which + "_run"+run+".dat"};
+    std::ofstream res_streamer {"./Outputs/resolution_" + which + "_run"+run+".dat"};
     streamer << std::fixed << std::setprecision(8);
+    res_streamer << std::fixed << std::setprecision(2);
     std::vector<std::shared_ptr<TH1D>> hfs;
     for(int s = 0; s < hsrebin.size(); s++)
     {
@@ -119,8 +121,8 @@ void f0_cal()
         auto idxStr {name.substr(it + 1)};
         int idx {std::stoi(idxStr)};
 
-        // if(true)
-        if(idx != 8)
+        if(true)
+        // if(idx != 8)
         {
             const auto& adcChannel {adcChannels[s]};
             runners.emplace_back(&source, hsrebin[s], hs[s], false);
@@ -147,6 +149,8 @@ void f0_cal()
             streamer << label << " " << p0 << " " << p1 << '\n';
             auto [ped, peds] {runners.back().GetPedestal()};
             streamer << labelp << " " << ped << " " << peds << '\n';
+            res_streamer << label << " " << runners.back().GetRes("241Am") * 1e3 << " +/- " << runners.back().GetURes("241Am") * 1e3 << " % \n";
+
         }
         else
         {
@@ -159,9 +163,12 @@ void f0_cal()
             auto labelp {TString::Format("Sil_%s_%d_P", which.c_str(), idx)};
             streamer << label << " 0.00000000 0.00000000 \n";
             streamer << labelp << " 20000 0 \n";
+            res_streamer << label << " 0. +/- 0. % \n";
+
         }
     }
     streamer.close();
+    res_streamer.close();
 
     // Plot
     auto* c0 {new TCanvas {"c0", "Raw silicon data"}};

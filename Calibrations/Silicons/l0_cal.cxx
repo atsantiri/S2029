@@ -71,7 +71,9 @@ void l0_cal()
     std::string which {"l0"};
     std::string label {"L0"};
     // Read data
-    auto hs {ReadData("./Inputs/Si_calib_histos_run0001.root", "L0", label)};
+    int run {66};
+    std::string fIn = TString::Format("./Inputs/Si_calib_histos_run00%02d.root", run).Data();
+    auto hs {ReadData(fIn, "L0", label)};
     // Pick only necessary
     int isil {};
     std::vector<int> adcChannels {};
@@ -86,7 +88,6 @@ void l0_cal()
         }
         isil++;
     }
-    // hs = {hs[2], hs[3], hs[5], hs[6]};
 
     // Source of ganil
     Calibration::Source source {};
@@ -112,8 +113,10 @@ void l0_cal()
     auto* gr {new TGraphErrors};
     gr->SetNameTitle("g", "Resolution;;#sigma ^{241}Am [keV]");
     // Save
-    std::ofstream streamer {"./Outputs/s2029_" + which + "_run1.dat"};
+    std::ofstream streamer {"./Outputs/s2029_" + which + "_run"+run+".dat"};
+    std::ofstream res_streamer {"./Outputs/resolution_" + which + "_run"+run+".dat"};
     streamer << std::fixed << std::setprecision(8);
+    res_streamer << std::fixed << std::setprecision(2);
     std::vector<std::shared_ptr<TH1D>> hfs;
     for(int s = 0; s < hsrebin.size(); s++)
     {
@@ -123,8 +126,8 @@ void l0_cal()
         auto idxStr {name.substr(it + 1)};
         int idx {std::stoi(idxStr)};
 
-        if(idx!=10) 
-        // if(idx!=10 && idx!=3 && idx!=0) // L0_10 is not available in either run & in run 66 0 and 3 are noisy
+        // if(idx!=9)
+        if(idx!=9 && idx!=3 && idx!=0) // L0_9 is not available in either run & in run 66 0 and 3 are noisy
         {
             const auto& adcChannel {adcChannels[s]};
             runners.emplace_back(&source, hsrebin[s], hs[s], false);
@@ -149,6 +152,7 @@ void l0_cal()
             streamer << label << " " << p0 << " " << p1 << '\n';
             auto [ped, peds] {runners.back().GetPedestal()};
             streamer << labelp << " " << ped << " " << peds << '\n';
+            res_streamer << label << " " << runners.back().GetRes("241Am") * 1e3 << " +/- " << runners.back().GetURes("241Am") * 1e3 << " % \n";
         }
         else
         {
@@ -161,9 +165,12 @@ void l0_cal()
             auto labelp {TString::Format("Sil_%s_%d_P", which.c_str(), idx)};
             streamer << label << " 0.00000000 0.00000000 \n";
             streamer << labelp << " 20000 0 \n";
+            res_streamer << label << " 0. +/- 0. % \n";
+
         }
     }
     streamer.close();
+    res_streamer.close();
 
     // Plot
     auto* c0 {new TCanvas {"c0", "Raw silicon data"}};
@@ -193,7 +200,7 @@ void l0_cal()
     for(int p = 0; p < hfs.size(); p++)
     {
         c2->cd(p + 1);
-        hfs[p]->SetTitle(TString::Format("%s_%d", label.c_str(), p ));
+        hfs[p]->SetTitle(TString::Format("%s_%d", label.c_str(), p));
         hfs[p]->DrawClone();
         for(auto* o : *(hfs[p]->GetListOfFunctions()))
             if(o)
