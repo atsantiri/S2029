@@ -1,12 +1,25 @@
 #include "ActDataManager.h"
 #include "ActMergerData.h"
+#include "ActSilSpecs.h"
 
 #include "ROOT/RDataFrame.hxx"
 #include "ROOT/TThreadedObject.hxx"
 
 #include "TCanvas.h"
-
 #include <map>
+
+void makeGrid(std::string layer)
+{
+    ActPhysics::SilSpecs specs;
+    specs.ReadFile("../configs/silspecs.conf");
+    auto sm {specs.GetLayer(layer).GetSilMatrix()->Clone()};
+    auto& cuts = sm->GetGraphs();
+    for(const auto& [id, cut] : cuts)
+    {
+        if(cut)
+            cut->Draw("same");
+    }
+}
 
 void plotSP()
 {
@@ -18,7 +31,7 @@ void plotSP()
     int nsils {12};
     std::map<std::string, std::map<int, ROOT::TThreadedObject<TH2D>>> hs;
     // Histogram model
-    auto* h2d {new TH2D {"h2d", ";X or Y [pad];Z [btb]", 300, 0, 300, 500, 0, 500}};
+    auto* h2d {new TH2D {"h2d", ";X or Y [mm];Z [mm]", 200, -10, 300, 200, -10, 300}};
     for(const auto& layer : {"f0", "l0", "r0"})
     {
         for(int s = 0; s < nsils; s++)
@@ -36,6 +49,7 @@ void plotSP()
             auto layer {m.fLight.fLayers.front()}; // ensured to have at least size >= 1
             auto n {m.fLight.fNs.front()};
             auto sp {m.fLight.fSP};
+
             if(hs.count(layer))
             {
                 if(hs[layer].count(n))
@@ -55,12 +69,19 @@ void plotSP()
     {
         auto lname {TString(layer)};
         lname.ToUpper();
-        auto c = new TCanvas {lname, lname, 800, 600};
+        // auto c = new TCanvas {lname, lname, 800, 600};
+        TCanvas* c = nullptr;
 
         if(layer == "l0" || layer == "r0")
+        {
+            c = new TCanvas(lname, lname, 600, 800);
             c->Divide(3, 4);
-        if(layer == "f0")
+        }
+        else if(layer == "f0")
+        {
+            c = new TCanvas(lname, lname, 800, 600);
             c->Divide(4, 3);
+        }
         // c0->cd(p);
         int idx {};
         std::cout << hsils.size() << " histograms for layer " << lname << std::endl;
@@ -74,14 +95,17 @@ void plotSP()
             // Merge histos from threads
             h.Merge();
             // Set color
-            h.GetAtSlot(0)->SetMarkerColor(color);
-            h.GetAtSlot(0)->SetLineColor(color);
+            h->SetMarkerColor(color);
+            h->SetLineColor(color);
             // Set size
-            h.GetAtSlot(0)->SetMarkerStyle(6);
+            h->SetMarkerStyle(6);
             // Set title
             h->SetTitle(TString::Format("%s_%d", lname.Data(), s));
             // Draw
-            h.GetAtSlot(0)->DrawClone("BOX");
+            h->DrawClone("BOX");
+
+            // make grid for comparison
+            makeGrid(layer);
             idx++;
         }
     }

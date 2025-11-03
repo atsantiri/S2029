@@ -1,5 +1,6 @@
 #include "ActDataManager.h"
 #include "ActMergerData.h"
+#include "ActSilSpecs.h"
 
 #include "ROOT/RDataFrame.hxx"
 #include "ROOT/TThreadedObject.hxx"
@@ -7,6 +8,16 @@
 #include "TCanvas.h"
 
 #include <map>
+
+void makeGrid(std::string layer)
+{
+    ActPhysics::SilSpecs specs;
+    specs.ReadFile("../configs/silspecs.conf");
+    auto sm {specs.GetLayer(layer).GetSilMatrix()->Clone()};
+    auto& cuts = sm->GetGraphs();
+    for(const auto& [id, cut] : cuts)
+        cut->Draw("same");
+}
 
 void plotAllSP()
 {
@@ -18,7 +29,7 @@ void plotAllSP()
     int nsils {12};
     std::map<std::string, std::map<int, ROOT::TThreadedObject<TH2D>>> hs;
     // Histogram model
-    auto* h2d {new TH2D {"h2d", ";X or Y [pad];Z [btb]", 300, 0, 300, 500, 0, 500}};
+    auto* h2d {new TH2D {"h2d", ";X or Y [mm];Z [mm]", 200, -10, 300, 200, -10, 300}};
     for(const auto& layer : {"f0", "l0", "r0"})
     {
         for(int s = 0; s < nsils; s++)
@@ -82,6 +93,7 @@ void plotAllSP()
             h->DrawClone(opts);
             idx++;
         }
+        makeGrid(layer);
     }
     std::cout << "Number of counts for R0: " << rstat << " and L0: " << lstat << std::endl;
 }
