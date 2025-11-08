@@ -1,0 +1,31 @@
+% Created 30/08/16 At 14.08.40 < none > OUTPUT   "Printed output               "
+1 SUMMARY OF THE GAS DATA
+  =======================
+
+  Identification: iC4H10 5%, H2 95%, T=293 K, p=0.60992 atm                                       
+
+  Electron transport properties for angle(E,B) = 90 degrees and B = 0 T:
+
+         E        Vdrift    Diffusion  (long, trans)      Townsend    Attachment Lorentz angle
+    [V/cm] [cm/microsec]           [micron for 1 cm]        [1/cm]        [1/cm]     [degrees]
+
+        10      0.096719       618.773       680.644             0             0 Not available
+   12.7427        0.1205       613.915       616.286             0             0 Not available
+   16.2378       0.14594       524.347       568.887             0             0 Not available
+   20.6914        0.1739       459.622       529.575             0             0 Not available
+   26.3665       0.21225       432.445       488.679             0             0 Not available
+   33.5982       0.25521       388.391       453.504             0             0 Not available
+   42.8133       0.30881       377.084       420.875             0             0 Not available
+   54.5559       0.36632       356.984       394.807             0             0 Not available
+   69.5193       0.43562           281       370.394             0             0 Not available
+   88.5867       0.51799        277.75       347.649             0             0 Not available
+   112.884       0.60381       256.766           330             0             0 Not available
+   143.845       0.70335       235.011       313.591             0             0 Not available
+   183.298       0.80956       221.186       300.498             0             0 Not available
+   233.572       0.92999       207.794       289.122             0             0 Not available
+   297.635       1.04741       189.257       280.636             0             0 Not available
+   379.269       1.17831       195.889       272.858             0             0 Not available
+   483.293       1.30917       179.164       266.642             0             0 Not available
+   615.848       1.44971       190.291       260.897             0             0 Not available
+    784.76       1.60313       165.143       255.137             0             0 Not available
+      1000       1.76437       168.801       250.112             0             0 Not available

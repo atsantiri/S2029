@@ -1,6 +1,5 @@
 % specs.conf from experiment s2384 adapted for s2029
 % Updated on 14/08/2025
-% modified to match SP
 [f0]
 Width: 50.
 Height: 50.
@@ -90,7 +89,7 @@ i10: 128, 175
 i9: 48, 175
 %% Point is referred to origin of pad plane
 %% this layer is along Y
-Point: 128, 309, 100
+Point: 128, 356, 100
 Normal: 0, 1, 0
 %% One can set a commom threshold in MeV units
 %CommomThresh: 0.5
@@ -141,7 +140,7 @@ i10: 128, 175
 i11: 48, 175
 %% Point is referred to origin of pad plane
 %% this layer is along Y
-Point: 128, -57, 100
+Point: 128, -100, 100
 Normal: 0, -1, 0
 %% One can set a commom threshold in MeV units
 %CommomThresh: 0.5

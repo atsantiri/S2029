@@ -1,144 +1,164 @@
 // Code from s2384 to calculate drift velocity
 
+#include "ActCluster.h"
+#include "ActCutsManager.h"
 #include "ActDataManager.h"
+#include "ActMergerData.h"
+#include "ActModularData.h"
 #include "ActSilData.h"
 #include "ActTPCData.h"
-#include "ActModularData.h"
-#include "ActModularData.h"
-#include "ActMergerData.h"
-#include "ActTPCData.h"
-#include "ActCluster.h"
 #include "ActVoxel.h"
-#include "ActCutsManager.h"
 
 #include <ROOT/RDataFrame.hxx>
 
 #include "TCanvas.h"
-#include "TFile.h"
-#include "TMath.h"
 #include "TF1.h"
+#include "TFile.h"
+#include "TGraph.h"
+#include "TGraphErrors.h"
 #include "TLatex.h"
+#include "TLegend.h"
 #include "TLine.h"
+#include "TMath.h"
+
+#include <fstream>
 
 void vDriftfromAlpha()
 {
-    ROOT::EnableImplicitMT();
+    // ROOT::EnableImplicitMT();
     // Get the data run 123
     // auto df{ROOT::RDataFrame("GETTree", "../../RootFiles/Cluster/Clusters_Run_0021.root")};
-    auto df{ROOT::RDataFrame("GETTree", "../../RootFiles/Cluster/Clusters_Run_0062.root")};
+    auto df {ROOT::RDataFrame("GETTree", "../../RootFiles/Cluster/Clusters_Run_0062.root")};
 
     // Define last point of cluster in x y z, as the projection of the alpha track
-    auto dfLastPoint = df.Define("fLastPoint", [](ActRoot::TPCData &d)
+    auto dfLastPoint = df.Define("fLastPoint",
+                                 [](ActRoot::TPCData& d)
                                  {
-        if(d.fClusters.size() != 1)
-        {
-            ROOT::Math::XYZPointF lastPoint {-1000, -1000, -1000};
-            return lastPoint;
-        }
-        else
-        {
-            auto cluster {d.fClusters[0]};
-            auto line {cluster.GetRefToLine()};
-            auto dir {line.GetDirection()};
-            cluster.SortAlongDir(dir);
-            auto lastVoxel {cluster.GetRefToVoxels().back()};
-            auto projectionPointLine {line.ProjectionPointOnLine(lastVoxel.GetPosition())};
-            return projectionPointLine;
-        } }, {"TPCData"});
+                                     if(d.fClusters.size() != 1)
+                                     {
+                                         ROOT::Math::XYZPointF lastPoint {-1000, -1000, -1000};
+                                         return lastPoint;
+                                     }
+                                     else
+                                     {
+                                         auto cluster {d.fClusters[0]};
+                                         auto line {cluster.GetRefToLine()};
+                                         auto dir {line.GetDirection()};
+                                         cluster.SortAlongDir(dir);
+                                         auto lastVoxel {cluster.GetRefToVoxels().back()};
+                                         auto projectionPointLine {line.ProjectionPointOnLine(lastVoxel.GetPosition())};
+                                         return projectionPointLine;
+                                     }
+                                 },
+                                 {"TPCData"});
 
     // Define other point
-    auto dfOtherPoint = dfLastPoint.Define("fOtherPoint", [](ActRoot::TPCData &d)
+    auto dfOtherPoint = dfLastPoint.Define("fOtherPoint",
+                                           [](ActRoot::TPCData& d)
                                            {
-        if(d.fClusters.size() != 1)
-        {
-            ROOT::Math::XYZPointF otherPoint {-1000, -1000, -2000};
-            return otherPoint;
-        }
-        else
-        {
-            auto cluster {d.fClusters[0]};
-            auto line {cluster.GetRefToLine()};
-            auto otherPoint {line.MoveToX(-50)}; // !!!!
-            return otherPoint;
-        } }, {"TPCData"});
+                                               if(d.fClusters.size() != 1)
+                                               {
+                                                   ROOT::Math::XYZPointF otherPoint {-1000, -1000, -2000};
+                                                   return otherPoint;
+                                               }
+                                               else
+                                               {
+                                                   auto cluster {d.fClusters[0]};
+                                                   auto line {cluster.GetRefToLine()};
+                                                   auto otherPoint {line.MoveToX(-50)}; // !!!!
+                                                   return otherPoint;
+                                               }
+                                           },
+                                           {"TPCData"});
 
     // Define the coordinates of the points
-    auto dfXY = dfOtherPoint
-                    .Define("fLastX", "fLastPoint.X()")
+    auto dfXY = dfOtherPoint.Define("fLastX", "fLastPoint.X()")
                     .Define("fLastY", "fLastPoint.Y()")
                     .Define("fOtherX", "fOtherPoint.X()")
                     .Define("fOtherY", "fOtherPoint.Y()");
 
     // Plot
-    auto c = new TCanvas("c", "Points XY", 1000, 500);
-    auto hLast = dfXY.Histo2D({"hLast", "LastPoint XY;X [pads];Y [pads]", 1000, -100, 100, 1000, -100, 100}, "fLastX", "fLastY");
-    auto hOther = dfXY.Histo2D({"hOther", "OtherPoint XY;X [pads];Y [pads]", 1000, -100, 100, 1000, -100, 100}, "fOtherX", "fOtherY");
-    hLast->DrawClone("colz");
-    hOther->DrawClone("same");
+    // auto c = new TCanvas("c", "Points XY", 1000, 500);
+    // auto hLast =
+    //     dfXY.Histo2D({"hLast", "LastPoint XY;X [pads];Y [pads]", 1000, -100, 100, 1000, -100, 100}, "fLastX",
+    //     "fLastY");
+    // auto hOther = dfXY.Histo2D({"hOther", "OtherPoint XY;X [pads];Y [pads]", 1000, -100, 100, 1000, -100, 100},
+    //                            "fOtherX", "fOtherY");
+    // hLast->DrawClone("colz");
+    // hOther->DrawClone("same");
 
-    // Create the lines and draw them with the foreach
-    int counter = 0;
-    dfXY.Foreach(
-        [&](float otherX, float otherY, float lastX, float lastY)
-        {
-            counter++;
-            auto line = new TLine(otherX, otherY, lastX, lastY);
-            line->SetLineColorAlpha(kBlue, 0.3); // transparente para ver cruces
-            if (counter % 50 == 0 && lastX > 5 && lastX < 60)
-                line->Draw("same");
-        },
-        {"fOtherX", "fOtherY", "fLastX", "fLastY"});
+    // // Create the lines and draw them with the foreach
+    // int counter = 0;
+    // dfXY.Foreach(
+    //     [&](float otherX, float otherY, float lastX, float lastY)
+    //     {
+    //         counter++;
+    //         auto line = new TLine(otherX, otherY, lastX, lastY);
+    //         line->SetLineColorAlpha(kBlue, 0.3); // transparente para ver cruces
+    //         if(counter % 50 == 0 && lastX > 5 && lastX < 60)
+    //             line->Draw("same");
+    //     },
+    //     {"fOtherX", "fOtherY", "fLastX", "fLastY"});
 
     // With the plot I guess the alpha source is at (-27, 41)
-    float xSource{-29.};
-    float ySource{39.};
+    float xSource {-29.};
+    float ySource {39.};
 
-    auto dfDrift = dfXY.Define("fDeltaZ", [&](ActRoot::TPCData &d, ROOT::Math::XYZPointF& otherPoint)
-                               {
-        if(d.fClusters.size() != 1)
-            return -1000.;
-        else
-        {
-            auto cluster {d.fClusters[0]};
-            auto line {cluster.GetRefToLine()};
-            line.AlignUsingPoint(otherPoint);
-            auto dir {line.GetDirection()};
-            cluster.SortAlongDir(dir);
-            //auto firstVoxel {cluster.GetRefToVoxels().front()};
-            //auto projectionFirstPointLine {line.ProjectionPointOnLine(firstVoxel.GetPosition())};
-            auto lastVoxel {cluster.GetRefToVoxels().back()};
-            auto projectionLastPointLine {line.ProjectionPointOnLine(lastVoxel.GetPosition())};
-            auto zSource {line.MoveToX(xSource).Z()};
-            double deltaZ = projectionLastPointLine.Z() - zSource;
-            return deltaZ *0.32; // Conversion factor from bin time bucket to micro seconds. 4 time buckets in 1 bin time bucket. 1 time bucket is 12.5MHz.
-        } }, {"TPCData", "fOtherPoint"})
-        .Define("fLxy", [&](ActRoot::TPCData &d)
-                               {
-        if(d.fClusters.size() != 1)
-            return -1000.;
-        else
-        {
-            auto cluster {d.fClusters[0]};
-            auto line {cluster.GetRefToLine()};
-            auto dir {line.GetDirection()};
-            cluster.SortAlongDir(dir);
-            auto lastVoxel {cluster.GetRefToVoxels().back()};
-            auto projectionPointLine {line.ProjectionPointOnLine(lastVoxel.GetPosition())};
-            double lxy = TMath::Sqrt(TMath::Power(projectionPointLine.X() - xSource, 2) + TMath::Power(projectionPointLine.Y() - ySource, 2));
-            return lxy * 2; // Conversion factor from pads to mm
-        } }, {"TPCData"})
-        .Define("fDeltaZSquare", "fDeltaZ * fDeltaZ")
-        .Define("fLxySquare", "fLxy * fLxy");
+    auto dfDrift =
+        dfXY.Define("fDeltaZ",
+                    [&](ActRoot::TPCData& d, ROOT::Math::XYZPointF& otherPoint)
+                    {
+                        if(d.fClusters.size() != 1)
+                            return -1000.;
+                        else
+                        {
+                            auto cluster {d.fClusters[0]};
+                            auto line {cluster.GetRefToLine()};
+                            line.AlignUsingPoint(otherPoint);
+                            auto dir {line.GetDirection()};
+                            cluster.SortAlongDir(dir);
+                            // auto firstVoxel {cluster.GetRefToVoxels().front()};
+                            // auto projectionFirstPointLine {line.ProjectionPointOnLine(firstVoxel.GetPosition())};
+                            auto lastVoxel {cluster.GetRefToVoxels().back()};
+                            auto projectionLastPointLine {line.ProjectionPointOnLine(lastVoxel.GetPosition())};
+                            auto zSource {line.MoveToX(xSource).Z()};
+                            double deltaZ = projectionLastPointLine.Z() - zSource;
+                            return deltaZ * 0.32; // Conversion factor from bin time bucket to micro seconds. 4 time
+                                                  // buckets in 1 bin time bucket. 1 time bucket is 12.5MHz.
+                        }
+                    },
+                    {"TPCData", "fOtherPoint"})
+            .Define("fLxy",
+                    [&](ActRoot::TPCData& d)
+                    {
+                        if(d.fClusters.size() != 1)
+                            return -1000.;
+                        else
+                        {
+                            auto cluster {d.fClusters[0]};
+                            auto line {cluster.GetRefToLine()};
+                            auto dir {line.GetDirection()};
+                            cluster.SortAlongDir(dir);
+                            auto lastVoxel {cluster.GetRefToVoxels().back()};
+                            auto projectionPointLine {line.ProjectionPointOnLine(lastVoxel.GetPosition())};
+                            double lxy = TMath::Sqrt(TMath::Power(projectionPointLine.X() - xSource, 2) +
+                                                     TMath::Power(projectionPointLine.Y() - ySource, 2));
+                            return (lxy * 2) / 10; // Conversion factor from pads to cm
+                        }
+                    },
+                    {"TPCData"})
+            .Define("fDeltaZSquare", "fDeltaZ * fDeltaZ")
+            .Define("fLxySquare", "fLxy * fLxy");
 
     // Plot the DeltaZ and lxy
     auto graphDrift = dfDrift.Graph("fDeltaZ", "fLxy");
-    graphDrift->SetTitle("Delta Z vs Lxy;#Delta Z [#mus]; Lxy [mm]");
+    graphDrift->SetTitle("Delta Z vs Lxy;#Delta Z [#mus]; Lxy [cm]");
     graphDrift->GetXaxis()->SetRangeUser(-20, 10);
-    graphDrift->GetYaxis()->SetRangeUser(-0, 300);
+    graphDrift->GetYaxis()->SetRangeUser(-0, 30);
 
     // Linearize the graph
     auto graphDriftLinear = dfDrift.Graph("fDeltaZSquare", "fLxySquare");
-    graphDriftLinear->SetTitle("Delta Z^2 vs Lxy^2;#Delta Z^2 [#mus^2]; Lxy^2 [mm^2]");
+    graphDriftLinear->SetTitle("Delta Z^2 vs Lxy^2;#Delta Z^2 [#mus^2]; Lxy^2 [cm^2]");
 
     auto c1 = new TCanvas("c1", "Delta Z vs Lxy", 1400, 800);
     c1->DivideSquare(2);
@@ -150,21 +170,20 @@ void vDriftfromAlpha()
     // Cuts for good events (no broad region) and for each line
     ActRoot::CutsManager<std::string> cuts;
     // Gas PID
-    cuts.ReadCut("goodEvents", "./cut_DriftVelocity_GoodAlphaEvents_run62.root");
-    cuts.ReadCut("first", "./cut_firstPeak_run62.root");
-    cuts.ReadCut("second", "./cut_secondPeak_run62.root");
-    cuts.ReadCut("third", "./cut_thirdPeak_run62.root");
+    cuts.ReadCut("goodEvents", "./Cuts/cut_DriftVelocity_GoodAlphaEvents_run62.root");
+    cuts.ReadCut("first", "./Cuts/cut_firstPeak_run62.root");
+    cuts.ReadCut("second", "./Cuts/cut_secondPeak_run62.root");
+    cuts.ReadCut("third", "./Cuts/cut_thirdPeak_run62.root");
     c1->cd(1);
     cuts.DrawCut("goodEvents");
 
     auto dfFiltered = dfDrift.Filter([&](double lxy, double deltaZ)
-                                     { return cuts.IsInside("goodEvents", deltaZ, lxy); },
-                                     {"fLxy", "fDeltaZ"});
+                                     { return cuts.IsInside("goodEvents", deltaZ, lxy); }, {"fLxy", "fDeltaZ"});
 
     auto graphDriftFiltered = dfFiltered.Graph("fDeltaZ", "fLxy");
-    graphDriftFiltered->SetTitle("Delta Z vs Lxy ;#Delta Z [#mus]; Lxy [mm]");
+    graphDriftFiltered->SetTitle("Delta Z vs Lxy ;#Delta Z [#mus]; Lxy [cm]");
     auto graphDriftFilteredLinear = dfFiltered.Graph("fDeltaZSquare", "fLxySquare");
-    graphDriftFilteredLinear->SetTitle("Delta Z^2 vs Lxy^2;#Delta Z^2 [#mus^2];Lxy^2 [mm^2]");
+    graphDriftFilteredLinear->SetTitle("Delta Z^2 vs Lxy^2;#Delta Z^2 [#mus^2];Lxy^2 [cm^2]");
     auto c2 = new TCanvas("c2", "Delta Z vs Lxy filtered", 1400, 800);
     c2->DivideSquare(2);
     c2->cd(1);
@@ -173,28 +192,26 @@ void vDriftfromAlpha()
     graphDriftFilteredLinear->DrawClone("AP");
 
     // Do graphs for each peak
-    auto dfFirst = dfFiltered.Filter([&](double lxy2, double deltaZ2)
-                                     { return cuts.IsInside("first", deltaZ2, lxy2); },
+    auto dfFirst = dfFiltered.Filter([&](double lxy2, double deltaZ2) { return cuts.IsInside("first", deltaZ2, lxy2); },
                                      {"fLxySquare", "fDeltaZSquare"});
     auto graphDriftLineFirst = dfFirst.Graph("fDeltaZSquare", "fLxySquare");
-    graphDriftLineFirst->SetTitle("Delta Z^2 vs Lxy^2 (first peak);#Delta Z^2 [#mus^2];Lxy^2 [mm^2]");
+    graphDriftLineFirst->SetTitle("Delta Z^2 vs Lxy^2 (first peak);#Delta Z^2 [#mus^2];Lxy^2 [cm^2]");
     graphDriftLineFirst->Fit("pol1");
-    auto f1{graphDriftLineFirst->GetFunction("pol1")};
+    auto f1 {graphDriftLineFirst->GetFunction("pol1")};
     f1->SetLineColor(kRed);
-    auto dfSecond = dfFiltered.Filter([&](double lxy2, double deltaZ2)
-                                      { return cuts.IsInside("second", deltaZ2, lxy2); },
-                                      {"fLxySquare", "fDeltaZSquare"});
+    auto dfSecond =
+        dfFiltered.Filter([&](double lxy2, double deltaZ2) { return cuts.IsInside("second", deltaZ2, lxy2); },
+                          {"fLxySquare", "fDeltaZSquare"});
     auto graphDriftLineSecond = dfSecond.Graph("fDeltaZSquare", "fLxySquare");
-    graphDriftLineSecond->SetTitle("Delta Z^2 vs Lxy^2 (second peak);#Delta Z^2 [#mus^2];Lxy^2 [mm^2]");
+    graphDriftLineSecond->SetTitle("Delta Z^2 vs Lxy^2 (second peak);#Delta Z^2 [#mus^2];Lxy^2 [cm^2]");
     graphDriftLineSecond->Fit("pol1");
-    auto f2{graphDriftLineSecond->GetFunction("pol1")};
-    auto dfThird = dfFiltered.Filter([&](double lxy2, double deltaZ2)
-                                     { return cuts.IsInside("third", deltaZ2, lxy2); },
+    auto f2 {graphDriftLineSecond->GetFunction("pol1")};
+    auto dfThird = dfFiltered.Filter([&](double lxy2, double deltaZ2) { return cuts.IsInside("third", deltaZ2, lxy2); },
                                      {"fLxySquare", "fDeltaZSquare"});
     auto graphDriftLineThird = dfThird.Graph("fDeltaZSquare", "fLxySquare");
-    graphDriftLineThird->SetTitle("Delta Z^2 vs Lxy^2 (third peak);#Delta Z^2 [#mus^2];Lxy^2 [mm^2]");
+    graphDriftLineThird->SetTitle("Delta Z^2 vs Lxy^2 (third peak);#Delta Z^2 [#mus^2];Lxy^2 [cm^2]");
     graphDriftLineThird->Fit("pol1");
-    auto f3{graphDriftLineThird->GetFunction("pol1")};
+    auto f3 {graphDriftLineThird->GetFunction("pol1")};
 
     auto c3 = new TCanvas("c3", "Delta Z vs Lxy lines", 2100, 700);
     c3->DivideSquare(3);
@@ -216,12 +233,68 @@ void vDriftfromAlpha()
     f3->SetLineColor(kBlue);
     f3->DrawClone("same");
     // Text of the fit parameters
-    auto t1 = new TLatex(50, 30000, TString::Format("First peak: Vdrift = %.2f#pm%.2f ", TMath::Sqrt(-f1->GetParameter(1)), TMath::Sqrt(f1->GetParError(1))));
-    auto t2 = new TLatex(50, 28000, TString::Format("Second peak: Vdrift = %.2f#pm%.2f", TMath::Sqrt(-f2->GetParameter(1)), TMath::Sqrt(f2->GetParError(1))));
-    auto t3 = new TLatex(50, 25000, TString::Format("Third peak: Vdrift = %.2f#pm%.2f", TMath::Sqrt(-f3->GetParameter(1)), TMath::Sqrt(f3->GetParError(1))));
+    auto t1 = new TLatex(50, 300,
+                         TString::Format("First peak: Vdrift = %.2f#pm%.2f ", TMath::Sqrt(-f1->GetParameter(1)),
+                                         TMath::Sqrt(f1->GetParError(1))));
+    auto t2 = new TLatex(50, 280,
+                         TString::Format("Second peak: Vdrift = %.2f#pm%.2f", TMath::Sqrt(-f2->GetParameter(1)),
+                                         TMath::Sqrt(f2->GetParError(1))));
+    auto t3 = new TLatex(50, 250,
+                         TString::Format("Third peak: Vdrift = %.2f#pm%.2f", TMath::Sqrt(-f3->GetParameter(1)),
+                                         TMath::Sqrt(f3->GetParError(1))));
     t1->DrawClone();
     t2->DrawClone();
     t3->DrawClone();
 
-    
+    // Compare with graph from Garfield
+    std::ifstream fIn("./Inputs/Garfield_H2-iC4H10_95-5_618mbar.txt");
+    if(!fIn.is_open())
+    {
+        std::cout << "Did not find Garfield file" << std::endl;
+        return;
+    }
+    auto* hTheo = new TGraph();
+    int n {0};
+    std::string line;
+    int iline {0};
+    while(std::getline(fIn, line))
+    {
+        iline++;
+        if(iline < 10)
+            continue;
+        if(iline > 32)
+            break;
+        std::istringstream iss(line);
+        double E, V;
+        if(!(iss >> E >> V))
+            continue;
+        // convert 618mbar calculation to 760mbar
+        double E_conv {E*760./618.};
+        hTheo->SetPoint(n, E_conv, V);
+        n++;
+    }
+    fIn.close();
+    auto c4 = new TCanvas("c4", "Theory Comparison", 800, 600);
+    c4->cd();
+    hTheo->SetLineColor(kRed);
+    hTheo->SetTitle("Drift vs E;E [V/cm];Drift [cm/us]");
+    hTheo->Draw("AL");
+    auto* hDrift = new TGraphErrors(0);
+    auto aveDrift {TMath::Mean(3, (double[]) {TMath::Sqrt(-f1->GetParameter(1)), TMath::Sqrt(-f2->GetParameter(1)),
+                                              TMath::Sqrt(-f3->GetParameter(1))})};
+
+    hDrift->SetPoint(0, (6450. - 480.) / 23.5, aveDrift);
+    hDrift->SetPointError(0, 0,
+                          TMath::Mean(3, (double[]) {TMath::Sqrt(f1->GetParError(1)), TMath::Sqrt(f2->GetParError(1)),
+                                                     TMath::Sqrt(f3->GetParError(1))}));
+    hDrift->SetMarkerStyle(20);
+    hDrift->SetMarkerSize(1.2);
+    hDrift->SetMarkerColor(kBlue);
+    hDrift->Draw("P same");
+
+
+    auto l = new TLegend(0.65, 0.1, 0.9, 0.3);
+    l->AddEntry(hDrift, "Drift measurement");
+    l->AddEntry(hTheo, "Garfield");
+    l->Draw();
 }
