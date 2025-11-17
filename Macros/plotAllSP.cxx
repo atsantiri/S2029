@@ -54,13 +54,15 @@ void plotAllSP()
             {
                 if(hs[layer].count(n))
                 {
-                    if(layer == "f0"){
-                        zOffset = 50;
-                        hs[layer][n].Get()->Fill(sp.Y(), sp.Z()-zOffset);
-                    }else
+                    if(layer == "f0")
                     {
-                        zOffset = 150;
-                        hs[layer][n].Get()->Fill(sp.X(), sp.Z()-zOffset);
+                        zOffset = 60;
+                        hs[layer][n].Get()->Fill(sp.Y(), sp.Z() - zOffset);
+                    }
+                    else
+                    {
+                        zOffset = 152;
+                        hs[layer][n].Get()->Fill(sp.X(), sp.Z() - zOffset);
                         (layer == "l0") ? lstat++
                                         : rstat++; // keep track of stats for L and R to check they're symmetric
                     }
@@ -75,7 +77,7 @@ void plotAllSP()
     {
         auto lname {TString(layer)};
         lname.ToUpper();
-        auto c = new TCanvas {lname, lname, 800, 600};
+        auto c = new TCanvas(lname.Data(), lname.Data(), 800, 600);
 
         int idx {0};
         std::cout << hsils.size() << " histograms for layer " << lname << std::endl;
@@ -88,7 +90,7 @@ void plotAllSP()
             // Merge histos from threads
             h.Merge();
             h->SetStats(false);
-            h->SetTitle(lname);
+            h->SetTitle(lname.Data());
             // Set color
             h->SetMarkerColor(color);
             h->SetLineColor(color);
@@ -99,6 +101,7 @@ void plotAllSP()
             idx++;
         }
         makeGrid(layer);
+        c->SaveAs(Form("Outputs/SPs_%s.png", lname.Data()));
     }
     std::cout << "Number of counts for R0: " << rstat << " and L0: " << lstat << std::endl;
 }
