@@ -22,7 +22,7 @@ void timeL1Cum()
     chain->AddFriend(chain3.get());
 
     ActRoot::TPCParameters fTPC {"Actar"};
-    int rebinZ {fTPC->GetREBINZ()};
+    // int rebinZ {fTPC->GetREBINZ()};
 
     ROOT::EnableImplicitMT();
     ROOT::RDataFrame d {*chain};

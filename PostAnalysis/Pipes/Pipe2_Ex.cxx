@@ -21,7 +21,7 @@
 
 #include "../HistConfig.h"
 
-void Pipe2_Ex_p(const std::string& beam, const std::string& target, const std::string& light)
+void Pipe2_Ex(const std::string& beam, const std::string& target, const std::string& light)
 {
     // Read data
     auto filename {TString::Format("./Outputs/tree_pid_%s_%s_%s.root", beam.c_str(), target.c_str(), light.c_str())};
@@ -36,10 +36,6 @@ void Pipe2_Ex_p(const std::string& beam, const std::string& target, const std::s
         srimName = "2H";
     else if(light == "p")
         srimName = "1H";
-    else if(light == "t")
-        srimName = "3H";
-    else if(light == "3He")
-        srimName = "3He";
     else if(light == "4He")
         srimName = "4He";
     srim->ReadTable(light,

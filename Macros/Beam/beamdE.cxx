@@ -24,7 +24,7 @@
 
 TH1D* make_dE(int run, TCanvas* c, TLegend* l, int pad)
 {
-    ActRoot::DataManager dataman {"../configs/data.conf", ActRoot::ModeType::EMerge};
+    ActRoot::DataManager dataman {"../../configs/data.conf", ActRoot::ModeType::EMerge};
     dataman.SetRuns(run, run);
     auto chain {dataman.GetChain()};
     auto chain2 {dataman.GetChain(ActRoot::ModeType::EFilter)};
@@ -108,9 +108,9 @@ TH1D* do_simu(const std::string p, TCanvas* c, TLegend* l, int color)
     };
 
     std::vector<std::pair<const char*, TString>> tables = {
-        {"beamInMylar", TString::Format("../Simulation/SRIM/%s_mylar.txt", p.c_str())},
-        {"beamIniC4H10", TString::Format("../Simulation/SRIM/%s_iC4H10_6mbar.txt", p.c_str())},
-        {"beamInACTARgas", TString::Format("../Simulation/SRIM/%s_H2-iC4H10_95-5_700mbar.txt", p.c_str())}};
+        {"beamInMylar", TString::Format("../../Simulation/SRIM/%s_mylar.txt", p.c_str())},
+        {"beamIniC4H10", TString::Format("../../Simulation/SRIM/%s_iC4H10_6mbar.txt", p.c_str())},
+        {"beamInACTARgas", TString::Format("../../Simulation/SRIM/%s_H2-iC4H10_95-5_700mbar.txt", p.c_str())}};
 
     for(const auto& [label, path] : tables)
     {

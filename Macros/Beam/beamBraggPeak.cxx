@@ -17,7 +17,7 @@ void beamBraggPeak()
 
     bool compare_with_simu {true};
 
-    ActRoot::DataManager dataman {"../configs/data.conf", ActRoot::ModeType::EMerge};
+    ActRoot::DataManager dataman {"../../configs/data.conf", ActRoot::ModeType::EMerge};
     dataman.SetRuns(49, 49);
     auto chain {dataman.GetChain()};
     auto chain2 {dataman.GetChain(ActRoot::ModeType::EFilter)};
@@ -94,7 +94,7 @@ void beamBraggPeak()
     {
 
         auto* srim {new ActPhysics::SRIM()};
-        srim->ReadTable("beamInGas", "../Simulation/SRIM/17F_H2-iC4H10_95-5_760mbar.txt");
+        srim->ReadTable("beamInGas", "../../Simulation/SRIM/17F_H2-iC4H10_95-5_760mbar.txt");
         ActPhysics::Particle p {"17F"};
 
         std::vector<double> energies;

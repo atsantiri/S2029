@@ -21,7 +21,7 @@
 
 void calcEBeamIni()
 {
-    ActRoot::DataManager dataman {"../configs/data.conf", ActRoot::ModeType::EMerge};
+    ActRoot::DataManager dataman {"../../configs/data.conf", ActRoot::ModeType::EMerge};
     // dataman.SetRuns(49, 65);
     dataman.SetRuns(49, 49);
     auto chain {dataman.GetChain()};
@@ -81,7 +81,7 @@ void calcEBeamIni()
     auto* srim {new ActPhysics::SRIM()};
     ActPhysics::Particle beam {"17F"};
     ActPhysics::Particle target {"p"};
-    srim->ReadTable("beamInGas", "../Simulation/SRIM/17F_H2-iC4H10_95-5_760mbar.txt");
+    srim->ReadTable("beamInGas", "../../Simulation/SRIM/17F_H2-iC4H10_95-5_760mbar.txt");
 
     auto qval {3.9231};
     auto resonance {6.150};

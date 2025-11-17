@@ -18,7 +18,7 @@
 void p2p()
 {
     // the three body vertices exist only in the filter data. So we start from there.
-    ActRoot::DataManager dataman {"../configs/data.conf", ActRoot::ModeType::EFilter};
+    ActRoot::DataManager dataman {"../../configs/data.conf", ActRoot::ModeType::EFilter};
     auto chain {dataman.GetChain()};
     // The run numbers and event entry exist in the merger data so we want that too.
     auto chain2 {dataman.GetChain(ActRoot::ModeType::EMerge)};
@@ -66,7 +66,7 @@ void p2p()
 
     // srim files
     auto* srim {new ActPhysics::SRIM};
-    srim->ReadTable("beamInGas", "../Simulation/SRIM/17F_H2-iC4H10_95-5_760mbar.txt");
+    srim->ReadTable("beamInGas", "../../Simulation/SRIM/17F_H2-iC4H10_95-5_760mbar.txt");
 
 
     auto def {df_filtered
@@ -104,7 +104,7 @@ void p2p()
 
     auto df_res{def.Filter([&](double ex){return (ex>=6. && ex<=6.3);},{"ECN"})};
 
-    std::ofstream streamer {"Outputs/p2p_resonance.txt"};
+    std::ofstream streamer {"../Outputs/p2p_resonance.txt"};
     df_res.Foreach([&](ActRoot::MergerData& mer) { mer.Stream(streamer); }, {"MergerData"});
     streamer.close();
 
@@ -115,5 +115,5 @@ void p2p()
     hRPx->DrawClone();
     c0->cd(2);
     hEcn->DrawClone();
-    c0->SaveAs("./Outputs/p2p_Ex_20Ne.png");
+    c0->SaveAs("../Outputs/p2p_Ex_20Ne.png");
 }

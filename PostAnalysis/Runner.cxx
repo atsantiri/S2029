@@ -41,11 +41,8 @@ void Runner(TString what = "")
     // Kin + Ex
     if(what.Contains("2"))
     {
-        if(light == "4He")
-            func = "Pipe2_Ex_alpha";
-        else
-            func = "Pipe2_Ex_p";
 
+        func = "Pipe2_Ex";
         gROOT->LoadMacro(path + func + ext);
         gROOT->ProcessLine(func + args);
     }

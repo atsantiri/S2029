@@ -10,7 +10,7 @@
 
 void beamEmittance()
 {
-    ActRoot::DataManager dataman {"../configs/data.conf", ActRoot::ModeType::EFilter};
+    ActRoot::DataManager dataman {"../../configs/data.conf", ActRoot::ModeType::EFilter};
     auto chain {dataman.GetChain()};
     auto chain2 {dataman.GetChain(ActRoot::ModeType::EReadSilMod)};
     chain->AddFriend(chain2.get());

@@ -15,7 +15,7 @@
 void count_L1ok_events()
 {
     std::string dataconf {};
-    dataconf = "./../configs/data.conf";
+    dataconf = "../../configs/data.conf";
 
     // ROOT::EnableImplicitMT();
     // Read data
@@ -36,7 +36,7 @@ void count_L1ok_events()
     std::atomic<unsigned long int> l1ok_gat {};
     std::atomic<unsigned long int> l1ok_inc {};
 
-    std::ofstream streamer {"./Outputs/events_L1ok.txt"};
+    std::ofstream streamer {"../Outputs/events_L1ok.txt"};
 
     def.Foreach(
         [&](const int& gatconf, const int& inconf, ActRoot::MergerData& mer)

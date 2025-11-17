@@ -6,24 +6,22 @@
 #include "ROOT/TThreadedObject.hxx"
 
 #include "TCanvas.h"
+
 #include <map>
 
 void makeGrid(std::string layer)
 {
     ActPhysics::SilSpecs specs;
-    specs.ReadFile("../configs/silspecs.conf");
+    specs.ReadFile("../../configs/silspecs.conf");
     auto sm {specs.GetLayer(layer).GetSilMatrix()->Clone()};
     auto& cuts = sm->GetGraphs();
     for(const auto& [id, cut] : cuts)
-    {
-        if(cut)
-            cut->Draw("same");
-    }
+        cut->Draw("same");
 }
 
-void plotSP()
+void plotAllSP()
 {
-    ActRoot::DataManager dataman {"../configs/data.conf", ActRoot::ModeType::EMerge};
+    ActRoot::DataManager dataman {"../../configs/data.conf", ActRoot::ModeType::EMerge};
     auto chain {dataman.GetChain()};
     ROOT::RDataFrame df {*chain};
 
@@ -37,9 +35,12 @@ void plotSP()
         for(int s = 0; s < nsils; s++)
         {
             hs[layer].emplace(s, *h2d);
-            hs[layer][s]->SetTitle(TString::Format("Layer %s", layer));
         }
     }
+    int rstat {0}, lstat {0};
+    // there is a trigger delay in the acquisition that sets the delay between the Si trigger and the moment at which
+    // the pad charges are read, therefore the Z axis needs to e shifted by an offset to match the Z position
+    double zOffset {0};
     df.Foreach(
         [&](ActRoot::MergerData& m)
         {
@@ -49,15 +50,22 @@ void plotSP()
             auto layer {m.fLight.fLayers.front()}; // ensured to have at least size >= 1
             auto n {m.fLight.fNs.front()};
             auto sp {m.fLight.fSP};
-
             if(hs.count(layer))
             {
                 if(hs[layer].count(n))
                 {
                     if(layer == "f0")
-                        hs[layer][n].Get()->Fill(sp.Y(), sp.Z());
+                    {
+                        zOffset = 60;
+                        hs[layer][n].Get()->Fill(sp.Y(), sp.Z() - zOffset);
+                    }
                     else
-                        hs[layer][n].Get()->Fill(sp.X(), sp.Z());
+                    {
+                        zOffset = 152;
+                        hs[layer][n].Get()->Fill(sp.X(), sp.Z() - zOffset);
+                        (layer == "l0") ? lstat++
+                                        : rstat++; // keep track of stats for L and R to check they're symmetric
+                    }
                 }
             }
         },
@@ -69,44 +77,31 @@ void plotSP()
     {
         auto lname {TString(layer)};
         lname.ToUpper();
-        // auto c = new TCanvas {lname, lname, 800, 600};
-        TCanvas* c = nullptr;
+        auto c = new TCanvas(lname.Data(), lname.Data(), 800, 600);
 
-        if(layer == "l0" || layer == "r0")
-        {
-            c = new TCanvas(lname, lname, 600, 800);
-            c->Divide(3, 4);
-        }
-        else if(layer == "f0")
-        {
-            c = new TCanvas(lname, lname, 800, 600);
-            c->Divide(4, 3);
-        }
-        // c0->cd(p);
-        int idx {};
+        int idx {0};
         std::cout << hsils.size() << " histograms for layer " << lname << std::endl;
         for(auto& [s, h] : hsils)
         {
-            c->cd(idx + 1);
             auto color {idx + 1};
             if(color == 10) // 10 is white, as well as 0
                 color = 46;
             auto opts {(idx == 0) ? "BOX" : "BOX same"};
             // Merge histos from threads
             h.Merge();
+            h->SetStats(false);
+            h->SetTitle(lname.Data());
             // Set color
             h->SetMarkerColor(color);
             h->SetLineColor(color);
             // Set size
             h->SetMarkerStyle(6);
-            // Set title
-            h->SetTitle(TString::Format("%s_%d", lname.Data(), s));
             // Draw
-            h->DrawClone("BOX");
-
-            // make grid for comparison
-            makeGrid(layer);
+            h->DrawClone(opts);
             idx++;
         }
+        makeGrid(layer);
+        c->SaveAs(Form("../Outputs/SPs_%s.png", lname.Data()));
     }
+    std::cout << "Number of counts for R0: " << rstat << " and L0: " << lstat << std::endl;
 }

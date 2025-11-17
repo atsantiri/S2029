@@ -14,7 +14,7 @@
 
 void findFunEvts()
 {
-    ActRoot::DataManager dataman {"../configs/data.conf", ActRoot::ModeType::EFilter};
+    ActRoot::DataManager dataman {"../../configs/data.conf", ActRoot::ModeType::EFilter};
     auto chain {dataman.GetChain()};
     auto chain2 {dataman.GetChain(ActRoot::ModeType::EMerge)};
     chain->AddFriend(chain2.get());
@@ -41,7 +41,7 @@ void findFunEvts()
         // {"TPCData"})
     };
 
-    std::ofstream streamer {"Outputs/funEvts_many_clusters.txt"};
+    std::ofstream streamer {"../Outputs/funEvts_many_clusters.txt"};
     df_filtered.Foreach([&](ActRoot::MergerData& mer) { mer.Stream(streamer); }, {"MergerData"});
     streamer.close();
 
