@@ -40,8 +40,7 @@ void plotAllSP()
     int rstat {0}, lstat {0};
     // there is a trigger delay in the acquisition that sets the delay between the Si trigger and the moment at which
     // the pad charges are read, therefore the Z axis needs to e shifted by an offset to match the Z position
-    double zOffset {150};
-    std::cout<<zOffset<<std::endl; 
+    double zOffset {0};
     df.Foreach(
         [&](ActRoot::MergerData& m)
         {
@@ -55,10 +54,12 @@ void plotAllSP()
             {
                 if(hs[layer].count(n))
                 {
-                    if(layer == "f0")
+                    if(layer == "f0"){
+                        zOffset = 50;
                         hs[layer][n].Get()->Fill(sp.Y(), sp.Z()-zOffset);
-                    else
+                    }else
                     {
+                        zOffset = 150;
                         hs[layer][n].Get()->Fill(sp.X(), sp.Z()-zOffset);
                         (layer == "l0") ? lstat++
                                         : rstat++; // keep track of stats for L and R to check they're symmetric
