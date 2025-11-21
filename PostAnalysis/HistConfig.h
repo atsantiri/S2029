@@ -56,7 +56,7 @@ const TH2DModel ELightTL {"hELight", "Alpha energy vs Track Length;TL [mm];E_{a}
 
 const TH1DModel ECM {"hECM", "E_{CM};E_{CM} [MeV];Counts / 25 keV", 100, 0, 5};
 const TH2DModel RPxECM {"hRPxECM", "ECM vs RP.X;RP.X [mm];E_{CM} [MeV]", 200, 0, 300, 150, 0, 15};
-
+const TH2DModel EcmESi {"hEcmESi", "ECM vs E_Si; ESi [MeV]; ECM [MeV]", 150, 0, 15, 150, -2, 15};
 
 template <typename T>
 T ChangeTitle(T model, const TString& title, const TString& label = "");

@@ -7,8 +7,8 @@
 
 void compKin()
 {
-    ActPhysics::Kinematics kp {"17F(p,p)@50"};
-    ActPhysics::Kinematics ka {"17F(p,a)@50"};
+    ActPhysics::Kinematics kp {"17F(p,p)@65.5"};
+    ActPhysics::Kinematics ka {"17F(p,a)@65.5"};
 
     auto* mg {new TMultiGraph};
     mg->SetTitle("Kin comparison;#theta_{Lab} [#circ];E_{Lab} [MeV]");
@@ -25,4 +25,10 @@ void compKin()
     l->AddEntry(gp, gp->GetTitle());
     l->AddEntry(ga, ga->GetTitle());
     l->Draw();
+
+
+    auto* c1 {new TCanvas{"c1", "Theta Lab vs CM elastic"}};
+    auto* gThetaLabvsCM {kp.GetThetaLabvsThetaCMLine()};
+    gThetaLabvsCM->Draw();
+
 }

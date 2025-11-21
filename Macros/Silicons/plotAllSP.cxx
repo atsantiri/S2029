@@ -6,7 +6,6 @@
 #include "ROOT/TThreadedObject.hxx"
 
 #include "TCanvas.h"
-
 #include <map>
 
 void makeGrid(std::string layer)
@@ -25,10 +24,9 @@ void plotAllSP()
     auto chain {dataman.GetChain()};
     ROOT::RDataFrame df {*chain};
 
-    // Fill histograms
     int nsils {12};
     std::map<std::string, std::map<int, ROOT::TThreadedObject<TH2D>>> hs;
-    // Histogram model
+
     auto* h2d {new TH2D {"h2d", ";X or Y [mm];Z [mm]", 200, -10, 300, 200, -10, 300}};
     for(const auto& layer : {"f0", "l0", "r0"})
     {
@@ -37,6 +35,7 @@ void plotAllSP()
             hs[layer].emplace(s, *h2d);
         }
     }
+
     int rstat {0}, lstat {0};
     // there is a trigger delay in the acquisition that sets the delay between the Si trigger and the moment at which
     // the pad charges are read, therefore the Z axis needs to e shifted by an offset to match the Z position
@@ -91,12 +90,9 @@ void plotAllSP()
             h.Merge();
             h->SetStats(false);
             h->SetTitle(lname.Data());
-            // Set color
             h->SetMarkerColor(color);
             h->SetLineColor(color);
-            // Set size
             h->SetMarkerStyle(6);
-            // Draw
             h->DrawClone(opts);
             idx++;
         }
