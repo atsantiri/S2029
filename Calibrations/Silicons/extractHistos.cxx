@@ -10,7 +10,7 @@ void extractHistos()
 {
 
     auto* chain = new TChain("VXITree");
-    const int run {66};
+    const int run {49};
     chain->Add(TString::Format("../../RootFiles/Data/Data_Run_00%02d.root", run));
     ROOT::RDataFrame df {*chain};
 
