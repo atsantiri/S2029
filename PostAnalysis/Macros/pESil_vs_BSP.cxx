@@ -5,7 +5,6 @@
 #include "ActKinematics.h"
 #include "ActMergerData.h"
 #include "ActParticle.h"
-#include "ActSRIM.h"
 
 #include "ROOT/RDataFrame.hxx"
 #include "Rtypes.h"
@@ -62,8 +61,9 @@ void pESil_vs_BSP()
     {
         hsEpBSP.push_back(new ROOT::TThreadedObject<TH2D>(
             TString::Format("hEpBSP%d", idx),
-            TString::Format("#theta_{lab} = %.0f^{o}; Beam-like Stopping Point [cm]; E_{Si} [MeV]", theta), 65, 150,
-            280, 150, 0, 15));
+            TString::Format("#theta_{lab} = %.0f^{o} +- %.0f^{o}; Beam-like Stopping Point [cm]; E_{Si} [MeV]",
+                            theta + step / 2., step / 2.),
+            65, 150, 280, 150, 0, 15));
 
         for(const auto& [key, args] : theoArgs)
         {
@@ -121,32 +121,23 @@ void pESil_vs_BSP()
     // Saw some weird stuff so I'm making a snapshot
     ActRoot::CutsManager<std::string> cuts;
 
-    // cuts.ReadCut("10", TString::Format("./Outputs/pESil_BSP_cut_10deg.root").Data());
-    cuts.ReadCut("15", TString::Format("./Outputs/pESil_BSP_cut_15deg.root").Data());
-    cuts.ReadCut("20", TString::Format("./Outputs/pESil_BSP_cut_20deg.root").Data());
+    cuts.ReadCut("cut", TString::Format("./Outputs/pESil_BSP_cut_left_tail.root").Data());
+    c0->cd(3);
+    cuts.DrawCut("cut");
 
-    std::ofstream streamer {"./Outputs/pESil_BSP_weird_events.dat"};
-    auto listOfCuts {cuts.GetListOfKeys()};
-    if(listOfCuts.size())
-    {
-        auto gated {df.Filter(
-            [&](double bsp, ActRoot::MergerData& m)
-            {
-                // if(cuts.GetCut("10"))
-                //     return cuts.IsInside("10", bsp, m.fLight.fEs.front());
-                // else
-                //     return false;
-                if(cuts.GetCut("15"))
-                    return cuts.IsInside("15", bsp, m.fLight.fEs.front());
-                else
-                    return false;
-                if(cuts.GetCut("20"))
-                    return cuts.IsInside("20", bsp, m.fLight.fEs.front());
-                else
-                    return false;
-            },
-            {"BSP", "MergerData"})};
+    // std::ofstream streamer {"./Outputs/pESil_BSP_2nd.dat"};
+    auto gated {df.Filter(
+        [&](double bsp, ActRoot::MergerData& m)
+        {
+            if(cuts.GetCut("cut"))
+                return cuts.IsInside("cut", bsp, m.fLight.fEs.front());
+            else
+                return false;
+        },
+        {"BSP", "MergerData"})};
 
-        gated.Foreach([&](ActRoot::MergerData& mer) { mer.Stream(streamer); }, {"MergerData"});
-    }
+    // gated.Foreach([&](ActRoot::MergerData& mer) { mer.Stream(streamer); }, {"MergerData"});
+    auto name {"./Outputs/tree_pESil_BSP_cut_left_tail.root"};
+    std::cout << "Saving PID_Tree in file : " << name << '\n';
+    gated.Snapshot("PID_Tree", name);
 }

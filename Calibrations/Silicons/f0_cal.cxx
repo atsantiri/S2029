@@ -68,7 +68,7 @@ void f0_cal()
 {
     std::string which {"f0"};
     std::string label {"F0"};
-    int run {1};
+    int run {66};
     std::string fIn = TString::Format("./Inputs/Si_calib_histos_run00%02d.root",run).Data();
     // Read data
     auto hs {ReadData(fIn, "F0", label)};
