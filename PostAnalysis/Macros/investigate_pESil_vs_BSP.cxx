@@ -24,14 +24,14 @@
 void investigate_pESil_vs_BSP()
 {
     // Read data
-    auto fIn {"./Outputs/tree_pESil_BSP_cut_left_tail.root"};
+    auto fIn {"./Outputs/tree_pESil_vs_BSP_good_events.root"};
     ROOT::EnableImplicitMT();
     ROOT::RDataFrame d {"PID_Tree", fIn};
 
 
     // read cut on poorly reconstructed events
     ActRoot::CutsManager<std::string> cuts;
-    cuts.ReadCut("cut", TString::Format("./Outputs/pESil_BSP_cut_left_tail.root").Data());
+    cuts.ReadCut("cut", TString::Format("./Outputs/pESil_vs_BSP_cut_good_events.root").Data());
 
     auto gated {d.Filter(
         [&](double bsp, ActRoot::MergerData& m)

@@ -87,9 +87,13 @@ void beamEmittance()
 
     // Print statistics
     std::cout << "-> Beginning : " << '\n';
+    std::cout << "   Mean Y : " << hEntry->GetMean(1) << '\n';
     std::cout << "   FWHM Y : " << hEntry->GetStdDev(1) * 2.35 << '\n';
+    std::cout << "   Mean Z : " << hEntry->GetMean(2) << '\n';
     std::cout << "   FWHM Z : " << hEntry->GetStdDev(2) * 2.35 << '\n';
     std::cout << "-> End       : " << '\n';
+    std::cout << "   Mean Y : " << hEnd->GetMean(1) << '\n';
     std::cout << "   FWHM Y : " << hEnd->GetStdDev(1) * 2.35 << '\n';
+    std::cout << "   Mean Z : " << hEnd->GetMean(2) << '\n';
     std::cout << "   FWHM Z : " << hEnd->GetStdDev(2) * 2.35 << '\n';
 }

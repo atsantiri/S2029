@@ -121,9 +121,12 @@ void pESil_vs_BSP()
     // Saw some weird stuff so I'm making a snapshot
     ActRoot::CutsManager<std::string> cuts;
 
-    cuts.ReadCut("cut", TString::Format("./Outputs/pESil_BSP_cut_left_tail.root").Data());
-    c0->cd(3);
-    cuts.DrawCut("cut");
+    cuts.ReadCut("cut", TString::Format("./Outputs/pESil_vs_BSP_cut_good_events.root").Data());
+    for(int i = 0; i < hsEpBSP.size(); i++)
+    {
+        c0->cd(i + 1);
+        cuts.DrawCut("cut");
+    }
 
     // std::ofstream streamer {"./Outputs/pESil_BSP_2nd.dat"};
     auto gated {df.Filter(
@@ -137,7 +140,7 @@ void pESil_vs_BSP()
         {"BSP", "MergerData"})};
 
     // gated.Foreach([&](ActRoot::MergerData& mer) { mer.Stream(streamer); }, {"MergerData"});
-    auto name {"./Outputs/tree_pESil_BSP_cut_left_tail.root"};
+    auto name {"./Outputs/tree_pESil_vs_BSP_good_events.root"};
     std::cout << "Saving PID_Tree in file : " << name << '\n';
     gated.Snapshot("PID_Tree", name);
 }
