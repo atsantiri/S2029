@@ -16,16 +16,14 @@ void ActAlgorithm::UserAction::UserAction::ReadConfiguration(std::shared_ptr<Act
     fIsEnabled = block->GetBool("IsEnabled");
     if(!fIsEnabled)
         return;
-    if(block->CheckTokenExists("fMinX"))
-        fMinX = block->GetDouble("fMinX");
-    if(block->CheckTokenExists("fQThreshold"))
-        fQThreshold = block->GetDouble("fQThreshold");
+    if(block->CheckTokenExists("MaxAngle"))
+        fMaxAngle = block->GetDouble("MaxAngle");
+    if(block->CheckTokenExists("MinLength"))
+        fMinLength = block->GetDouble("MinLength");
+    if(block->CheckTokenExists("CylinderR"))
+        fCylinderR = block->GetDouble("CylinderR");
 }
-// There is noise in the pad plane that sometimes gets picked up as part of the recoil track. This creates an artifact
-// in the proton ESil vs BSP plot, since the stopping point of the recoil includes the noise. We want to create a charge
-// threshold (fQThreshold) that is applied near the end of the pad plane (after fMinX), so the tracks of the recoil do
-// not include the noise.
-
+// There were in the 17O data tracks that were broken near the end. This will pick up small clusters that belong to the beam and merge them together with the rest of the beam.
 void ActAlgorithm::UserAction::Run()
 {
     auto& clusters {fTPCData->fClusters};
@@ -102,8 +100,9 @@ void ActAlgorithm::UserAction::Print() const
         std::cout << "······························" << RESET << '\n';
         return;
     }
-    std::cout << "  MinX       : " << fMinX << '\n';
-    std::cout << "  QThreshold : " << fQThreshold << RESET << '\n';
+    std::cout << "  MaxAngle       : " << fMaxAngle << '\n';
+    std::cout << "  MinLength      : " << fMinLength << '\n';
+    std::cout << "  CylinderRadius : " << fCylinderR << RESET << '\n';
 }
 
 // Create symbol to load class from .so

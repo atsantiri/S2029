@@ -37,6 +37,7 @@ const TH2DModel ExThetaLab {
     "hExThetaLab", "E_{x} vs #theta_{Lab};#theta_{Lab} [#circ];E_{x} [MeV]", 400, 0, 60, 200, -10, 20};
 
 const TH2DModel ExRPx {"hExRPX", "E_{x} vs RP.X;RP.X() [mm];E_{x} [MeV]", 200, -10, 300, 200, -10, 20};
+const TH2DModel EBeamRPx {"hEBeamRPX", "E_{Beam} vs RP.X;RP.X() [mm];E_{Beam} [MeV]", 200, -10, 300, 200, 0, 80};
 
 const TH2DModel EcnThetaCM {"hEcnThetaCM", "E_{CN} vs ThetaCM; E_{CN} [MeV];ThetaCM [#circ]", 200, 4., 8., 200, 0, 180};
 
@@ -56,7 +57,9 @@ const TH2DModel ELightTL {"hELight", "Alpha energy vs Track Length;TL [mm];E_{a}
 
 const TH1DModel ECM {"hECM", "E_{CM};E_{CM} [MeV];Counts / 25 keV", 100, 0, 5};
 const TH2DModel RPxECM {"hRPxECM", "ECM vs RP.X;RP.X [mm];E_{CM} [MeV]", 200, 0, 300, 150, 0, 15};
-const TH2DModel EcmESi {"hEcmESi", "ECM vs E_Si; ESi [MeV]; ECM [MeV]", 150, 0, 15, 150, -2, 15};
+const TH2DModel ExESi {"hExESi", "Ex vs E_Si; ESi [MeV]; Ex [MeV]", 150, 0, 15, 150, -2, 15};
+const TH2DModel EBeamCompare {"hEBeamCompare", "EBeam vs Reconstructed EBeam; EBeam [MeV]; Reconstructed EBeam [MeV]", 100, 0, 80, 100, 0, 80};
+
 
 template <typename T>
 T ChangeTitle(T model, const TString& title, const TString& label = "");

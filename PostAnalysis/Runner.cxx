@@ -38,11 +38,19 @@ void Runner(TString what = "")
         gROOT->LoadMacro(path + func + ext);
         gROOT->ProcessLine(func + args);
     }
-    // Kin + Ex
+    // ESil vs BSP plot to verify only gs contribution
     if(what.Contains("2"))
     {
 
-        func = "Pipe2_Ex";
+        func = "Pipe2_ESil_BSP";
+        gROOT->LoadMacro(path + func + ext);
+        gROOT->ProcessLine(func + args);
+    }
+    // Kin + Ex
+    if(what.Contains("3"))
+    {
+
+        func = "Pipe3_Ex";
         gROOT->LoadMacro(path + func + ext);
         gROOT->ProcessLine(func + args);
     }
@@ -53,10 +61,5 @@ void Runner(TString what = "")
     //     gROOT->LoadMacro(path + func + ext);
     //     gROOT->ProcessLine(func + args);
     // }
-    if(what.Contains("L"))
-    {
-        func = "L1_Pipe1_PID";
-        gROOT->LoadMacro(path + func + ext);
-        gROOT->ProcessLine(func + "()");
-    }
+
 }

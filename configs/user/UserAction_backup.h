@@ -5,8 +5,9 @@ namespace ActAlgorithm
 class UserAction : public VAction
 {
 public:
-    double fMinX {};       //!< Min distance traveled on the X axis for the charge threshold to be implemented, close to where we saw the noise
-    double fQThreshold {}; //!< Threshold in the collected charge for the pad to be included in the heavy recoil's track
+    double fMinLength {};      //!< Min length in X of the cluster set as reference
+    double fMaxAngle {};       //!< Max angle for reference cluster in DEGREES
+    double fCylinderR {};      //!< Radius of cylinder to compare if clusters overlap
 
 public:
     UserAction() : VAction("UserAction") {}
