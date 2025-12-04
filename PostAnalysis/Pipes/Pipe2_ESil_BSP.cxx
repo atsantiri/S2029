@@ -5,6 +5,7 @@
 #include "ActKinematics.h"
 #include "ActMergerData.h"
 #include "ActParticle.h"
+#include "ActTPCData.h"
 
 #include "ROOT/RDataFrame.hxx"
 #include "Rtypes.h"
@@ -48,9 +49,26 @@ void Pipe2_ESil_BSP(const std::string& beam, const std::string& target, const st
                    },
                    {"MergerData"});
 
+    // // Try to filter out poorly reconstructed BSPs
+    // auto filtered = df.Filter(
+    //     [&](double bsp, const ActRoot::MergerData& m, ActRoot::TPCData& tpc)
+    //     {
+    //         if(bsp >= 220.)
+    //         {
+    //             // need to somehow take only the clusters from the heavy particle
+    //             for(auto& cl : tpc.fClusters)
+    //             {
+
+    //                 auto voxels {cl.GetRefToVoxels()};
+    //             }
+    //         }
+    //     },
+    //     {"BSP", "MergerData", "GETTree_TPCData"});
+
+
     int thetamin {5};
-    int thetamax {35};
-    int step {5};
+    int thetamax {75};
+    int step {10};
 
     // make histos
     std::vector<ROOT::TThreadedObject<TH2D>*> hsEpBSP;
@@ -98,13 +116,13 @@ void Pipe2_ESil_BSP(const std::string& beam, const std::string& target, const st
         {"BSP", "MergerData"});
 
     // Draw
-    auto* c0 {new TCanvas("c0", "ESil vs BSP", 900, 600)};
-    c0->DivideSquare(hsEpBSP.size());
+    auto* c20 {new TCanvas("c20", "ESil vs BSP", 900, 600)};
+    c20->DivideSquare(hsEpBSP.size());
 
     int i = 0;
     for(auto& h : hsEpBSP)
     {
-        c0->cd(i + 1);
+        c20->cd(i + 1);
         h->Merge()->DrawClone("colz");
 
         for(const auto& [key, graphs] : hsTheo)
@@ -124,7 +142,7 @@ void Pipe2_ESil_BSP(const std::string& beam, const std::string& target, const st
 
     // If cut on Ex=0 band present, apply
     ActRoot::CutsManager<std::string> cuts;
-    // cuts.ReadCut("cut", TString::Format("./Cuts/ESil_BSP_%s_%s.root", light.c_str(), beam.c_str()).Data());
+    cuts.ReadCut("cut", TString::Format("./Cuts/ESil_BSP_%s_%s.root", light.c_str(), beam.c_str()).Data());
 
     auto listOfCuts {cuts.GetListOfKeys()};
     if(listOfCuts.size())
@@ -147,7 +165,7 @@ void Pipe2_ESil_BSP(const std::string& beam, const std::string& target, const st
         // Draw the cut
         for(int i = 0; i < hsEpBSP.size(); i++)
         {
-            c0->cd(i + 1);
+            c20->cd(i + 1);
             cuts.DrawCut("cut");
         }
     }

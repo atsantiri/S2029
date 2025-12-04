@@ -151,32 +151,32 @@ void Pipe1_PID(const std::string& beam, const std::string& target, const std::st
     }
 
     // Draw
-    auto* c0 {new TCanvas {"c0", "Pipe 1 PID Si"}};
-    c0->DivideSquare(4);
+    auto* c11 {new TCanvas {"c11", "Pipe 1 PID Si"}};
+    c11->DivideSquare(4);
     int p {1};
-    c0->cd(1);
+    c11->cd(1);
     for(auto& [layer, h] : hsgas)
     {
-        c0->cd(p);
+        c11->cd(p);
         h.Merge()->DrawClone("colz"); //merge histograms written by all threads
         cuts.DrawCut(layer);
         p++;
     }
     for(auto& [layer, h] : hstwo)
     {
-        c0->cd(p);
+        c11->cd(p);
         h.Merge()->DrawClone("colz");
         p++;
     }
 
-    auto* c2 {new TCanvas {"c2", "Pipe1 PID L1"}};
-    c2->DivideSquare(4);
-    c2->cd(1);
+    auto* c12 {new TCanvas {"c12", "Pipe1 PID L1"}};
+    c12->DivideSquare(4);
+    c12->cd(1);
     hl1.Merge()->DrawClone("colz");
     cuts.DrawCut("l1");
-    c2->cd(2);
+    c12->cd(2);
     hl1theta.Merge()->DrawClone("colz");
-    c2->cd(3);
+    c12->cd(3);
     hl1thetaCorr.Merge()->DrawClone("colz");
     auto* gtheo {ActPhysics::Kinematics(TString::Format("%s(p,p)@65.2", beam.c_str()).Data()).GetTheta3vs4Line()};
     gtheo->SetLineColor(46);
@@ -189,5 +189,5 @@ void Pipe1_PID(const std::string& beam, const std::string& target, const std::st
     l->AddEntry(gtheo2, gtheo2->GetTitle());
     l->Draw();
 
-    c2->cd(4);
+    c12->cd(4);
 }
