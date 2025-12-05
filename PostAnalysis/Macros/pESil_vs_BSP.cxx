@@ -119,27 +119,27 @@ void pESil_vs_BSP()
     }
 
     // Saw some weird stuff so I'm making a snapshot
-    // ActRoot::CutsManager<std::string> cuts;
+    ActRoot::CutsManager<std::string> cuts;
 
-    // cuts.ReadCut("cut", TString::Format("./Outputs/pESil_vs_BSP_cut_good_events.root").Data());
-    // for(int i = 0; i < hsEpBSP.size(); i++)
-    // {
-    //     c0->cd(i + 1);
-    //     cuts.DrawCut("cut");
-    // }
+    cuts.ReadCut("cut", TString::Format("./Outputs/cut_pESil_BSP_weird_events.root").Data());
+    for(int i = 0; i < hsEpBSP.size(); i++)
+    {
+        c0->cd(i + 1);
+        cuts.DrawCut("cut");
+    }
 
-    // // std::ofstream streamer {"./Outputs/pESil_BSP_2nd.dat"};
-    // auto gated {df.Filter(
-    //     [&](double bsp, ActRoot::MergerData& m)
-    //     {
-    //         if(cuts.GetCut("cut"))
-    //             return cuts.IsInside("cut", bsp, m.fLight.fEs.front());
-    //         else
-    //             return false;
-    //     },
-    //     {"BSP", "MergerData"})};
+    std::ofstream streamer {"./Outputs/pESil_BSP_weird_events.dat"};
+    auto gated {df.Filter(
+        [&](double bsp, ActRoot::MergerData& m)
+        {
+            if(cuts.GetCut("cut"))
+                return cuts.IsInside("cut", bsp, m.fLight.fEs.front());
+            else
+                return false;
+        },
+        {"BSP", "MergerData"})};
 
-    // // gated.Foreach([&](ActRoot::MergerData& mer) { mer.Stream(streamer); }, {"MergerData"});
+    gated.Foreach([&](ActRoot::MergerData& mer) { mer.Stream(streamer); }, {"MergerData"});
     // auto name {"./Outputs/tree_pESil_vs_BSP_good_events.root"};
     // std::cout << "Saving PID_Tree in file : " << name << '\n';
     // gated.Snapshot("PID_Tree", name);

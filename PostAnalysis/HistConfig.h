@@ -15,7 +15,7 @@ const TH2DModel Ecm_dist {"hEcm_dist","Energy along active area;Distance [mm];E_
 
 const TH2DModel Kin {"hKin", "Kinematics;#theta_{Lab} [#circ];E_{Vertex} [MeV]", 250, 0, 60, 250, 0, 15};
 const TH2DModel KinEl {"hKinEl", "Kinematics;#theta_{Lab} [#circ];E_{Vertex} [MeV]", 600, 0, 180, 400, 0, 15};
-const TH2DModel KinCM {"hKinCM", "CM kinematics;#theta_{CM} [#circ];E_{Vertex} [MeV]", 400, 0, 60, 400, 0, 15};
+const TH2DModel KinCM {"hKinCM", "CM kinematics;#theta_{CM} [#circ];E_{Vertex} [MeV]", 400, 0, 180, 400, 0, 15};
 const TH1DModel RPx {"hRPx", "RPx;X [mm];Counts", 100, -10, 300};
 const TH2DModel RP {"hRP", "RP;X [mm];Y [mm]", 200, -10, 300, 200, -10, 300};
 
@@ -42,10 +42,10 @@ const TH2DModel EBeamRPx {"hEBeamRPX", "E_{Beam} vs RP.X;RP.X() [mm];E_{Beam} [M
 const TH2DModel EcnThetaCM {"hEcnThetaCM", "E_{CN} vs ThetaCM; E_{CN} [MeV];ThetaCM [#circ]", 200, 4., 8., 200, 0, 180};
 
 const TH2DModel ThetaCMLab {
-    "hThetaCMLab", "CM vs Lab correlations;#theta_{Lab} [#circ];#theta_{CM} [#circ]", 400, 0, 90, 400, 0, 90};
+    "hThetaCMLab", "CM vs Lab correlations;#theta_{CM} [#circ];#theta_{Lab} [#circ]", 400, 0, 180, 400, 0, 180};
 
 const TH2DModel RPxThetaCM {
-    "hRPxThetaCM", "RP.X vs #theta_{CM} correlations;RP.X [mm];#theta_{CM} [#circ]", 200, 0, 300, 100, 0, 60};
+    "hRPxThetaCM", "RP.X vs #theta_{CM} correlations;RP.X [mm];#theta_{CM} [#circ]", 200, 0, 300, 200, 0, 180};
 
 const TH1DModel ECN {"hEcn","Compound Nucleus energy;E_{^{18}Ne} [MeV];Counts ", 100,3.5, 8};
 

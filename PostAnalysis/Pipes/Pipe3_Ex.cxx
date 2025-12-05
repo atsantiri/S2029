@@ -189,7 +189,7 @@ void Pipe3_Ex(const std::string& beam, const std::string& target, const std::str
                         .Histo1D(HistConfig::Ex, "RecEx")};
     hRecExSil->SetTitle("Reconstructed Ex with silicons");
     auto hRecExRPx {def.Filter([](ActRoot::MergerData& m) { return m.fLight.GetNLayers() == 1; }, {"MergerData"})
-                        .Histo2D(HistConfig::ExRPx,"fRP.fCoordinates.fX" , "RecEx")};
+                        .Histo2D(HistConfig::ExRPx, "fRP.fCoordinates.fX", "RecEx")};
     hRecExRPx->GetYaxis()->SetRangeUser(-5., 5.);
 
 
@@ -207,6 +207,10 @@ void Pipe3_Ex(const std::string& beam, const std::string& target, const std::str
     hEVertexRPx->SetTitle("EVertex vs RPx; RPx [mm]; EVertex [MeV]");
     hEVertexRPx->GetYaxis()->SetRangeUser(0., 15.);
     auto hKin {def.Histo2D(HistConfig::KinEl, "fThetaLight", "EVertex")};
+    auto hKinCM {def.Histo2D(HistConfig::KinCM, "RecThetaCM", "EVertex")};
+    auto hThetaCMLab {def.Histo2D(HistConfig::ThetaCMLab, "RecThetaCM", "fThetaLight")};
+    auto hRPxThetaCM {def.Histo2D(HistConfig::RPxThetaCM, "fRP.fCoordinates.fX", "RecThetaCM")};
+
 
     // Ecm
     auto hEcn {def.Histo1D(HistConfig::ECN, "ECN")};
@@ -243,11 +247,18 @@ void Pipe3_Ex(const std::string& beam, const std::string& target, const std::str
     hEBeamCompare->DrawClone("colz");
 
     auto* c33 {new TCanvas("c33", "Pipe 3 Canvas 3: EVertex", 800, 600)};
-    c33->Divide(2);
+    c33->DivideSquare(4);
     c33->cd(1);
     hEVertexRPx->DrawClone("colz");
     c33->cd(2);
-    hKin->DrawClone("colz");
+    hRPxThetaCM->DrawClone("colz");
+    c33->cd(3);
+    hKinCM->DrawClone("colz");
+    c33->cd(4);
+    hThetaCMLab->DrawClone("colz");
+    auto* gThetaLabvsCM {kin.GetThetaLabvsThetaCMLine()};
+    gThetaLabvsCM->Draw("same");
+
 
     auto* c34 {new TCanvas("c34", "Pipe 3 Canvas 4: ECN", 800, 600)};
     hRecEcn->DrawClone();

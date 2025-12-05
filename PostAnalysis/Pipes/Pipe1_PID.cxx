@@ -10,8 +10,8 @@
 
 #include "TCanvas.h"
 #include "TH2.h"
-#include "TString.h"
 #include "TLegend.h"
+#include "TString.h"
 
 #include <map>
 #include <string>
@@ -59,6 +59,9 @@ void Pipe1_PID(const std::string& beam, const std::string& target, const std::st
     }
     hstwo.emplace("f0-f1", *hTwoSils);
     hstwo["f0-f1"]->SetTitle("f0-f1");
+    ROOT::TThreadedObject<TH2D> hEsilThetaLab {
+        "hEsilThetaLab", "ESil vs #theta_{Light}; #theta_{Light} [#circ]; E_{Sil} [MeV]", 200, 0, 180, 400, 0., 20};
+
     ROOT::TThreadedObject<TH2D> hl1 {"hl1", "L1 PID;Raw TL [au];Q_{total} [au]", 200, 0, 120, 2000, 0, 3e5};
     ROOT::TThreadedObject<TH2D> hl1Gated {"hl1", "L1 PID > 100#circ;Raw TL [au];Q_{total} [au]", 200, 0, 120, 2000, 0,
                                           3e5};
@@ -85,9 +88,11 @@ void Pipe1_PID(const std::string& beam, const std::string& target, const std::st
             if(lambdaOne(m)) // Gas-E0 PID
             {
                 auto layer {m.fLight.GetLayer(0)};
-                if(hsgas.count(layer)){
+                if(hsgas.count(layer))
+                {
                     hsgas[layer]->Fill(m.fLight.fEs.front(), m.fLight.fQave);
                 }
+                hEsilThetaLab->Fill(m.fThetaLight,m.fLight.fEs.front());
             }
             else if(lambdaTwo(m)) // E0-E1 PID
             {
@@ -105,7 +110,7 @@ void Pipe1_PID(const std::string& beam, const std::string& target, const std::st
     cuts.ReadCut("f0", TString::Format("./Cuts/pid_%s_f0_%s.root", light.c_str(), beam.c_str()).Data());
     // cuts.ReadCut("l1", TString::Format("./Cuts/pid_%s_l1_%s.root", light.c_str(), beam.c_str()).Data());
     // cuts.ReadCut("l1", TString::Format("./Cuts/grass.root").Data());
-    
+
     // Two sils PID
     // cuts.ReadCut("f0-f1", TString::Format("./Cuts/pid_%s_f0_f1_%s.root", light.c_str(), beam.c_str()).Data());
     // Get list of cuts
@@ -132,8 +137,8 @@ void Pipe1_PID(const std::string& beam, const std::string& target, const std::st
                     {
                         // LIGHT particle
                         auto l {cuts.IsInside(layer, m.fLight.fEs[0], m.fLight.fQave)};
-                        
-                        return l ;
+
+                        return l;
                     }
                     else
                         return false;
@@ -158,16 +163,22 @@ void Pipe1_PID(const std::string& beam, const std::string& target, const std::st
     for(auto& [layer, h] : hsgas)
     {
         c11->cd(p);
-        h.Merge()->DrawClone("colz"); //merge histograms written by all threads
+        h.Merge()->DrawClone("colz"); // merge histograms written by all threads
         cuts.DrawCut(layer);
         p++;
     }
-    for(auto& [layer, h] : hstwo)
-    {
-        c11->cd(p);
-        h.Merge()->DrawClone("colz");
-        p++;
-    }
+    // for(auto& [layer, h] : hstwo)
+    // {
+    //     c11->cd(p);
+    //     h.Merge()->DrawClone("colz");
+    //     p++;
+    // }
+    c11->cd(p);
+    hEsilThetaLab.Merge()->DrawClone("colz");
+    auto* gtheoKin {ActPhysics::Kinematics(TString::Format("%s(p,p)@65.2", beam.c_str()).Data()).GetKinematicLine3()};
+    gtheoKin->SetLineColor(kMagenta);
+    gtheoKin->Draw("l");
+
 
     auto* c12 {new TCanvas {"c12", "Pipe1 PID L1"}};
     c12->DivideSquare(4);
