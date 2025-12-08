@@ -69,7 +69,7 @@ void Pipe3_Ex(const std::string& beam, const std::string& target, const std::str
     ActPhysics::Particle pl {light};
 
     // Initial energy of beam at pad plane entrance
-    double EBeamIni {3.84}; // MeV/u
+    double EBeamIni {3.90}; // MeV/u
 
     // // Filter on heavy particle hit in the telescope
     auto def {dfVertex};
@@ -272,7 +272,8 @@ void Pipe3_Ex(const std::string& beam, const std::string& target, const std::str
     t42->Draw("same");
 
     // Save!
-    auto outfile {TString::Format("./Outputs/tree_ex_%s_%s_%s.root", beam.c_str(), target.c_str(), light.c_str())};
+    // auto outfile {TString::Format("./Outputs/tree_ex_%s_%s_%s.root", beam.c_str(), target.c_str(), light.c_str())};
+    auto outfile {TString::Format("./Outputs/tree_ex_%s_%s_%s_%.2f.root", beam.c_str(), target.c_str(), light.c_str(), EBeamIni)};
     def.Snapshot("Final_Tree", outfile);
     std::cout << "Saving Final_Tree in " << outfile << '\n';
 }

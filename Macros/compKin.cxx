@@ -44,16 +44,16 @@ void compKin()
 
     for(int i = 0; i < 10; i++)
     {
-        double ene = 65.5 - double(i) * 2.;
+        double ene = 65.5 - double(i) * 2.5;
         std::cout<<ene<<std::endl;
         ActPhysics::Kinematics kin {TString::Format("17F(p,p)@%f", ene).Data()};
         c2->cd(1);
         auto* gTheoTheta3vsTheta4 {kin.GetTheta3vs4Line()};
         gTheoTheta3vsTheta4->SetLineColor(i + 1);
         if(i == 0)
-            gTheoTheta3vsTheta4->Draw();
+            gTheoTheta3vsTheta4->Draw("apl plc pmc");
         else
-            gTheoTheta3vsTheta4->Draw("same");
+            gTheoTheta3vsTheta4->Draw("apl plc pmc same");
 
         c2->cd(2);
         auto* gp {kin.GetKinematicLine3()};
