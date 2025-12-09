@@ -1,6 +1,7 @@
 #ifndef Pipe3_Ex_cxx
 #define Pipe3_Ex_cxx
 
+#include "ActCutsManager.h"
 #include "ActKinematics.h"
 #include "ActMergerData.h"
 #include "ActParticle.h"
@@ -31,6 +32,9 @@ void Pipe3_Ex(const std::string& beam, const std::string& target, const std::str
         fIn = TString::Format("./Outputs/tree_ESil_BSP_%s_%s_%s.root", beam.c_str(), target.c_str(), light.c_str());
     else if(light == "4He")
         fIn = TString::Format("./Outputs/tree_pid_%s_%s_%s.root", beam.c_str(), target.c_str(), light.c_str());
+
+    // fIn = TString::Format("./Outputs/tree_pid_%s_%s_%s.root", beam.c_str(), target.c_str(), light.c_str());
+
 
     ROOT::EnableImplicitMT();
     ROOT::RDataFrame df {"PID_Tree", fIn};
@@ -69,7 +73,7 @@ void Pipe3_Ex(const std::string& beam, const std::string& target, const std::str
     ActPhysics::Particle pl {light};
 
     // Initial energy of beam at pad plane entrance
-    double EBeamIni {3.90}; // MeV/u
+    double EBeamIni {3.84}; // MeV/u
 
     // // Filter on heavy particle hit in the telescope
     auto def {dfVertex};
@@ -191,7 +195,9 @@ void Pipe3_Ex(const std::string& beam, const std::string& target, const std::str
     auto hRecExRPx {def.Filter([](ActRoot::MergerData& m) { return m.fLight.GetNLayers() == 1; }, {"MergerData"})
                         .Histo2D(HistConfig::ExRPx, "fRP.fCoordinates.fX", "RecEx")};
     hRecExRPx->GetYaxis()->SetRangeUser(-5., 5.);
-
+    auto hRecExL1 {def.Filter([](ActRoot::MergerData& m) { return m.fLight.IsFilled() == false; }, {"MergerData"})
+                    .Histo1D(HistConfig::Ex, "RecEx")};
+    hRecExL1->SetTitle("Reconstructed Ex with L1");
 
     // Ebeam
     auto hEbeam {def.Histo1D(HistConfig::EBeam, "EBeam")};
@@ -218,14 +224,16 @@ void Pipe3_Ex(const std::string& beam, const std::string& target, const std::str
 
 
     // Draw
-    auto* c31 {new TCanvas("c31", "Pipe 3 Canvas 1: Ex from Si", 1000, 800)};
-    c31->DivideSquare(3);
+    auto* c31 {new TCanvas("c31", "Pipe 3 Canvas 1: Ex", 1000, 800)};
+    c31->DivideSquare(4);
     c31->cd(1);
     hRecExSil->DrawClone();
     c31->cd(2);
     hExESi->DrawClone("colz");
     c31->cd(3);
     hRecExRPx->DrawClone("colz");
+    c31->cd(4);
+    hRecExL1->DrawClone();
 
     auto* c32 {new TCanvas("c32", "Pipe 3 Canvas 2: EBeam", 800, 800)};
     c32->DivideSquare(4);
@@ -273,8 +281,40 @@ void Pipe3_Ex(const std::string& beam, const std::string& target, const std::str
 
     // Save!
     // auto outfile {TString::Format("./Outputs/tree_ex_%s_%s_%s.root", beam.c_str(), target.c_str(), light.c_str())};
-    auto outfile {TString::Format("./Outputs/tree_ex_%s_%s_%s_%.2f.root", beam.c_str(), target.c_str(), light.c_str(), EBeamIni)};
-    def.Snapshot("Final_Tree", outfile);
-    std::cout << "Saving Final_Tree in " << outfile << '\n';
+    // auto outfile {TString::Format("./Outputs/tree_ex_%s_%s_%s_%.2f.root", beam.c_str(), target.c_str(),
+    // light.c_str(), EBeamIni)}; def.Snapshot("Final_Tree", outfile); std::cout << "Saving Final_Tree in " << outfile
+    // << '\n';
+
+
+    // ActRoot::CutsManager<std::string> cuts;
+    // cuts.ReadCut("cut", TString::Format("./Cuts/eVertexRpx_side_wall2.root").Data());
+    // TH1D* hangles {new TH1D("hangles", "hangles", 100, 0, 180)};
+    // auto listOfCuts {cuts.GetListOfKeys()};
+    // if(listOfCuts.size())
+    // {
+    //     // Apply cut and save in file
+    //     auto gated {def.Filter(
+    //         [&](double evertex, ActRoot::MergerData& m)
+    //         {
+    //             if(cuts.GetCut("cut"))
+    //             {
+    //                 return cuts.IsInside("cut", m.fRP.X(), evertex);
+    //             }
+    //             else
+    //                 return false;
+    //         },
+    //         {"EVertex", "MergerData"})};
+    //     auto name {TString::Format("./Outputs/tree_Ex_side_walls2.root")};
+    //     std::cout << "Saving in file : " << name << '\n';
+    //     gated.Snapshot("Final_Tree", name.Data());
+
+    //     // Draw the cut
+    //     c33->cd(1);
+    //     cuts.DrawCut("cut");
+    //     auto* c30 {new TCanvas("c35", "Pipe 3 Canvas 0: testing", 800, 600)};
+    //     c30->cd();
+    //     gated.Foreach([&](ActRoot::MergerData& m) { hangles->Fill(m.fThetaLight); }, {"MergerData"});
+    //     hangles->Draw();
+    // }
 }
 #endif
