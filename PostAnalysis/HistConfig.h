@@ -47,7 +47,7 @@ const TH2DModel ThetaCMLab {
 const TH2DModel RPxThetaCM {
     "hRPxThetaCM", "RP.X vs #theta_{CM} correlations;RP.X [mm];#theta_{CM} [#circ]", 200, 0, 300, 200, 0, 180};
 
-const TH1DModel ECN {"hEcn","Compound Nucleus energy;E_{^{18}Ne} [MeV];Counts ", 100,3.5, 8};
+const TH1DModel ECN {"hEcn","Compound Nucleus energy;E_{^{18}Ne} [MeV];Counts ", 150,3.5, 9};
 
 const TH1DModel EBeam {"hEBeam", "Beam energy;E_{Beam} [MeV]", 100, 0, 80};
 const TH1DModel ELight {"hELight", "Alpha energy;E_{a} [MeV]", 100, 0, 4};

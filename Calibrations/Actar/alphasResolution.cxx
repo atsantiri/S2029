@@ -186,7 +186,7 @@ void alphasResolution()
                                      return eneMeV * 1000.;
                                  },
                                  {"Lxy"});
-    auto hEne {dfEne.Histo1D({"hEne", "Reconstructed truealpha energy; Energy [keV];Counts", 200, 3000, 7000}, "Ene")};
+    auto hEne {dfEne.Histo1D({"hEne", "Reconstructed alpha energy; Energy [keV];Counts", 150, 3000, 7000}, "Ene")};
     auto c1 = new TCanvas("c1", "c1");
     c1->cd();
     TF1* fEne = new TF1("fEne", "gaus(0)+gaus(3)+gaus(6)", 4800, 6000);

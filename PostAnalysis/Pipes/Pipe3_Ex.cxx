@@ -13,6 +13,7 @@
 #include "TCanvas.h"
 #include "TLatex.h"
 #include "TLegend.h"
+#include "TLine.h"
 #include "TMath.h"
 #include "TROOT.h"
 #include "TString.h"
@@ -29,7 +30,7 @@ void Pipe3_Ex(const std::string& beam, const std::string& target, const std::str
     // Read data
     TString fIn;
     // if(light == "p")
-        fIn = TString::Format("./Outputs/tree_ESil_BSP_%s_%s_%s.root", beam.c_str(), target.c_str(), light.c_str());
+    fIn = TString::Format("./Outputs/tree_ESil_BSP_%s_%s_%s.root", beam.c_str(), target.c_str(), light.c_str());
     // else if(light == "4He")
     //     fIn = TString::Format("./Outputs/tree_pid_%s_%s_%s.root", beam.c_str(), target.c_str(), light.c_str());
 
@@ -53,7 +54,7 @@ void Pipe3_Ex(const std::string& beam, const std::string& target, const std::str
     srim->ReadTable(light,
                     TString::Format("../Simulation/SRIM/%s_H2-iC4H10_95-5_760mbar.txt", srimName.c_str()).Data());
     srim->ReadTable(beam, TString::Format("../Simulation/SRIM/%s_H2-iC4H10_95-5_760mbar.txt", beam.c_str()).Data());
-    srim->ReadTable("heavy", "../Simulation/SRIM/14O_H2-iC4H10_95-5_760mbar.txt");
+    // srim->ReadTable("heavy", "../Simulation/SRIM/14O_H2-iC4H10_95-5_760mbar.txt");
 
     // Build energy at vertex
     auto dfVertex = df.Define("EVertex",
@@ -193,12 +194,18 @@ void Pipe3_Ex(const std::string& beam, const std::string& target, const std::str
     auto hRecExSil {def.Filter([](ActRoot::MergerData& m) { return m.fLight.GetNLayers() == 1; }, {"MergerData"})
                         .Histo1D(HistConfig::Ex, "RecEx")};
     hRecExSil->SetTitle("Reconstructed Ex with silicons");
-    auto hRecExRPx {def.Filter([](ActRoot::MergerData& m) { return m.fLight.GetNLayers() == 1; }, {"MergerData"})
-                        .Histo2D(HistConfig::ExRPx, "fRP.fCoordinates.fX", "RecEx")};
-    hRecExRPx->GetYaxis()->SetRangeUser(-5., 5.);
+    auto hRecExSilRPx {def.Filter([](ActRoot::MergerData& m) { return m.fLight.GetNLayers() == 1; }, {"MergerData"})
+                           .Histo2D(HistConfig::ExRPx, "fRP.fCoordinates.fX", "RecEx")};
+    hRecExSilRPx->GetYaxis()->SetRangeUser(-5., 5.);
+    hRecExSilRPx->SetTitle("Rec Ex with Si vs RPx");
     auto hRecExL1 {def.Filter([](ActRoot::MergerData& m) { return m.fLight.IsFilled() == false; }, {"MergerData"})
-                    .Histo1D(HistConfig::Ex, "RecEx")};
+                       .Histo1D(HistConfig::Ex, "RecEx")};
     hRecExL1->SetTitle("Reconstructed Ex with L1");
+    auto hRecExL1RPx {def.Filter([](ActRoot::MergerData& m) { return m.fLight.IsFilled() == false; }, {"MergerData"})
+                          .Histo2D(HistConfig::ExRPx, "fRP.fCoordinates.fX", "RecEx")};
+    hRecExL1RPx->GetYaxis()->SetRangeUser(-5., 5.);
+    hRecExL1RPx->SetTitle("Rec Ex with L1 vs RPx");
+
 
     // Ebeam
     auto hEbeam {def.Histo1D(HistConfig::EBeam, "EBeam")};
@@ -220,21 +227,41 @@ void Pipe3_Ex(const std::string& beam, const std::string& target, const std::str
 
 
     // Ecm
-    auto hEcn {def.Histo1D(HistConfig::ECN, "ECN")};
-    auto hRecEcn {def.Histo1D(HistConfig::ECN, "RecECN")};
-
+    auto hEcnSi {def.Filter([](ActRoot::MergerData& m) { return m.fLight.GetNLayers() == 1; }, {"MergerData"}).Histo1D(HistConfig::ECN, "ECN")};
+    auto hRecEcnSi {def.Filter([](ActRoot::MergerData& m) { return m.fLight.GetNLayers() == 1; }, {"MergerData"}).Histo1D(HistConfig::ECN, "RecECN")};
+    auto hEcnL1 {def.Filter([](ActRoot::MergerData& m) { return m.fLight.IsFilled() == false; }, {"MergerData"}).Histo1D(HistConfig::ECN, "ECN")};
+    auto hRecEcnL1 {def.Filter([](ActRoot::MergerData& m) { return m.fLight.IsFilled() == false; }, {"MergerData"}).Histo1D(HistConfig::ECN, "RecECN")};
+    hRecEcnSi->SetTitle("Ecn from Si");
+    hRecEcnL1->SetTitle("Ecn from L1");
 
     // Draw
     auto* c31 {new TCanvas("c31", "Pipe 3 Canvas 1: Ex", 1000, 800)};
-    c31->DivideSquare(4);
+    c31->DivideSquare(5);
     c31->cd(1);
+    gPad->SetLogy();
     hRecExSil->DrawClone();
     c31->cd(2);
-    hExESi->DrawClone("colz");
+    hRecExSilRPx->DrawClone("colz");
     c31->cd(3);
-    hRecExRPx->DrawClone("colz");
+    hExESi->DrawClone("colz");
     c31->cd(4);
+    gPad->SetLogy();
     hRecExL1->DrawClone();
+    c31->cd(5);
+    hRecExL1RPx->DrawClone("colz");
+
+    TLine* hgs = new TLine(0, 0, 0, 50000);
+    TLine* h1ex = new TLine(0.495, 0, 0.495, 50000);
+    hgs->SetLineColor(2);
+    h1ex->SetLineColor(2);
+    hgs->SetLineStyle(2);
+    h1ex->SetLineStyle(2);
+    c31->cd(1);
+    hgs->Draw("same");
+    h1ex->Draw("same");
+    c31->cd(4);
+    hgs->Draw("same");
+    h1ex->Draw("same");
 
     auto* c32 {new TCanvas("c32", "Pipe 3 Canvas 2: EBeam", 800, 800)};
     c32->DivideSquare(4);
@@ -269,16 +296,22 @@ void Pipe3_Ex(const std::string& beam, const std::string& target, const std::str
     gThetaLabvsCM->Draw("same");
 
 
-    auto* c34 {new TCanvas("c34", "Pipe 3 Canvas 4: ECN", 800, 600)};
-    hRecEcn->DrawClone();
-    hEcn->SetLineColor(2);
-    hEcn->DrawClone("same");
+    auto* c34 {new TCanvas("c34", "Pipe 3 Canvas 4: ECN", 1500, 600)};
+    c34->DivideSquare(2);
+    c34->cd(1);
+    hRecEcnSi->DrawClone();
+    hEcnSi->SetLineColor(2);
+    hEcnSi->DrawClone("same");
     auto t41 = new TLatex(6, 700, "reconstructed");
     t41->SetTextColor(1);
     t41->Draw("same");
     auto t42 = new TLatex(6, 620, "from srim");
     t42->SetTextColor(2);
     t42->Draw("same");
+    c34->cd(2);
+        hRecEcnL1->DrawClone();
+    hEcnL1->SetLineColor(2);
+    hEcnL1->DrawClone("same");
 
     // Save!
     // auto outfile {TString::Format("./Outputs/tree_ex_%s_%s_%s.root", beam.c_str(), target.c_str(), light.c_str())};

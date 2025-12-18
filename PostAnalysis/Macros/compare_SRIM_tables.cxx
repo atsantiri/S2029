@@ -34,7 +34,7 @@ void compare_SRIM_tables()
 {
 
     // std::vector<double> vars {765., 760., 755., 740.};
-    std::vector<double> vars {3.82};
+    std::vector<double> vars {3.83, 3.84};
     // std::vector<double> vars {3.70,3.71,3.72,3.73,3.74, 3.75,3.76,3.77,3.78,3.79,3.80,3.81, 3.82,3.83, 3.84, 3.85, 3.86,3.87,3.88,3.89, 3.90};
     auto* c {new TCanvas("c", "ECN", 800, 600)};
 
