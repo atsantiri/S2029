@@ -28,12 +28,13 @@ void Pipe3_Ex(const std::string& beam, const std::string& target, const std::str
 {
     // Read data
     TString fIn;
-    if(light == "p")
+    // if(light == "p")
         fIn = TString::Format("./Outputs/tree_ESil_BSP_%s_%s_%s.root", beam.c_str(), target.c_str(), light.c_str());
-    else if(light == "4He")
-        fIn = TString::Format("./Outputs/tree_pid_%s_%s_%s.root", beam.c_str(), target.c_str(), light.c_str());
+    // else if(light == "4He")
+    //     fIn = TString::Format("./Outputs/tree_pid_%s_%s_%s.root", beam.c_str(), target.c_str(), light.c_str());
 
     // fIn = TString::Format("./Outputs/tree_pid_%s_%s_%s.root", beam.c_str(), target.c_str(), light.c_str());
+    // fIn = TString::Format("./Outputs/tree_pid_l1_p_diag2.root");
 
 
     ROOT::EnableImplicitMT();

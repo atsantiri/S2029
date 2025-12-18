@@ -38,16 +38,16 @@ void Pipe2_ESil_BSP(const std::string& beam, const std::string& target, const st
     ActPhysics::Particle pl {light};
 
     // Filter one silicon layer events
-    auto df {d.Filter([](ActRoot::MergerData& m) { return m.fLight.GetNLayers() == 1; }, {"MergerData"})};
+    // auto df {d.Filter([](ActRoot::MergerData& m) { return m.fLight.GetNLayers() == 1; }, {"MergerData"})};
 
     // Find beam-like stopping point (=RPx + TLheavy)
-    df = df.Define("BSP",
-                   [&](const ActRoot::MergerData& m)
-                   {
-                       double bsp = m.fRP.X() + m.fHeavy.fTL;
-                       return bsp;
-                   },
-                   {"MergerData"});
+    auto df = d.Define("BSP",
+                       [&](const ActRoot::MergerData& m)
+                       {
+                           double bsp = m.fRP.X() + m.fHeavy.fTL;
+                           return bsp;
+                       },
+                       {"MergerData"});
 
     // // Try to filter out poorly reconstructed BSPs
     // auto filtered = df.Filter(
@@ -67,7 +67,7 @@ void Pipe2_ESil_BSP(const std::string& beam, const std::string& target, const st
 
 
     int thetamin {5};
-    int thetamax {75};
+    int thetamax {45};
     int step {10};
 
     // make histos
@@ -107,9 +107,12 @@ void Pipe2_ESil_BSP(const std::string& beam, const std::string& target, const st
             for(size_t i = 0; i < hsEpBSP.size(); i++)
             {
                 double theta = thetamin + i * step;
-                if(m.fThetaLight >= theta && m.fThetaLight < theta + step)
+                if(m.fLight.GetNLayers() == 1) // only if in silicon
                 {
-                    hsEpBSP[i]->GetAtSlot(slot)->Fill(bsp, m.fLight.fEs.front());
+                    if(m.fThetaLight >= theta && m.fThetaLight < theta + step)
+                    {
+                        hsEpBSP[i]->GetAtSlot(slot)->Fill(bsp, m.fLight.fEs.front());
+                    }
                 }
             }
         },
@@ -151,8 +154,15 @@ void Pipe2_ESil_BSP(const std::string& beam, const std::string& target, const st
         auto gated {df.Filter(
             [&](double bsp, ActRoot::MergerData& m)
             {
-                if(cuts.GetCut("cut"))
-                    return cuts.IsInside("cut", bsp, m.fLight.fEs.front());
+                if(m.fLight.GetNLayers() == 1)
+                {
+                    if(cuts.GetCut("cut"))
+                        return cuts.IsInside("cut", bsp, m.fLight.fEs.front());
+                    else
+                        return false;
+                }
+                else if(m.fLightIdx != -1)
+                    return true;
                 else
                     return false;
             },

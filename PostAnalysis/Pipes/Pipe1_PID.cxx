@@ -108,8 +108,9 @@ void Pipe1_PID(const std::string& beam, const std::string& target, const std::st
     cuts.ReadCut("l0", TString::Format("./Cuts/pid_%s_l0_%s.root", light.c_str(), beam.c_str()).Data());
     cuts.ReadCut("r0", TString::Format("./Cuts/pid_%s_r0_%s.root", light.c_str(), beam.c_str()).Data());
     cuts.ReadCut("f0", TString::Format("./Cuts/pid_%s_f0_%s.root", light.c_str(), beam.c_str()).Data());
-    // cuts.ReadCut("l1", TString::Format("./Cuts/pid_%s_l1_%s.root", light.c_str(), beam.c_str()).Data());
-    // cuts.ReadCut("l1", TString::Format("./Cuts/grass.root").Data());
+    cuts.ReadCut("l1", TString::Format("./Cuts/pid_%s_l1_%s.root", light.c_str(), beam.c_str()).Data());
+    // std::string cutname {"pid_l1_p_diag2"};
+    // cuts.ReadCut("l1", TString::Format("./Cuts/%s.root",cutname.c_str()).Data());
 
     // Two sils PID
     // cuts.ReadCut("f0-f1", TString::Format("./Cuts/pid_%s_f0_f1_%s.root", light.c_str(), beam.c_str()).Data());
@@ -151,6 +152,7 @@ void Pipe1_PID(const std::string& beam, const std::string& target, const std::st
             {"MergerData", "ModularData"})};
         // auto name {TString::Format("./Outputs/grass.root")};
         auto name {TString::Format("./Outputs/tree_pid_%s_%s_%s.root", beam.c_str(), target.c_str(), light.c_str())};
+        // auto name {TString::Format("./Outputs/tree_%s.root", cutname.c_str())};
         std::cout << "Saving PID_Tree in file : " << name << '\n';
         gated.Snapshot("PID_Tree", name.Data());
     }

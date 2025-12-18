@@ -14,12 +14,15 @@ double calc_ESil(double RPx, double theta3Lab, double T3Lab)
 {
     // Silicon specs
     ActPhysics::SilSpecs specs;
-    specs.ReadFile("/home/artemis/ACTAR/S2029/configs/silspecs.conf");
+    specs.ReadFile("../configs/silspecs.conf");
+    // specs.ReadFile("/home/artemis/ACTAR/S2029/configs/silspecs.conf");
 
     // Init SRIM
     auto* srim {new ActPhysics::SRIM};
-    srim->ReadTable("gas", "/home/artemis/ACTAR/S2029//Simulation/SRIM/1H_H2-iC4H10_95-5_760mbar.txt");
-    srim->ReadTable("silicon", "/home/artemis/ACTAR/S2029//Simulation/SRIM/1H_silicon.txt");
+    srim->ReadTable("gas", "../Simulation/SRIM/1H_H2-iC4H10_95-5_760mbar.txt");
+    // srim->ReadTable("gas", "/home/artemis/ACTAR/S2029//Simulation/SRIM/1H_H2-iC4H10_95-5_760mbar.txt");
+    srim->ReadTable("silicon", "../Simulation/SRIM/1H_silicon.txt");
+    // srim->ReadTable("silicon", "/home/artemis/ACTAR/S2029//Simulation/SRIM/1H_silicon.txt");
 
     // Runner: contains utility functions to execute multiple actions
     ActSim::Runner runner(nullptr, nullptr, 0, 0.);
@@ -86,7 +89,8 @@ TGraph* calcTheo_pESil_vs_BSP(double theta3Lab, double Eex, EColor color, int st
     // Correct SRIM names
     std::string light = "1H";
     std::string beam = "17F";
-    srim->ReadTable(beam, TString::Format("/home/artemis/ACTAR/S2029/Simulation/SRIM/%s_H2-iC4H10_95-5_760mbar.txt", beam.c_str()).Data());
+    srim->ReadTable(beam, TString::Format("../Simulation/SRIM/%s_H2-iC4H10_95-5_760mbar.txt", beam.c_str()).Data());
+    // srim->ReadTable(beam, TString::Format("/home/artemis/ACTAR/S2029/Simulation/SRIM/%s_H2-iC4H10_95-5_760mbar.txt", beam.c_str()).Data());
 
     // Init particles
     ActPhysics::Particle pb {beam};

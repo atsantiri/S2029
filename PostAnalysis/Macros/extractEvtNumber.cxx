@@ -16,14 +16,14 @@ void extractEvtNumber()
     // light.c_str())};
 
 
-    std::ofstream streamer {"Outputs/eVertex_side_walls2.dat"};
+    std::ofstream streamer {"Outputs/pid_l1_p_diag2.dat"};
 
 
     // std::string cutname {"pid_l1_what_is_this"};
     // auto filename {TString::Format("../Outputs/%s.root",cutname.c_str())};
-    auto filename {TString::Format("../Outputs/tree_Ex_side_walls2.root")};
+    auto filename {TString::Format("../Outputs/tree_pid_l1_p_diag2.root")};
     std::cout << filename << std::endl;
-    ROOT::RDataFrame df("Final_Tree", filename);
+    ROOT::RDataFrame df("PID_Tree", filename);
     // auto cols = df.GetColumnNames();
     // for(auto&& c : cols)
     //     std::cout << c << std::endl;
