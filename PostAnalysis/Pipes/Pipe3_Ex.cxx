@@ -314,10 +314,11 @@ void Pipe3_Ex(const std::string& beam, const std::string& target, const std::str
     hEcnL1->DrawClone("same");
 
     // Save!
-    // auto outfile {TString::Format("./Outputs/tree_ex_%s_%s_%s.root", beam.c_str(), target.c_str(), light.c_str())};
-    // auto outfile {TString::Format("./Outputs/tree_ex_%s_%s_%s_%.2f.root", beam.c_str(), target.c_str(),
-    // light.c_str(), EBeamIni)}; def.Snapshot("Final_Tree", outfile); std::cout << "Saving Final_Tree in " << outfile
-    // << '\n';
+    // auto outfile {TString::Format("./Outputs/tree_ex_%s_%s_%s_phi_lt2.root", beam.c_str(), target.c_str(), light.c_str())};
+    auto outfile {TString::Format("./Outputs/tree_ex_%s_%s_%s_%.2f.root", beam.c_str(), target.c_str(),
+    light.c_str(), EBeamIni)};
+    def.Snapshot("Final_Tree", outfile);
+    std::cout << "Saving Final_Tree in " << outfile << '\n';
 
 
     // ActRoot::CutsManager<std::string> cuts;

@@ -77,11 +77,14 @@ void Pipe1_PID(const std::string& beam, const std::string& target, const std::st
             // L1
             if(lambdaIsL1(m, mod))
             {
-                hl1->Fill(m.fLight.fRawTL, m.fLight.fQtotal);
-                hl1theta->Fill(m.fThetaLight, m.fLight.fQtotal);
-                hl1thetaCorr->Fill(m.fThetaLight, m.fThetaHeavy);
-                if(m.fThetaLight > 100)
-                    hl1Gated->Fill(m.fLight.fRawTL, m.fLight.fQtotal);
+                // if(m.fPhiLight < 2)
+                // {
+                    hl1->Fill(m.fLight.fRawTL, m.fLight.fQtotal);
+                    hl1theta->Fill(m.fThetaLight, m.fLight.fQtotal);
+                    hl1thetaCorr->Fill(m.fThetaLight, m.fThetaHeavy);
+                    if(m.fThetaLight > 100)
+                        hl1Gated->Fill(m.fLight.fRawTL, m.fLight.fQtotal);
+                // }
                 return;
             }
             // Light
@@ -92,7 +95,7 @@ void Pipe1_PID(const std::string& beam, const std::string& target, const std::st
                 {
                     hsgas[layer]->Fill(m.fLight.fEs.front(), m.fLight.fQave);
                 }
-                hEsilThetaLab->Fill(m.fThetaLight,m.fLight.fEs.front());
+                hEsilThetaLab->Fill(m.fThetaLight, m.fLight.fEs.front());
             }
             else if(lambdaTwo(m)) // E0-E1 PID
             {
@@ -105,9 +108,9 @@ void Pipe1_PID(const std::string& beam, const std::string& target, const std::st
     ActRoot::CutsManager<std::string> cuts;
 
     // Gas PID
-    cuts.ReadCut("l0", TString::Format("./Cuts/pid_%s_l0_%s.root", light.c_str(), beam.c_str()).Data());
-    cuts.ReadCut("r0", TString::Format("./Cuts/pid_%s_r0_%s.root", light.c_str(), beam.c_str()).Data());
-    cuts.ReadCut("f0", TString::Format("./Cuts/pid_%s_f0_%s.root", light.c_str(), beam.c_str()).Data());
+    // cuts.ReadCut("l0", TString::Format("./Cuts/pid_%s_l0_%s.root", light.c_str(), beam.c_str()).Data());
+    // cuts.ReadCut("r0", TString::Format("./Cuts/pid_%s_r0_%s.root", light.c_str(), beam.c_str()).Data());
+    // cuts.ReadCut("f0", TString::Format("./Cuts/pid_%s_f0_%s.root", light.c_str(), beam.c_str()).Data());
     cuts.ReadCut("l1", TString::Format("./Cuts/pid_%s_l1_%s.root", light.c_str(), beam.c_str()).Data());
     // std::string cutname {"pid_l1_p_diag2"};
     // cuts.ReadCut("l1", TString::Format("./Cuts/%s.root",cutname.c_str()).Data());
@@ -125,8 +128,14 @@ void Pipe1_PID(const std::string& beam, const std::string& target, const std::st
                 // L1
                 if(lambdaIsL1(m, mod))
                 {
-                    if(cuts.GetCut("l1"))
-                        return cuts.IsInside("l1", m.fLight.fRawTL, m.fLight.fQtotal);
+                    if(m.fPhiLight < 2)
+
+                    {
+                        if(cuts.GetCut("l1"))
+                            return cuts.IsInside("l1", m.fLight.fRawTL, m.fLight.fQtotal);
+                        else
+                            return false;
+                    }
                     else
                         return false;
                 }
@@ -203,4 +212,8 @@ void Pipe1_PID(const std::string& beam, const std::string& target, const std::st
     l->Draw();
 
     c12->cd(4);
+    auto* c13 {new TCanvas {"c13", "Pipe1 Temp"}};
+    c13->cd();
+    hl1->DrawClone("colz");
+    cuts.DrawCut("l1");
 }
