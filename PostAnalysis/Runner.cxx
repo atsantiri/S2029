@@ -25,9 +25,16 @@ void Runner(TString what = "")
     TString ext {".cxx"};
 
     // CFA counter
+    if(what.Contains("B"))
+    {
+        func = "Pipe_Beam";
+        gROOT->LoadMacro(path + func + ext);
+        gROOT->ProcessLine(func + "()");
+    }
+    // CFA counter
     if(what.Contains("0"))
     {
-        func = "Pipe0_Beam";
+        func = "Pipe0_PreProcess";
         gROOT->LoadMacro(path + func + ext);
         gROOT->ProcessLine(func + "()");
     }
