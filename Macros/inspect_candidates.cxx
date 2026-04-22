@@ -89,8 +89,8 @@ int inspect_candidates()
 
 
     // Express track length as energy with SRIM
-    // auto* srim {new ActPhysics::SRIM()};
-    // srim->ReadTable("alphasInGas", "../../Simulation/SRIM/4He_H2-iC4H10_95-5_755mbar.txt");
+    auto* srim {new ActPhysics::SRIM()};
+    srim->ReadTable("p", "../Simulation/SRIM/1H_H2-iC4H10_95-5_760mbar.txt");
 
     // Calculate quantities the MergerDetector would for binary reactions
     df = df.Define("Qtot",
@@ -243,7 +243,23 @@ int inspect_candidates()
 
                          return isRecoil;
                      },
-                     {"TPCData", "Qtot"});
+                     {"TPCData", "Qtot"})
+             .Define("pEnergy",
+                     [&](const ActRoot::TPCData& tpc, const std::vector<double> tl, const std::vector<bool> isRecoil)
+                     {
+                        std::vector<double> ene;
+                         for(int i=0; i<tpc.fClusters.size();i++)
+                         {
+                            if (tpc.fClusters[i].GetIsBeamLike() || isRecoil[i]){
+                                ene.push_back(0.);
+                            } else {
+                                double e {srim->EvalInitialEnergy("p",0,tl[i])};
+                                ene.push_back(e);
+                            }
+                         }
+                        return ene;
+                     },
+                     {"TPCData", "TL", "IsRecoil"});
 
 
     /*
@@ -285,7 +301,7 @@ int inspect_candidates()
     //                                  double eneMeV {srim->EvalInitialEnergy("alphasInGas", 0, Lxy)};
     df.Foreach(
         [&](ActRoot::TPCData& tpc, ActRoot::MergerData& mer, std::vector<double> qtot, std::vector<double> TL,
-            std::vector<std::pair<double, double>> angles, std::vector<bool> isRecoil)
+            std::vector<std::pair<double, double>> angles, std::vector<bool> isRecoil, std::vector<double> ene)
         {
             std::cout << "Event: " << mer.fRun << " " << mer.fEntry << std::endl;
             std::cout << "N of clusters: " << tpc.fClusters.size() << std::endl;
@@ -318,21 +334,21 @@ int inspect_candidates()
 
                 // std::cout << "start: "<<projBegin<<", end: "<<projEnd<<", TL: "<<TL << std::endl;
                 if(cl.GetIsBeamLike())
-                    std::cout << std::setprecision(4) << i << ": Beam, \tend: " << projEnd << ",\tQtot: " << qtot[i]
+                    std::cout << std::setprecision(4) << i << ": Beam, \tend: " << projEnd << ",\tQtot: " << qtot[i] << ",\tif p ene:"<<ene[i]
                               << std::endl;
                 else if(isRecoil[i])
-                    std::cout << std::setprecision(4) << i << ": Recoil, \tend: " << projEnd << ",\tQtot: " << qtot[i]
+                    std::cout << std::setprecision(4) << i << ": Recoil, \tend: " << projEnd << ",\tQtot: " << qtot[i] << ",\tif p ene:"<<ene[i]
                               << ", \tTL: " << TL[i] << ", \t(theta, phi): (" << angles[i].first << " ,"
                               << angles[i].second << ")" << std::endl;
                 else
-                    std::cout << std::setprecision(4) << i << ": Light, \tend: " << projEnd << ",\tQtot: " << qtot[i]
+                    std::cout << std::setprecision(4) << i << ": Light, \tend: " << projEnd << ",\tQtot: " << qtot[i] << ",\tif p ene:"<<ene[i]
                               << ", \tTL: " << TL[i] << ", \t(theta, phi): (" << angles[i].first << " ,"
                               << angles[i].second << ")" << std::endl;
                 // }
             }
             std::cout << "-----------------------------------------" << std::endl;
         },
-        {"TPCData", "MergerData", "Qtot", "TL", "Angles", "IsRecoil"});
+        {"TPCData", "MergerData", "Qtot", "TL", "Angles", "IsRecoil", "pEnergy"});
 
     return 1;
 }

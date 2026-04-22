@@ -11,29 +11,29 @@ void extractEvtNumber()
 {
     std::string beam {"17F"};
     std::string target {"p"};
-    std::string light {"p"};
+    std::string light {"4He"};
     // auto filename {TString::Format("../Outputs/tree_pid_%s_%s_%s.root", beam.c_str(), target.c_str(),
     // light.c_str())};
 
 
-    std::ofstream streamer {"Outputs/pid_l1_p_phi_lt2.dat"};
+    std::ofstream streamer {"Outputs/pid_l1_4He.dat"};
 
 
     // std::string cutname {"pid_l1_what_is_this"};
     // auto filename {TString::Format("../Outputs/%s.root",cutname.c_str())};
-    auto filename {TString::Format("../Outputs/tree_ex_17F_p_p_phi_lt2.root")};
+    auto filename {TString::Format("../Outputs/tree_pid_17F_p_4He.root")};
     std::cout << filename << std::endl;
-    ROOT::RDataFrame df("Final_Tree", filename);
+    ROOT::RDataFrame df("PID_Tree", filename);
     // auto cols = df.GetColumnNames();
     // for(auto&& c : cols)
     //     std::cout << c << std::endl;
 
-    // auto lambda {[](float x)
-    //              {
-    //                  double min {110}; // modify based on resonance location
-    //                  double max {135};
-    //                  return (min <= x) && (x <= max);
-    //              }};
+    auto lambda {[](float x)
+                 {
+                     double min {110}; // modify based on resonance location
+                     double max {135};
+                     return (min <= x) && (x <= max);
+                 }};
 
 
     // std::ofstream streamer {
@@ -43,8 +43,8 @@ void extractEvtNumber()
     df.Foreach(
         [&](ActRoot::MergerData& mer, float x)
         {
-            // if(lambda(x))
-            mer.Stream(streamer);
+            if(lambda(x))
+                mer.Stream(streamer);
         },
         {"MergerData", "fRP.fCoordinates.fX"});
 

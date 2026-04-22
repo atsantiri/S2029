@@ -7,11 +7,11 @@
 #include "TStyle.h"
 
 #include <fstream>
-#include <iostream>
 #include <iomanip>
+#include <iostream>
 
 std::vector<double> GetPeaks(TH2D* h, int c)
-{   
+{
     auto bin {h->GetXaxis()->FindBin(c)}; // Get the bin number for the channel c
     auto* proj {h->ProjectionY("proj", bin, bin)};
 
@@ -98,7 +98,7 @@ void DoGainMatching()
         idx++;
         if(peak.size() != peaks[channelRef - 1].size())
         {
-            std::cout << "\n Channel : " << idx ;
+            std::cout << "\n Channel : " << idx;
             for(const auto& val : peak)
             {
                 std::cout << "   " << val << ' ';
@@ -115,7 +115,7 @@ void DoGainMatching()
     for(const auto& peak : peaks)
     {
         TGraph* graph {new TGraph()};
-        if (peak.size()!=peaks[channelRef - 1].size())
+        if(peak.size() != peaks[channelRef - 1].size())
             zeros++;
         FillGraph(channel, graph, peak, peaks[channelRef - 1], streamer, gCal);
         graph->SetMarkerStyle(24);
@@ -124,13 +124,15 @@ void DoGainMatching()
     }
     streamer.close();
 
-    double perc_failed {(zeros-1024.)/16834.}; // how many pads failed? (account for the 1024 (=4*256) FPN channels)
-    std::cout<<"\n ------------- \n"<< std::fixed << std::setprecision(2)<<perc_failed*100<<" % ("<< std::fixed << std::setprecision(0)<<perc_failed*16834<<" out of 16834) of the pads didn't get gainmatched "<<std::endl;
+    double perc_failed {(zeros - 1024.) / 16834.}; // how many pads failed? (account for the 1024 (=4*256) FPN channels)
+    std::cout << "\n ------------- \n"
+              << std::fixed << std::setprecision(2) << perc_failed * 100 << " % (" << std::fixed << std::setprecision(0)
+              << perc_failed * 16834 << " out of 16834) of the pads didn't get gainmatched " << std::endl;
 
     gStyle->SetOptFit(true);
     auto* c {new TCanvas("c")};
     int chosen {1231};
-    gs[chosen]->SetTitle(TString::Format(";test pad %d charge [a.u.];reference pad charge [a.u]",chosen));
+    gs[chosen]->SetTitle(TString::Format(";test pad %d charge [a.u.];reference pad charge [a.u]", chosen));
     gs[chosen]->Draw("ap");
     for(auto* ptr : *(gs[chosen]->GetListOfFunctions()))
         if(ptr)

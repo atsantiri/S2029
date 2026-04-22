@@ -4,6 +4,7 @@
 #include "ActCutsManager.h"
 #include "ActKinematics.h"
 #include "ActMergerData.h"
+#include "ActModularData.h"
 #include "ActParticle.h"
 #include "ActTPCData.h"
 
@@ -66,11 +67,14 @@ void Pipe2_ESil_BSP(const std::string& beam, const std::string& target, const st
     //     {"BSP", "MergerData", "GETTree_TPCData"});
 
 
-    int thetamin {5};
-    int thetamax {45};
+    int thetaminSi {5};
+    int thetamaxSi {45};
+    int thetaminL1 {40};
+    int thetamaxL1 {90};
     int step {10};
 
     // make histos
+    std::vector<ROOT::TThreadedObject<TH2D>*> hsESilBSP;
     std::vector<ROOT::TThreadedObject<TH2D>*> hsEpBSP;
     std::map<std::string, std::vector<TGraph*>> hsTheo;
     std::map<std::string, std::tuple<double, EColor, int, double, double>> theoArgs {
@@ -78,10 +82,11 @@ void Pipe2_ESil_BSP(const std::string& beam, const std::string& target, const st
     // {"^{17}F* 3.104 MeV", {3.104, kMagenta, 10, 186., 1.5}}}; // {label, Eex, linecolor, linestyle, xlabel, ylabel}
 
     int idx {0};
-    for(double theta = thetamin; theta < thetamax; theta += step)
+    for(double theta = thetaminSi; theta < thetamaxSi; theta += step)
     {
-        hsEpBSP.push_back(new ROOT::TThreadedObject<TH2D>(
-            TString::Format("hEpBSP%d", idx),
+        // For Sil
+        hsESilBSP.push_back(new ROOT::TThreadedObject<TH2D>(
+            TString::Format("hsESilBSP%d", idx),
             TString::Format("#theta_{lab} [%.0f^{o}, %.0f^{o}); Beam-like Stopping Point [cm]; E_{Si} [MeV]", theta,
                             theta + step),
             65, 150, 280, 150, 0, 15));
@@ -91,39 +96,81 @@ void Pipe2_ESil_BSP(const std::string& beam, const std::string& target, const st
             auto [Eex, color, mstyle, xlabel, ylabel] = args;
             hsTheo[key].push_back(calcTheo_pESil_vs_BSP(theta + step / 2, Eex, color, mstyle));
         }
+        idx++;
+    }
+
+
+    // For L1ok
+    idx = 0;
+    for(double theta = thetaminL1; theta < thetamaxL1; theta += step)
+    {
+
+        hsEpBSP.push_back(new ROOT::TThreadedObject<TH2D>(
+            TString::Format("hEpBSP%d", idx),
+            TString::Format("#theta_{lab} [%.0f^{o}, %.0f^{o}); Beam-like Stopping Point [cm]; TL_{p} [mm]", theta,
+                            theta + step),
+            65, 150, 280, 150, 0, 200));
 
         idx++;
     }
 
     // Initialize slot 0 to not crash
-    for(auto& h : hsEpBSP)
+    for(auto& h : hsESilBSP)
         h->GetAtSlot(0);
 
     // Fill exp histograms
     df.ForeachSlot(
-        [&](unsigned int slot, double bsp, const ActRoot::MergerData& m)
+        [&](unsigned int slot, double bsp, const ActRoot::MergerData& mer, ActRoot::ModularData& mod)
         {
             // get the hstogram we have to fill
-            for(size_t i = 0; i < hsEpBSP.size(); i++)
+            for(size_t i = 0; i < hsESilBSP.size(); i++)
             {
-                double theta = thetamin + i * step;
-                if(m.fLight.GetNLayers() == 1) // only if in silicon
+                double theta = thetaminSi + i * step;
+                if(mer.fThetaLight >= theta && mer.fThetaLight < theta + step)
                 {
-                    if(m.fThetaLight >= theta && m.fThetaLight < theta + step)
+                    if(mer.fLight.GetNLayers() == 1) // only if in silicon
                     {
-                        hsEpBSP[i]->GetAtSlot(slot)->Fill(bsp, m.fLight.fEs.front());
+
+                        hsESilBSP[i]->GetAtSlot(slot)->Fill(bsp, mer.fLight.fEs.front());
                     }
                 }
             }
+
+
+            for(size_t j = 0; j < hsEpBSP.size(); j++)
+            {
+                double theta = thetaminL1 + j * step;
+                if(mer.fThetaLight >= theta && mer.fThetaLight < theta + step)
+                {
+                    if((mod.Get("GATCONF") == 8) && (mer.fLightIdx != -1))
+                    {
+                        hsEpBSP[j]->GetAtSlot(slot)->Fill(bsp, mer.fLight.fTL);
+                    }
+                }
+            }
+
+            
         },
-        {"BSP", "MergerData"});
+        {"BSP", "MergerData", "ModularData"});
 
     // Draw
+    auto* c21 {new TCanvas("c21", "Ep vs BSP - L1ok", 900, 600)};
+    c21->DivideSquare(hsEpBSP.size());
+
+    int j = 0;
+    for(auto& h : hsEpBSP)
+    {
+        c21->cd(j + 1);
+        h->Merge()->DrawClone("colz");
+        j++;
+    }
+
+
     auto* c20 {new TCanvas("c20", "ESil vs BSP", 900, 600)};
-    c20->DivideSquare(hsEpBSP.size());
+    c20->DivideSquare(hsESilBSP.size());
 
     int i = 0;
-    for(auto& h : hsEpBSP)
+    for(auto& h : hsESilBSP)
     {
         c20->cd(i + 1);
         h->Merge()->DrawClone("colz");
@@ -173,7 +220,7 @@ void Pipe2_ESil_BSP(const std::string& beam, const std::string& target, const st
         gated.Snapshot("PID_Tree", name.Data());
 
         // Draw the cut
-        for(int i = 0; i < hsEpBSP.size(); i++)
+        for(int i = 0; i < hsESilBSP.size(); i++)
         {
             c20->cd(i + 1);
             cuts.DrawCut("cut");

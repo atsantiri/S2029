@@ -24,12 +24,27 @@ void findFunEvts()
     ROOT::RDataFrame df {*chain};
 
     auto df_filtered {
-        df.Filter(
-            [](ActRoot::TPCData& tpc, ActRoot::ModularData& m)
-            {
-                return (tpc.fRPs.size() == 1 && tpc.fClusters.size() > 4);
-            }, 
-            {"TPCData", "ModularData"})
+        df.Filter([](ActRoot::TPCData& tpc, ActRoot::ModularData& m)
+                  { return (tpc.fRPs.size() == 0 && tpc.fClusters.size() > 2); },
+                  {"TPCData", "ModularData"})
+            .Filter( // find window scattering events
+                [](ActRoot::TPCData& tpc)
+                {
+                    auto max {100};
+                    bool ret {true};
+                    for(auto cl : tpc.fClusters)
+                    {   
+                        auto cl_copy = cl;
+                                                     auto line = cl_copy.GetRefToLine();
+                             auto dir = line.GetDirection();
+                             cl_copy.SortAlongDir(dir);
+                             auto end = cl_copy.GetRefToVoxels().back().GetPosition().X();
+                        if(end > max)
+                            ret = false;
+                    }
+                    return ret;
+                },
+                {"TPCData"})
         // .Filter(
         //     [](ActRoot::TPCData& tpc)
         //     {
@@ -44,5 +59,4 @@ void findFunEvts()
     std::ofstream streamer {"../Outputs/funEvts_many_clusters.txt"};
     df_filtered.Foreach([&](ActRoot::MergerData& mer) { mer.Stream(streamer); }, {"MergerData"});
     streamer.close();
-
 }

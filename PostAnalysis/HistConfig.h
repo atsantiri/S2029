@@ -39,7 +39,7 @@ const TH2DModel ExThetaLab {
 const TH2DModel ExRPx {"hExRPX", "E_{x} vs RP.X;RP.X() [mm];E_{x} [MeV]", 200, -10, 300, 200, -5, 15};
 const TH2DModel EBeamRPx {"hEBeamRPX", "E_{Beam} vs RP.X;RP.X() [mm];E_{Beam} [MeV]", 200, -10, 300, 200, 0, 80};
 
-const TH2DModel EcnThetaCM {"hEcnThetaCM", "E_{CN} vs ThetaCM; E_{CN} [MeV];ThetaCM [#circ]", 200, 4., 8., 200, 0, 180};
+const TH2DModel EcnThetaCM {"hEcnThetaCM", "E_{CN} vs ThetaCM; E_{CN} [MeV];ThetaCM [#circ]", 50, 4., 8., 50, 0, 160};
 
 const TH2DModel ThetaCMLab {
     "hThetaCMLab", "CM vs Lab correlations;#theta_{CM} [#circ];#theta_{Lab} [#circ]", 400, 0, 180, 400, 0, 180};
