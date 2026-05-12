@@ -6,45 +6,41 @@
 
 #include <fstream>
 
-
 void extractEvtNumber()
 {
-    std::string beam {"17F"};
-    std::string target {"p"};
-    std::string light {"4He"};
+    std::string beam{"17F"};
+    std::string target{"p"};
+    std::string light{"4He"};
     // auto filename {TString::Format("../Outputs/tree_pid_%s_%s_%s.root", beam.c_str(), target.c_str(),
     // light.c_str())};
 
+    std::ofstream streamer{"Outputs/events_l1_veryLowQevents.dat"};
 
-    std::ofstream streamer {"Outputs/pid_l1_4He.dat"};
-
-
-    // std::string cutname {"pid_l1_what_is_this"};
-    // auto filename {TString::Format("../Outputs/%s.root",cutname.c_str())};
-    auto filename {TString::Format("../Outputs/tree_pid_17F_p_4He.root")};
+    std::string cutname{"tree_pid_l1_veryLowQevents"};
+    auto filename{TString::Format("../Outputs/%s.root", cutname.c_str())};
+    // auto filename {TString::Format("../Outputs/tree_pid_17F_p_4He.root")};
     std::cout << filename << std::endl;
     ROOT::RDataFrame df("PID_Tree", filename);
     // auto cols = df.GetColumnNames();
     // for(auto&& c : cols)
     //     std::cout << c << std::endl;
 
-    auto lambda {[](float x)
-                 {
-                     double min {110}; // modify based on resonance location
-                     double max {135};
-                     return (min <= x) && (x <= max);
-                 }};
-
+    auto lambda{[](float x)
+                {
+                    double min{110}; // modify based on resonance location
+                    double max{135};
+                    return (min <= x) && (x <= max);
+                }};
 
     // std::ofstream streamer {
     //     // TString::Format("./Outputs/events_%s_%s_%s.txt", beam.c_str(), target.c_str(), light.c_str())};
     //     TString::Format("./Outputs/%s.txt",cutname.c_str())};
 
     df.Foreach(
-        [&](ActRoot::MergerData& mer, float x)
+        [&](ActRoot::MergerData &mer, float x)
         {
-            if(lambda(x))
-                mer.Stream(streamer);
+            // if(lambda(x))
+            mer.Stream(streamer);
         },
         {"MergerData", "fRP.fCoordinates.fX"});
 

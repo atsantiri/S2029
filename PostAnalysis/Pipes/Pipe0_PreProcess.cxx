@@ -1,5 +1,6 @@
 #include "ActDataManager.h"
 #include "ActModularData.h"
+#include "ActCutsManager.h"
 #include "ActMergerData.h"
 #include "ActTPCData.h"
 #include "ActTypes.h"
@@ -14,6 +15,11 @@
 
 void Pipe0_PreProcess(const std::string &beam = "17F")
 {
+
+    //===========================================================
+    bool filterZ = true;
+    //===========================================================
+
     std::string configsdir{"./../configs/"};
 
     ROOT::EnableImplicitMT();
@@ -24,16 +30,13 @@ void Pipe0_PreProcess(const std::string &beam = "17F")
     auto chain3{datman.GetChain(ActRoot::ModeType::EFilter)};
     auto chain4{datman.GetChain(ActRoot::ModeType::EReadTPC)};
     chain->AddFriend(chain2.get());
-    chain->AddFriend(chain3.get(), "TPCData");
-    chain->AddFriend(chain4.get(), "GETTree");
+    // chain->AddFriend(chain3.get(), "TPCData");
+    // chain->AddFriend(chain4.get(), "GETTree");
+    chain->AddFriend(chain3.get());
+    chain->AddFriend(chain4.get());
 
     ROOT::EnableImplicitMT();
     ROOT::RDataFrame d{*chain};
-
-    // Get GATCONF values
-    auto df{d.Define("GATCONF", [](ActRoot::ModularData &mod)
-                     { return static_cast<int>(mod.fLeaves["GATCONF"]); },
-                     {"ModularData"})};
 
     // Get drift factor
     ActRoot::InputParser parserDet{configsdir + "detector.conf"};
@@ -41,8 +44,11 @@ void Pipe0_PreProcess(const std::string &beam = "17F")
     auto drift{bl->GetDouble("DriftFactor")};
 
     // For L1 events: find mean Z of beamlike particle
-    auto def = df.Define("zDrift", [&](ActRoot::MergerData &m, ActRoot::TPCData &tpc)
-                         {
+    auto df = d.Define("GATCONF", [](ActRoot::ModularData &mod)
+                         { return static_cast<int>(mod.fLeaves["GATCONF"]); },
+                         {"ModularData"})
+                   .Define("zDrift", [&](ActRoot::MergerData &m, ActRoot::TPCData &tpc)
+                           {
                             auto idx = m.fLightIdx;
                             if (idx < 0)
                                 return -300.0f;
@@ -81,20 +87,45 @@ void Pipe0_PreProcess(const std::string &beam = "17F")
                             float zDrift = deltaZ;
                             return zDrift; }, {"MergerData", "TPCData"});
 
-    auto dfWithRun = def.Define("RunNumber",
+    auto dfWithRun = df.Define("RunNumber",
                                 [](ActRoot::MergerData &m) -> int
                                 { return m.fRun; },
                                 {"MergerData"});
 
-    // 2D histo: x = run number, y = zDrift — bin width 1 in run so each bin = one run
-    auto hZdriftVsRun = dfWithRun.Histo2D(
-        {"hZdriftVsRun", "Z drift vs Run;Run number;Z drift [mm]", 25, 45,70, 300, -200, 200},
-        "RunNumber", "zDrift");
-
-    auto hZdrift = def.Histo1D({"hZdrift", "Z drift distribution;Z drift [mm];Counts", 300, -200, 200}, "zDrift");
+    auto hZdrift = df.Histo1D({"hZdrift", "Z drift distribution;Z drift [mm];Counts", 300, -200, 200}, "zDrift");
     auto c = new TCanvas("c", "c", 800, 600);
-
     hZdrift->DrawClone();
-    auto *cZdriftRun = new TCanvas("cZdriftRun", "Z drift vs Run (2D)", 800, 600);
-    hZdriftVsRun->DrawClone("COLZ");
+
+    // Results from fitting the two peaks near the edges of the zDrift distribution
+    float maxZ_mean = 1.44452e+02;
+    float maxZ_sig = 2.13408e+00;
+    float minZ_mean = -112.752;
+    float minZ_sig = 2.29358;
+
+    // Filter out events with very high or low Z drift.
+    auto dFiltered = df.Filter([&](float zdrift, int gatconf)
+                                {
+                                    if (gatconf != 8)
+                                        return true;
+                                    return zdrift >= (minZ_mean + 2 * minZ_sig) && zdrift <= (maxZ_mean - 2 * maxZ_sig); },
+                                {"zDrift", "GATCONF"});
+
+
+    auto hZdriftFiltered = dFiltered.Histo1D({"hZdriftFiltered", "Z drift distribution;Z drift [mm];Counts", 300, -200, 200}, "zDrift");
+    hZdriftFiltered->SetLineColor(2);
+    hZdriftFiltered->DrawClone("same");
+
+    // Save filtered dataframe in output
+    auto outName{TString::Format("./Outputs/tree_preProcessed_%s.root", beam.c_str())};
+    if (filterZ)
+    {
+        std::cout << "Saving Z filtered PreProcessed_Tree in file : " << outName << '\n';
+        dFiltered.Snapshot("PreProcessed_Tree", outName.Data());
+    }
+    else
+    {
+        std::cout << "Saving PreProcessed_Tree in file : " << outName << '\n';
+        std::cout << "This data will not be Z filtered (bool flag set to false)" << std::endl;
+        df.Snapshot("PreProcessed_Tree", outName.Data());
+    }
 }
