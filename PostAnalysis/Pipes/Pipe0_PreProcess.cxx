@@ -45,10 +45,10 @@ void Pipe0_PreProcess(const std::string &beam = "17F")
 
     // For L1 events: find mean Z of beamlike particle
     auto df = d.Define("GATCONF", [](ActRoot::ModularData &mod)
-                         { return static_cast<int>(mod.fLeaves["GATCONF"]); },
-                         {"ModularData"})
-                   .Define("zDrift", [&](ActRoot::MergerData &m, ActRoot::TPCData &tpc)
-                           {
+                       { return static_cast<int>(mod.fLeaves["GATCONF"]); },
+                       {"ModularData"})
+                  .Define("zDrift", [&](ActRoot::MergerData &m, ActRoot::TPCData &tpc)
+                          {
                             auto idx = m.fLightIdx;
                             if (idx < 0)
                                 return -300.0f;
@@ -88,9 +88,9 @@ void Pipe0_PreProcess(const std::string &beam = "17F")
                             return zDrift; }, {"MergerData", "TPCData"});
 
     auto dfWithRun = df.Define("RunNumber",
-                                [](ActRoot::MergerData &m) -> int
-                                { return m.fRun; },
-                                {"MergerData"});
+                               [](ActRoot::MergerData &m) -> int
+                               { return m.fRun; },
+                               {"MergerData"});
 
     auto hZdrift = df.Histo1D({"hZdrift", "Z drift distribution;Z drift [mm];Counts", 300, -200, 200}, "zDrift");
     auto c = new TCanvas("c", "c", 800, 600);
@@ -104,12 +104,11 @@ void Pipe0_PreProcess(const std::string &beam = "17F")
 
     // Filter out events with very high or low Z drift.
     auto dFiltered = df.Filter([&](float zdrift, int gatconf)
-                                {
+                               {
                                     if (gatconf != 8)
                                         return true;
                                     return zdrift >= (minZ_mean + 2 * minZ_sig) && zdrift <= (maxZ_mean - 2 * maxZ_sig); },
-                                {"zDrift", "GATCONF"});
-
+                               {"zDrift", "GATCONF"});
 
     auto hZdriftFiltered = dFiltered.Histo1D({"hZdriftFiltered", "Z drift distribution;Z drift [mm];Counts", 300, -200, 200}, "zDrift");
     hZdriftFiltered->SetLineColor(2);

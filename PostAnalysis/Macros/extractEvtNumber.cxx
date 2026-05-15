@@ -14,10 +14,13 @@ void extractEvtNumber()
     // auto filename {TString::Format("../Outputs/tree_pid_%s_%s_%s.root", beam.c_str(), target.c_str(),
     // light.c_str())};
 
-    std::ofstream streamer{"Outputs/events_l1_veryLowQevents.dat"};
 
-    std::string cutname{"tree_pid_l1_veryLowQevents"};
-    auto filename{TString::Format("../Outputs/%s.root", cutname.c_str())};
+    // std::string cutname{"tree_pid_l1_veryLowQevents"};
+    std::string cutname{"pid_l1_lowQ_alphas"};
+    std::ofstream streamer{TString::Format("Outputs/events_%s.dat",cutname.c_str())};
+
+
+    auto filename{TString::Format("../Outputs/tree_%s.root", cutname.c_str())};
     // auto filename {TString::Format("../Outputs/tree_pid_17F_p_4He.root")};
     std::cout << filename << std::endl;
     ROOT::RDataFrame df("PID_Tree", filename);
