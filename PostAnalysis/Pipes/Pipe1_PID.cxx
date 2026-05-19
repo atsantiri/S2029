@@ -18,7 +18,7 @@
 
 void Pipe1_PID(const std::string &beam, const std::string &target, const std::string &light)
 {
-    std::string dataconf {};
+    std::string dataconf{};
     dataconf = "./../configs/data.conf";
 
     // Read data
@@ -120,6 +120,8 @@ void Pipe1_PID(const std::string &beam, const std::string &target, const std::st
     std::string cutname{"pid_4He_l1_17F"};
     // std::string cutname{"pid_l1_lowQ_alphas"};
     cuts.ReadCut("l1", TString::Format("./Cuts/%s.root", cutname.c_str()).Data());
+    cuts.ReadCut("l1p", "./Cuts/pid_p_l1_17F.root");
+    cuts.ReadCut("l1bad", "./Cuts/pid_lowQ_region.root");
 
     // Two sils PID
     // cuts.ReadCut("f0-f1", TString::Format("./Cuts/pid_%s_f0_f1_%s.root", light.c_str(), beam.c_str()).Data());
@@ -169,6 +171,28 @@ void Pipe1_PID(const std::string &beam, const std::string &target, const std::st
         std::cout << "Counts in cut " << cutname << " " << tot.GetValue() << std::endl;
     }
 
+    std::map<std::string, ROOT::RDF::RResultPtr<ULong64_t>> cutCounts;
+    for (const auto &cut : cuts.GetListOfKeys())
+    {
+        cutCounts[cut] = df.Filter(
+                               [&, cut](ActRoot::MergerData &m, ActRoot::ModularData &mod)
+                               {
+                                   if (cut == "l1" || cut == "l1p" || cut == "l1bad")
+                                   {
+                                       return lambdaIsL1(m, mod) &&
+                                              cuts.IsInside(cut,
+                                                            m.fLight.fRawTL,
+                                                            m.fLight.fQtotal);
+                                   }
+                                   return false;
+                               },
+                               {"MergerData", "ModularData"})
+                             .Count();
+    }
+    std::cout << "\n==== COUNTS PER CUT ====\n";
+    for (auto &[cut, counter] : cutCounts)
+        std::cout << cut << " : " << counter.GetValue() << '\n';
+
     // Draw
     auto *c11{new TCanvas{"c11", "Pipe 1 PID Si"}};
     c11->DivideSquare(4);
@@ -181,12 +205,7 @@ void Pipe1_PID(const std::string &beam, const std::string &target, const std::st
         cuts.DrawCut(layer);
         p++;
     }
-    // for(auto& [layer, h] : hstwo)
-    // {
-    //     c11->cd(p);
-    //     h.Merge()->DrawClone("colz");
-    //     p++;
-    // }
+
     c11->cd(p);
     hEsilThetaLab.Merge()->DrawClone("colz");
     auto *gtheoKin{ActPhysics::Kinematics(TString::Format("%s(p,p)@65.2", beam.c_str()).Data()).GetKinematicLine3()};
@@ -218,4 +237,6 @@ void Pipe1_PID(const std::string &beam, const std::string &target, const std::st
     c13->cd();
     hl1.Merge()->DrawClone("colz");
     cuts.DrawCut("l1");
+    cuts.DrawCut("l1p");
+    cuts.DrawCut("l1bad");
 }

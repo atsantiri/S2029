@@ -6,4 +6,5 @@ set(ACTROOT $ENV{ACTROOT})
 include(${ACTROOT}/Scripts.cmake)
 
 #And call function
-add_userlibrary(NAME UserAction SOURCES UserAction.h UserAction.cxx LINK ActAlgorithm)
+# add_userlibrary(NAME UserAction SOURCES UserAction.h UserAction.cxx LINK ActAlgorithm)
+add_userlibrary(NAME L1Filter SOURCES L1Filter.h L1Filter.cxx LINK ActAlgorithm)
