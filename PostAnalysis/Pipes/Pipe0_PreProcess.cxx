@@ -13,6 +13,84 @@
 #include <atomic>
 #include <stdexcept>
 
+// PreProcessing for S2029
+// First step is to find events that hit the pad plane, by calculating the dZ distribution of the voxel with highest Z from the RP and removing the edge peak
+// Second step is to try and remove the events triggered on noise caused from the spread of the beam. This can't be done by increasing maxVoxeln cause I'll lose tiny alpha tracks
+
+struct BeamCone
+{
+    std::vector<std::pair<double, double>> yzWidth;
+    double x0, xMax, dxStep;
+    ActRoot::Line line;
+    bool Contains(ActRoot::Voxel &v) const;
+    double GetDistfromCone(ActRoot::Voxel &v) const;
+};
+
+BeamCone GetBeamCone(const ActRoot::Cluster &cl)
+{
+    BeamCone cone;
+
+    ActRoot::Cluster c = cl;
+    c.SortAlongDir();
+
+    int nBins = 12;
+
+    cone.x0 = c.GetVoxels().front().GetPosition().X();
+    cone.xMax = c.GetVoxels().back().GetPosition().X();
+    cone.dxStep = (cone.xMax - cone.x0) / nBins;
+    cone.line = c.GetRefToLine(); // cone center axis is the beam axis
+    cone.yzWidth.resize(nBins, {0.0, 0.0});
+
+    for (const auto &v : c.GetVoxels())
+    {
+        double x = v.GetPosition().X();
+        double y = v.GetPosition().Y();
+        double z = v.GetPosition().Z();
+
+        int i = (x - cone.x0) / cone.dxStep;
+        if (i < 0 || i >= nBins)
+            continue;
+
+        auto lineProjection = cone.line.ProjectionPointOnLine(v.GetPosition()); // project voxel on beamline
+        double yLine = lineProjection.Y();
+        double zLine = lineProjection.Z();
+
+        // width of cone will be the max distance of each voxel from the
+        cone.yzWidth[i].first = std::max(cone.yzWidth[i].first, std::abs(y - yLine));
+        cone.yzWidth[i].second = std::max(cone.yzWidth[i].second, std::abs(z - zLine));
+    }
+
+    return cone;
+}
+
+bool BeamCone::Contains(ActRoot::Voxel &v) const
+{
+    auto vPos = v.GetPosition();
+    int i = (vPos.X() - x0) / dxStep;
+    if (i < 0 || i >= (int)yzWidth.size())
+        return false;
+
+    auto [dy, dz] = yzWidth[i];
+    auto lineProjection = line.ProjectionPointOnLine(vPos);
+
+    return std::abs(vPos.Y() - lineProjection.Y()) <= dy &&
+           std::abs(vPos.Z() - lineProjection.Z()) <= dz;
+}
+
+double BeamCone::GetDistfromCone(ActRoot::Voxel &v) const
+{
+    auto vPos = v.GetPosition();
+    int i = (vPos.X() - x0) / dxStep;
+    auto [dy, dz] = yzWidth[i];
+
+    auto lineProjection = line.ProjectionPointOnLine(vPos);
+
+    double yDistfromLine = std::abs(vPos.Y() - lineProjection.Y());
+    double zDistfromLine = std::abs(vPos.Z() - lineProjection.Z());
+
+    return std::max(yDistfromLine - dy, zDistfromLine - dz);
+}
+
 void Pipe0_PreProcess(const std::string &beam = "17F")
 {
 
@@ -44,9 +122,8 @@ void Pipe0_PreProcess(const std::string &beam = "17F")
     auto drift{bl->GetDouble("DriftFactor")};
 
     // For L1 events: find mean Z of beamlike particle
-    auto df = d.Define("GATCONF", [](ActRoot::ModularData &mod)
-                       { return static_cast<int>(mod.fLeaves["GATCONF"]); },
-                       {"ModularData"})
+    auto df = d.Define("GATCONF", [](ActRoot::TPCData &tpc)
+                       { return static_cast<int>(tpc.fTrigger); }, {"TPCData"})
                   .Define("zDrift", [&](ActRoot::MergerData &m, ActRoot::TPCData &tpc)
                           {
                             auto idx = m.fLightIdx;
@@ -85,12 +162,22 @@ void Pipe0_PreProcess(const std::string &beam = "17F")
                             }
                             float deltaZ = (zExtreme - rpVox.Z()) * drift;
                             float zDrift = deltaZ;
-                            return zDrift; }, {"MergerData", "TPCData"});
+                            return zDrift; }, {"MergerData", "TPCData"})
+                  .Define("RunNumber",
+                          [](ActRoot::MergerData &m) -> int
+                          { return m.fRun; },
+                          {"MergerData"});
+                //   .Define("BeamCone", [&](ActRoot::TPCData &tpc)
+                //           {
+                //             int beamId = -1;
+                //             for (auto cl : tpc.fClusters)
+                //             {
+                //                 if (cl.GetIsBeamLike())
+                //                     beamId = cl.GetClusterID();
+                //             }
+                //             auto beamCone = GetBeamCone(tpc.fClusters[beamId]);
+                //             return beamCone; }, {"TPCData"});
 
-    auto dfWithRun = df.Define("RunNumber",
-                               [](ActRoot::MergerData &m) -> int
-                               { return m.fRun; },
-                               {"MergerData"});
 
     auto hZdrift = df.Histo1D({"hZdrift", "Z drift distribution;Z drift [mm];Counts", 300, -200, 200}, "zDrift");
     auto c = new TCanvas("c", "c", 800, 600);
