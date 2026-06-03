@@ -77,7 +77,7 @@ double dEthroughCFA(const ActPhysics::Particle& particle, double energy, bool ap
 
 
 
-void Simulation_S2029(const std::string& beam = "17F", double T1 = 5.5, double Ex = 0){
+void PreExperiment_Simulation_S2029(const std::string& beam = "17F", double T1 = 5.5, double Ex = 0){
 
     // Set number of iterations
     const int iterations {static_cast<int>(1e6)};

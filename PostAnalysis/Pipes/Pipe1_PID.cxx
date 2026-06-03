@@ -114,14 +114,14 @@ void Pipe1_PID(const std::string &beam, const std::string &target, const std::st
     // Gas PID
     // cuts.ReadCut("l0", TString::Format("./Cuts/pid_%s_l0_%s.root", light.c_str(), beam.c_str()).Data());
     // cuts.ReadCut("r0", TString::Format("./Cuts/pid_%s_r0_%s.root", light.c_str(), beam.c_str()).Data());
-    // cuts.ReadCut("f0", TString::Format("./Cuts/pid_%s_f0_%s.root", light.c_str(), beam.c_str()).Data());
+    cuts.ReadCut("f0", TString::Format("./Cuts/pid_%s_f0_%s.root", light.c_str(), beam.c_str()).Data());
     // cuts.ReadCut("l1", TString::Format("./Cuts/pid_%s_l1_%s.root", light.c_str(), beam.c_str()).Data());
     // std::string cutname {"pid_l1_veryLowQevents"};
-    std::string cutname{"pid_4He_l1_17F"};
+    // std::string cutname{"pid_4He_l1_17F"};
     // std::string cutname{"pid_l1_lowQ_alphas"};
-    cuts.ReadCut("l1", TString::Format("./Cuts/%s.root", cutname.c_str()).Data());
-    cuts.ReadCut("l1p", "./Cuts/pid_p_l1_17F.root");
-    cuts.ReadCut("l1bad", "./Cuts/pid_lowQ_region.root");
+    // cuts.ReadCut("l1", TString::Format("./Cuts/%s.root", cutname.c_str()).Data());
+    // cuts.ReadCut("l1p", "./Cuts/pid_p_l1_17F.root");
+    // cuts.ReadCut("l1bad", "./Cuts/pid_lowQ_region.root");
 
     // Two sils PID
     // cuts.ReadCut("f0-f1", TString::Format("./Cuts/pid_%s_f0_f1_%s.root", light.c_str(), beam.c_str()).Data());
@@ -163,12 +163,12 @@ void Pipe1_PID(const std::string &beam, const std::string &target, const std::st
             },
             {"MergerData", "ModularData"})};
         // auto name {TString::Format("./Outputs/grass.root")};
-        // auto name {TString::Format("./Outputs/tree_pid_%s_%s_%s.root", beam.c_str(), target.c_str(), light.c_str())};
-        auto name{TString::Format("./Outputs/tree_%s.root", cutname.c_str())};
+        auto name {TString::Format("./Outputs/tree_pid_%s_%s_%s.root", beam.c_str(), target.c_str(), light.c_str())};
+        // auto name{TString::Format("./Outputs/tree_%s.root", cutname.c_str())};
         std::cout << "Saving PID_Tree in file : " << name << '\n';
         gated.Snapshot("PID_Tree", name.Data());
         auto tot = gated.Count();
-        std::cout << "Counts in cut " << cutname << " " << tot.GetValue() << std::endl;
+        // std::cout << "Counts in cut " << cutname << " " << tot.GetValue() << std::endl;
     }
 
     std::map<std::string, ROOT::RDF::RResultPtr<ULong64_t>> cutCounts;

@@ -256,7 +256,7 @@ void Pipe3_Ex(const std::string& beam, const std::string& target, const std::str
     auto* c31 {new TCanvas("c31", "Pipe 3 Canvas 1: Ex", 1000, 800)};
     c31->DivideSquare(6);
     c31->cd(1);
-    gPad->SetLogy();
+    // gPad->SetLogy();
     hRecExSil->DrawClone();
     c31->cd(2);
     hRecExSilRPx->DrawClone("colz");

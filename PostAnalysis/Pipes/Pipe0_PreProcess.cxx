@@ -30,7 +30,7 @@ BeamCone GetBeamCone(const ActRoot::Cluster &cl)
 {
     BeamCone cone;
 
-    ActRoot::Cluster c = cl;
+    auto c = cl;
     c.SortAlongDir();
 
     int nBins = 12;
@@ -166,18 +166,15 @@ void Pipe0_PreProcess(const std::string &beam = "17F")
                   .Define("RunNumber",
                           [](ActRoot::MergerData &m) -> int
                           { return m.fRun; },
-                          {"MergerData"});
-                //   .Define("BeamCone", [&](ActRoot::TPCData &tpc)
+                          {"MergerData"})
+                //   .Define("BeamCone", [&](ActRoot::TPCData &tpc, ActRoot::MergerData &m, int gatconf)
                 //           {
-                //             int beamId = -1;
-                //             for (auto cl : tpc.fClusters)
-                //             {
-                //                 if (cl.GetIsBeamLike())
-                //                     beamId = cl.GetClusterID();
-                //             }
-                //             auto beamCone = GetBeamCone(tpc.fClusters[beamId]);
-                //             return beamCone; }, {"TPCData"});
-
+                //             if (gatconf!=8)
+                //              return BeamCone{};
+                //             if (m.fBeamIdx < 0)
+                //                 throw std::runtime_error("Invalid beamId");
+                //             return GetBeamCone(tpc.fClusters[m.fBeamIdx]); }, {"TPCData", "MergerData", "GATCONF"})
+                ;
 
     auto hZdrift = df.Histo1D({"hZdrift", "Z drift distribution;Z drift [mm];Counts", 300, -200, 200}, "zDrift");
     auto c = new TCanvas("c", "c", 800, 600);
@@ -190,28 +187,67 @@ void Pipe0_PreProcess(const std::string &beam = "17F")
     float minZ_sig = 2.29358;
 
     // Filter out events with very high or low Z drift.
-    auto dFiltered = df.Filter([&](float zdrift, int gatconf)
-                               {
+    auto dZFiltered = df.Filter([&](float zdrift, int gatconf)
+                                {
                                     if (gatconf != 8)
                                         return true;
                                     return zdrift >= (minZ_mean + 2 * minZ_sig) && zdrift <= (maxZ_mean - 2 * maxZ_sig); },
-                               {"zDrift", "GATCONF"});
+                                {"zDrift", "GATCONF"})
+                          //   .Filter([&](int gatconf, const ActRoot::TPCData &tpc, const ActRoot::MergerData &m)
+                        //   .Filter([&](int gatconf, const ActRoot::TPCData &tpc, const BeamCone beamCone, const ActRoot::MergerData &m)
+                        //           {
+                        //               if (gatconf != 8)
+                        //                   return true;
 
-    auto hZdriftFiltered = dFiltered.Histo1D({"hZdriftFiltered", "Z drift distribution;Z drift [mm];Counts", 300, -200, 200}, "zDrift");
+                        //               if (m.fLightIdx < 0 || m.fLightIdx >= (int)tpc.fClusters.size())
+                        //               {
+                        //                   std::cerr << "Invalid light index: "
+                        //                             << m.fLightIdx
+                        //                             << "  clusters size = "
+                        //                             << tpc.fClusters.size()
+                        //                             << std::endl;
+                        //                   return false;
+                        //               }
+                        //               //   std::cout<< "idx=" << m.fLightIdx<< " size=" << tpc.fClusters.size()<< std::endl;
+
+                        //               auto &lightCluster = tpc.fClusters[m.fLightIdx];
+                        //               int voxelsOutOfCone = 0;
+                        //               double maxDistFromCone{0};
+                        //               auto &voxels = lightCluster.GetVoxels();
+                        //               for ( auto v : voxels)
+                        //               {
+                        //                   if (!beamCone.Contains(v))
+                        //                   {
+                        //                       voxelsOutOfCone++;
+                        //                       maxDistFromCone = std::max(beamCone.GetDistfromCone(v), maxDistFromCone);
+                        //                   }
+                        //               }
+                        //               return (voxelsOutOfCone > 0);
+                        //               //             bool isInBeamCone{voxelsOutOfCone <= 5};
+                        //               //             bool isNearBeamCone{maxDistFromCone <= 5};
+                        //               //             return (!isInBeamCone && !isNearBeamCone);
+                        //           },
+                        //           {"GATCONF", "TPCData", "BeamCone", "MergerData"});
+    //   {"GATCONF", "TPCData", "MergerData"})
+    ;
+
+    auto hZdriftFiltered = dZFiltered.Histo1D({"hZdriftFiltered", "Z drift distribution;Z drift [mm];Counts", 300, -200, 200}, "zDrift");
     hZdriftFiltered->SetLineColor(2);
     hZdriftFiltered->DrawClone("same");
+
+    std::vector<std::string> cols = {"MergerData", "TPCData","ModularData", "zDrift", "RunNumber", "GATCONF"};
 
     // Save filtered dataframe in output
     auto outName{TString::Format("./Outputs/tree_preProcessed_%s.root", beam.c_str())};
     if (filterZ)
     {
         std::cout << "Saving Z filtered PreProcessed_Tree in file : " << outName << '\n';
-        dFiltered.Snapshot("PreProcessed_Tree", outName.Data());
+        dZFiltered.Snapshot("PreProcessed_Tree", outName.Data(), cols);
     }
     else
     {
         std::cout << "Saving PreProcessed_Tree in file : " << outName << '\n';
         std::cout << "This data will not be Z filtered (bool flag set to false)" << std::endl;
-        df.Snapshot("PreProcessed_Tree", outName.Data());
+        df.Snapshot("PreProcessed_Tree", outName.Data(), cols);
     }
 }
