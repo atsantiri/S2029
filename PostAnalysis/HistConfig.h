@@ -32,26 +32,18 @@ const TH2DModel YPhiY {"hYPhiY", "Emittance along Y;Y [mm];#phi_{Y} [#circ]", 60
 const TH2DModel ThetaBeam {"hThetaBeam", "#theta_{Beam} against RP.X;RP.X() [mm];#theta_{Beam} [#circ]", 200, -5, 270, 200, -1, 10};
 const TH2DModel ExZ {"hExZ", "E_{x} dependence on SP.Z();SP.Z() [mm];E_{x} [MeV]", 200, -10, 300, 200, -10, 20};
 const TH2DModel ExThetaCM {"hExThetaCM", "E_{x} vs #theta_{CM};#theta_{CM} [#circ];E_{x} [MeV]", 400, 0, 180, 200, -5, 10};
-
 const TH2DModel ExThetaLab {"hExThetaLab", "E_{x} vs #theta_{Lab};#theta_{Lab} [#circ];E_{x} [MeV]", 400, 0, 60, 200, -10, 20};
-
 const TH2DModel ExRPx {"hExRPX", "E_{x} vs RP.X;RP.X() [mm];E_{x} [MeV]", 200, -10, 300, 200, -5, 15};
 const TH2DModel EBeamRPx {"hEBeamRPX", "E_{Beam} vs RP.X;RP.X() [mm];E_{Beam} [MeV]", 200, -10, 300, 200, 0, 80};
-
 const TH2DModel EcnThetaCM {"hEcnThetaCM", "E_{CN} vs ThetaCM; E_{CN} [MeV];ThetaCM [#circ]", 200, 4, 9, 200, 0, 180};
-
 const TH2DModel ThetaCMLab {"hThetaCMLab", "CM vs Lab correlations;#theta_{CM} [#circ];#theta_{Lab} [#circ]", 400, 0, 180, 400, 0, 180};
-
 const TH2DModel RPxThetaCM {"hRPxThetaCM", "RP.X vs #theta_{CM} correlations;RP.X [mm];#theta_{CM} [#circ]", 200, 0, 300, 200, 0, 180};
-
 const TH1DModel ECN {"hEcn","Compound Nucleus energy;E_{^{18}Ne} [MeV];Counts ", 150,3.5, 9};
-
 const TH1DModel EBeam {"hEBeam", "Beam energy;E_{Beam} [MeV]", 100, 0, 80};
 const TH1DModel ELight {"hELight", "Alpha energy;E_{a} [MeV]", 100, 0, 4};
 const TH1DModel EHeavy {"hEHeavy", "Heavy energy;E [MeV]", 100, 0, 70};
-
 const TH2DModel ELightTL {"hELight", "Alpha energy vs Track Length;TL [mm];E_{a} [MeV];",100,0,50, 100, 0, 4 };
-
+const TH1DModel PhiCM {"hPhiCM", "PhiCM;#phi_{CM} [#circ]", 600, 0, 180};
 const TH1DModel ECM {"hECM", "E_{CM};E_{CM} [MeV];Counts / 25 keV", 100, 0, 5};
 const TH2DModel RPxECM {"hRPxECM", "ECM vs RP.X;RP.X [mm];E_{CM} [MeV]", 200, 0, 300, 150, 0, 15};
 const TH2DModel ExESi {"hExESi", "Ex vs E_Si; ESi [MeV]; Ex [MeV]", 150, 0, 15, 100, -5, 5};

@@ -21,7 +21,7 @@
 #include "TString.h"
 #include "TStyle.h"
 #include "TTree.h"
-
+#include "TLegend.h"
 #include "ROOT/TThreadedObject.hxx"
 #include "Math/Point3Dfwd.h"
 #include "Rtypes.h"
@@ -107,10 +107,19 @@ void ApplyNaN(double &val, double thresh = 0, const std::string &comment = "stop
     val = std::nan(comment.c_str());
 }
 
+void makeGrid(std::string layer, std::unordered_map<std::string, ActPhysics::SilMatrix *> smAll)
+{
+  auto &cuts = smAll[layer]->GetGraphs();
+  for (const auto &[id, cut] : cuts)
+  {
+    if (cut)
+      cut->Draw("same");
+  }
+}
+
 void Simulation_S2029(const std::string &beam, const std::string &target,
                       const std::string &light, const std::string &heavy,
-                      int neutronPS, int protonPS, double T1, double Ex,
-                      int pressure, bool standalone)
+                      double T1, double Ex, int pressure, bool standalone)
 {
   // set batch mode if not an independent function
   if (!standalone)
@@ -163,24 +172,27 @@ void Simulation_S2029(const std::string &beam, const std::string &target,
 
   // Silicon EFFECTIVE matrix
   double silCentre{};
-  double beamOffset{};      // determined from emittance calculations
-  std::string layer = "f0"; // for now
-  ActPhysics::SilMatrix *sm{specs.GetLayer(layer).GetSilMatrix()->Clone()};
+  double beamOffset{}; // determined from emittance calculations
+  // std::string layer = "f0"; // for now
+  // ActPhysics::SilMatrix *sm{specs.GetLayer(layer).GetSilMatrix()->Clone()};
+  std::vector<std::string> silLayers{"f0", "l0", "r0"};
+  std::unordered_map<std::string, ActPhysics::SilMatrix *> smAll;
+  for (const auto &l : silLayers)
+    smAll[l] = specs.GetLayer(l).GetSilMatrix()->Clone();
 
-  //---- SIMULATION STARTS HERE
-  ROOT::EnableImplicitMT();
-
-  // timer
-  TStopwatch timer{};
-  timer.Start();
+  /////////////////////////////////////////////////////////////////////////////
+  // need to move silicons around, like Ivan's lines 304 - 334 of s2384/Simulation/do_simu.cxx
+  /////////////////////////////////////////////////////////////////////////////
+  specs.DrawGeo();
 
   // Init particles
   ActPhysics::Particle p1{beam};
   ActPhysics::Particle p2{target};
   ActPhysics::Particle p3{light};
   ActPhysics::Particle p4{heavy};
+
   // Init kinematics generator
-  ActSim::KinematicGenerator kingen{p1, p2, p3, p4, protonPS, neutronPS};
+  ActSim::KinematicGenerator kingen{p1, p2, p3, p4, 0, 0};
   kingen.Print();
   ActPhysics::Kinematics *reckin = kingen.GetBinaryKinematics();
 
@@ -193,32 +205,50 @@ void Simulation_S2029(const std::string &beam, const std::string &target,
   auto hThetaCMAll{HistConfig::ChangeTitle(HistConfig::ThetaCM, "ThetaCM all", "All").GetHistogram()};
   auto hDistL0{HistConfig::ChangeTitle(HistConfig::TL, "Distance to L0").GetHistogram()};
   auto hKinVertex{HistConfig::ChangeTitle(HistConfig::Kin, "Kinematics at vertex").GetHistogram()};
-  auto hSP{HistConfig::SP.GetHistogram()};
-  auto hSPCut{(TH2D *)hSP->Clone("hSPCut")};
   auto hEexBefore{HistConfig::ChangeTitle(HistConfig::Ex, "Ex before resolutions", "Bef").GetHistogram()};
   auto hEexAfter{HistConfig::ChangeTitle(HistConfig::Ex, "Ex after resolutions", "After").GetHistogram()};
   auto hSPTheta{std::make_unique<TProfile2D>("hSPTheta", "SP vs #theta_{CM};Y [mm];Z [mm];#theta_{CM} [#circ]", 75, 0, 300, 75, 0, 300)};
   auto hRP{HistConfig::RP.GetHistogram()};
   auto hEcn{HistConfig::ECN.GetHistogram()};
+  auto hEcnFr{HistConfig::ECN.GetHistogram()};  // front Sil
+  auto hEcnLat{HistConfig::ECN.GetHistogram()}; // lateral sil
   auto *hRPxSimu{HistConfig::RP.GetHistogram()->ProjectionX("hRPxSimu")};
   auto *hRPxRange{new TH2D{"hRPxRange", "Light range vs dist to sil wall;Dist to wall [mm];Light range [mm]", 300, 0, 500, 300, 0, 500}};
   auto *hEBeam{new TH2D{"hEBeam", "Range angle", 300, 0, 180, 300, 0, 500}};
   auto *hEx2{new TH2D{"hEx2", "#theta_{Lab} vs E_{CN};E_{CN} [MeV];#theta_{CM} [#circ]", 200, 4, 9, 200, 90, 180}};
-  auto *hnorm{new TH2D{"hnorm", "geometric efficiency;E*_{^{12}Be,elastic} [MeV];#theta_{CM} [#circ]", 90, 10, 15, 90, 90, 180}};
+  auto *hnorm{new TH2D{"hnorm", "geometric efficiency;E*_{^{18}Ne,elastic} [MeV];#theta_{CM} [#circ]", 90, 4, 9, 90, 90, 180}};
   auto hKin{HistConfig::Kin.GetHistogram()};
-  auto *hnorm_phi{new TH2D{"hnorm_phi", "geometric efficiency;E*_{^{12}Be} [MeV];#Phi_{Lab} [#circ]", 90, 10, 15, 90, 0, 200}};
+  auto *hnorm_phi{new TH2D{"hnorm_phi", "geometric efficiency;E*_{^{18}Ne} [MeV];#Phi_{Lab} [#circ]", 90, 4, 9, 90, 0, 200}};
   auto hECM{HistConfig::ECM.GetHistogram()};
   auto *hprojection{new TH1D{"hprojection", "Ex;E_{x} [MeV]; Counts", 80, 11, 13}};
   auto *htrack{new TH2D{"htrack", "trackslength;#theta_{heavy lab} [#circ];track length [mm]", 90, 0, 100, 90, 0, 250}};
   auto hEcnThetaCM{HistConfig::EcnThetaCM.GetHistogram()};
+  auto *hTestEcm{new TH2D{"hTestEcm", "E_{CM};E_{CM} ;E_{CM}Recon", 100, 0, 5, 100, 0, 5}};
+  auto hTheta3CM{HistConfig::ThetaCM.GetHistogram()};
+  auto hTheta3CMside{HistConfig::ThetaCM.GetHistogram()};
+  auto hTheta3CMfront{HistConfig::ThetaCM.GetHistogram()};
+  auto hTheta3Lab{HistConfig::ThetaCM.GetHistogram()};
+  hTheta3Lab->SetTitle("Theta3Lab;#theta_{Lab} [#circ];Counts");
+  auto hTheta3Labside{HistConfig::ThetaCM.GetHistogram()};
+  hTheta3Labside->SetTitle("Theta3Lab;#theta_{Lab} [#circ];Counts");
+  auto hTheta3Labfront{HistConfig::ThetaCM.GetHistogram()};
+  hTheta3Labfront->SetTitle("Theta3Lab;#theta_{Lab} [#circ];Counts");
+  auto hThetaLabAll{HistConfig::ThetaCM.GetHistogram()};
+  hThetaLabAll->SetTitle("Theta3Lab all;#theta_{Lab} [#circ];Counts");
+  auto hPhiAll{HistConfig::PhiCM.GetHistogram()};
+  hPhiAll->SetTitle("Phi3CM all;#phi_{CM} [#circ];Counts");
 
-  std::map<std::string, ROOT::TThreadedObject<TH2D>> hSilPID;
-  auto *hpid{new TH2D{"hPID", "PID;E[MeV];Eloss [MeV]", 1000, 0, 15, 1000, 0, 0.01}};
+  std::map<std::string, ROOT::TThreadedObject<TH2D>> hSilPID, hSilSP;
+  auto hSP{HistConfig::SP.GetHistogram()};
+  auto *hpid{new TH2D{"hPID", "PID;E[MeV];Eloss [MeV]", 1000, 0, 10, 1000, 0, 0.01}};
   for (const auto &layer : {"f0", "l0", "r0"})
   {
     hSilPID.emplace(layer, *hpid);
     hSilPID[layer]->SetTitle(TString::Format("%s", layer));
+    hSilSP.emplace(layer, *hSP);
+    hSilSP[layer]->SetTitle(TString::Format("%s", layer));
   }
+  auto hSPCut{(TH2D *)hSP->Clone("hSPCut")}; // 3D object to examine L1 events?
 
   // Load SRIM tables
   // The name of the file sets particle + medium
@@ -232,7 +262,7 @@ void Simulation_S2029(const std::string &beam, const std::string &target,
   rand->SetSeed(); // random path in each execution of macro
 
   // Runner: contains utility funcstions to execute multiple actions
-  ActSim::Runner runner(srim, nullptr, rand, sigmaSil);
+  ActSim::Runner runner(nullptr, nullptr, rand, sigmaSil);
 
   // Output from simulation!
   // We only store a few things in the TTree
@@ -240,8 +270,10 @@ void Simulation_S2029(const std::string &beam, const std::string &target,
   // 2-> Theta in CM frame
   // 3-> Weight of the generator: for three-body reactions (phase spaces) the
   // other two variables need to be weighted by this value. For binary
-  // reactions, weight = 1 4-> Energy at vertex 5-> Theta in Lab frame
-  auto *outFile{new TFile(TString::Format("../PostAnalysis/Input/Norm_%s_%dmbar_%.0f-%.0fdeg.root", light.c_str(), pressure, angle_min, angle_max), "recreate")};
+  // reactions, weight = 1
+  // 4-> Energy at vertex
+  // 5-> Theta in Lab frame
+  auto *outFile{new TFile(TString::Format("../PostAnalysis/Input/Simu_%s_%dmbar.root", light.c_str(), pressure), "recreate")};
   auto *outTree{new TTree("SimulationTTree", "A TTree containing only our Eex obtained by simulation")};
 
   double theta3CM_tree{};
@@ -257,10 +289,16 @@ void Simulation_S2029(const std::string &beam, const std::string &target,
   double rpx_tree{};
   outTree->Branch("RPx", &rpx_tree);
 
-  // RUN!
+  //---- SIMULATION STARTS HERE
+  ROOT::EnableImplicitMT();
+
+  // timer
+  TStopwatch timer{};
+  timer.Start();
+
   // print fancy info
-  std::cout << BOLDMAGENTA << "Running for Ex = " << Ex << " MeV" << RESET
-            << '\n';
+  std::cout << BOLDMAGENTA << "Running for Ex = " << Ex << " MeV" << RESET << '\n';
+  std::cout << BOLDMAGENTA << "Output File: " << outFile->GetName() << RESET << '\n';
   std::cout << BOLDGREEN;
   const int percentPrint{5};
   int step{iterations / (100 / percentPrint)};
@@ -283,9 +321,7 @@ void Simulation_S2029(const std::string &beam, const std::string &target,
     auto [start, vertex]{SampleVertex(zVertexMean, zVertexSigma, yVertexMean, yVertexSigma, nullptr, fTPC.X())};
 
     // 2-> Beam energy according to its sigma
-    auto TBeam{runner.RandomizeBeamEnergy(
-        T1 * p1.GetAMU(),
-        sigmaPercentBeam * T1 * p1.GetAMU())}; // T1 in Mev / u * mass of beam in u = total kinetic energy
+    auto TBeam{runner.RandomizeBeamEnergy(T1 * p1.GetAMU(), sigmaPercentBeam * T1 * p1.GetAMU())}; // T1 in Mev / u * mass of beam in u = total kinetic energy
 
     // Slow down it according to vertex position
     auto distToVertex{(vertex - start).R()};
@@ -308,22 +344,28 @@ void Simulation_S2029(const std::string &beam, const std::string &target,
     reckin->SetBeamEnergyAndEx(TBeam, Ex);
     double weight{kingen.Generate()}; // need to understand what this is
 
-    // focus on recoil 3 (light)
-    // obtain thetas and energies
+    // Light
     auto *PLight{kingen.GetLorentzVector(0)};
-    // auto *PHeavy{kingen.GetLorentzVector(1)};
     auto theta3Lab{PLight->Theta()};
     auto phi3Lab{PLight->Phi()};
     auto T3Lab{PLight->Energy() - p3.GetMass()};
-    // std::cout << "T3Lab= " << T3Lab << "\n";
-    // std::cout << "\n";
-    // auto T4Lab{PHeavy->Energy() - p4.GetMass()};
-    auto EexBefore{kingen.GetBinaryKinematics()->ReconstructExcitationEnergy(
-        T3Lab, theta3Lab)};
-    // to compute geometric efficiency by CM interval and with our set reference
-    // direction
-    double theta3CM{kingen.GetBinaryKinematics()->ReconstructTheta3CMFromLab(T3Lab, theta3Lab)};
-    hThetaCMAll->Fill(theta3CM * TMath::RadToDeg());
+
+    // Heavy
+    auto *PHeavy{kingen.GetLorentzVector(1)};
+    auto T4Lab{PHeavy->Energy() - p4.GetMass()};
+
+    // Save without resolution
+    // Simulated thetaCM, to be used for efficiency computation by CM interval and with our set reference direction
+    double theta3CMEff{reckin->ReconstructTheta3CMFromLab(T3Lab, theta3Lab)};
+    double phi3CM = phi3Lab;
+    auto EexEff{reckin->ReconstructExcitationEnergy(T3Lab, theta3Lab)};
+    double theta3LabEff{theta3Lab}; // before implementing resolution in angle
+    auto Ecm{(p2.GetAMU() / (p2.GetAMU() + p1.GetAMU())) * TBeam};
+
+    // Fill Histograms
+    hThetaCMAll->Fill(theta3CMEff * TMath::RadToDeg());
+    hThetaLabAll->Fill(theta3LabEff * TMath::RadToDeg());
+    hPhiAll->Fill(phi3Lab * TMath::RadToDeg());
 
     ////////////////////////////////////////////////////////////////////////////////
     // 4-> Include thetaLab resolution to compute thetaCM and Ex afterwards
@@ -334,15 +376,8 @@ void Simulation_S2029(const std::string &beam, const std::string &target,
     auto lightRange{srim->EvalDirect("light", T3Lab)};
     // std::cout<<"lightRange = "<<lightRange<<std::endl;
     // auto heavyRange{srim->EvalDirect("heavy", T4Lab)};
-    // Ecm from formula using masses
-    auto Ecm{(p2.GetAMU() / (p2.GetAMU() + p1.GetAMU())) * TBeam};
-    double Ecn = Ecm + qval;
-    // double theta_gauss = random.Gaus(theta3Lab, 0.1);
-
-    auto Ex_calc = T3Lab * ((2 * TMath::Cos(theta3Lab) * TMath::Sqrt((TBeam * p3.GetAMU()) / (T3Lab * p4.GetAMU()))) - ((p3.GetAMU() / p4.GetAMU()) + 1));
 
     ////////////////////////////////////////////////////////////////////////////////
-    // 5-> Propagate track from vertex to silicon wall using Geometry class -- deprecated
     // 5-> Propagate track from vertex to silicon wall using SilSpecs class
     // And using the angle with the uncertainty already in
     ROOT::Math::XYZVector dirBeamFrame{TMath::Cos(theta3Lab), TMath::Sin(theta3Lab) * TMath::Sin(phi3Lab), TMath::Sin(theta3Lab) * TMath::Cos(phi3Lab)};
@@ -352,12 +387,31 @@ void Simulation_S2029(const std::string &beam, const std::string &target,
     // Rotate to world = geometry frame
     auto dirWorldFrame{runner.RotateToWorldFrame(dirBeamFrame, beamDir)};
 
-    auto [silIndex0, silPoint0InMM]{specs.FindSPInLayer(layer, vertex, dirWorldFrame)};
+    // Threshold L1, particles that stop in actar. Check before doing the continues
+    double rangeInGas{srim->EvalRange("light", T3Lab)};
+    ROOT::Math::XYZPoint finalPointGas{vertex + rangeInGas * dirWorldFrame.Unit()};
+    if (0 <= finalPointGas.X() && finalPointGas.X() <= fTPC.X() && 0 <= finalPointGas.Y() && finalPointGas.Y() <= fTPC.Y() && 0 <= finalPointGas.Z() && finalPointGas.Z() <= fTPC.Z())
+    {
+      hSPCut->Fill(finalPointGas.Y(), finalPointGas.Z());
+      // do something here????
+    }
 
+    // auto [silIndex0, silPoint0InMM]{specs.FindSPInLayer(layer, vertex, dirWorldFrame)};
+    int silIndex0 = -1;
+    ROOT::Math::XYZPoint silPoint0;
+    std::string layer0;
+    for (auto layer : silLayers)
+    {
+      std::tie(silIndex0, silPoint0) = specs.FindSPInLayer(layer, vertex, dirWorldFrame);
+      if (silIndex0 != -1)
+      {
+        layer0 = layer;
+        break;
+      }
+    }
     // Define SP distance
-    auto distance0{(vertex - silPoint0InMM).R()};
+    auto distance0{(vertex - silPoint0).R()};
     // std::cout << "lightRange: " << lightRange << " distance0: " << distance0 << std::endl;
-
     auto T3EnteringSil{srim->Slow("light", T3Lab, distance0)};
     // std::cout<<" SilPoint "<<silPoint0InMM<<", energy entering Sil: "<<T3EnteringSil<<std::endl;
     ApplyNaN(T3EnteringSil);
@@ -368,22 +422,24 @@ void Simulation_S2029(const std::string &beam, const std::string &target,
     // skip tracks that doesn't reach silicons or are in silicon index cut
     if (silIndex0 == -1)
     {
-      hSPCut->Fill(silPoint0InMM.Y(), silPoint0InMM.Z());
       continue;
     }
 
     // SILICON0
-    auto angleNormal0{AngleWithNormal(dirWorldFrame, {0, 1, 0})};
-    auto T3AfterSil0{srim->SlowWithStraggling("lightInSil", T3EnteringSil, specs.GetLayer(layer).GetUnit().GetThickness(), 0)}; ////////////////////////////////////////////////////////////////////////////////////////////make angleWithNormal
+    ROOT::Math::XYZVector normal{specs.GetLayer(layer0).GetNormal()};
+    auto angleNormal0{AngleWithNormal(dirWorldFrame, normal)};
+    auto T3AfterSil0{srim->SlowWithStraggling("lightInSil", T3EnteringSil, specs.GetLayer(layer0).GetUnit().GetThickness(), 0)}; ////////////////////////////////////////////////////////////////////////////////////////////make angleWithNormal
     auto eLoss0{T3EnteringSil - T3AfterSil0};
-   
+
     // Apply resolution
     if (T3AfterSil0 != 0)
     {
       eLoss0 = gRandom->Gaus(eLoss0, sigmaSil * TMath::Sqrt(eLoss0 / 5.5));
       T3AfterSil0 = T3EnteringSil - eLoss0;
     }
-    ApplyNaN(eLoss0, thresholdSi0, "thresh");
+    // ApplyNaN(eLoss0, thresholdSi0, "thresh");
+    ApplyNaN(eLoss0, specs.GetLayer(layer0).GetThresholds().at(silIndex0));
+
     // nan if bellow threshold
     if (!std::isfinite(eLoss0))
       continue;
@@ -395,36 +451,57 @@ void Simulation_S2029(const std::string &beam, const std::string &target,
     // 7->
     // we are ready to reconstruct Eex with all resolutions implemented
     //(d,light) is investigated gating on Esil1 = 0!
-    bool cutEAfterSil0{T3AfterSil0 == 0.};
+    bool cutEAfterSil0{T3AfterSil0 == 0.};      // remove punchthrough
     if (cutEAfterSil0 && std::isfinite(eLoss0)) // fill histograms
     {
       // auto T3Recon{runner.EnergyBeforeGas(eLoss0, distance0, "light")};
-      auto T3Recon{srim->EvalInitialEnergy("light", eLoss0, distance0)};
-      auto EexAfter{reckin->ReconstructExcitationEnergy(T3Recon, theta3Lab)};
-      auto theta3CM{reckin->ReconstructTheta3CMFromLab(T3Recon, theta3Lab)};
+      auto T3Rec{srim->EvalInitialEnergy("light", eLoss0, distance0)};
+      auto EexRec{reckin->ReconstructExcitationEnergy(T3Rec, theta3Lab)};
+      auto theta3CMRec{reckin->ReconstructTheta3CMFromLab(T3Rec, theta3Lab)};
+      auto TBeamRec{reckin->ReconstructBeamEnergyFromLabKinematics(T3Rec, theta3Lab)};
+      // // Ecm from formula using masses
+      auto EcmRecon{(p2.GetAMU() / (p2.GetAMU() + p1.GetAMU())) * TBeamRec};
+      double EcnRec = Ecm + qval;
+      // double theta_gauss = random.Gaus(theta3Lab, 0.1);
+
+      auto Ex_calc = T3Lab * ((2 * TMath::Cos(theta3Lab) * TMath::Sqrt((TBeam * p3.GetAMU()) / (T3Lab * p4.GetAMU()))) - ((p3.GetAMU() / p4.GetAMU()) + 1));
 
       // fill histograms
-      // hThetaCM->Fill(theta3CM * TMath::RadToDeg());
+      hTheta3CM->Fill(theta3CMEff);
+      hThetaCM->Fill(theta3CMRec * TMath::RadToDeg());
       TF1 *fit = new TF1("fit", "[0]*(x^[1])", 10, -0.5);
-      hSilPID[layer]->Fill(T3EnteringSil, (T3Lab - T3EnteringSil) / distance0);
+      hTheta3Lab->Fill(theta3Lab * TMath::RadToDeg());
+      hSilPID[layer0]->Fill(T3EnteringSil, (T3Lab - T3EnteringSil) / distance0);
       // hThetaCM->Fill(theta3CMBefore * TMath::RadToDeg());
-      hEexBefore->Fill(
-          EexBefore,
-          weight); // with the weight from each TGenPhaseSpace::Generate()
+      hEexBefore->Fill(EexEff, weight); // with the weight from each TGenPhaseSpace::Generate()
       hDistL0->Fill(distance0);
       hKin->Fill(theta3Lab * TMath::RadToDeg(), T3EnteringSil);
       hKinVertex->Fill(theta3Lab * TMath::RadToDeg(), Ecm); // T3Recon);
-      hEcnThetaCM->Fill(Ecn, theta3CM * TMath::RadToDeg());
-      hnorm->Fill(Ecm, theta3CM * TMath::RadToDeg());
+      hEcnThetaCM->Fill(EcnRec, theta3CMRec * TMath::RadToDeg());
+      hnorm->Fill(Ecm, theta3CMRec * TMath::RadToDeg());
       hnorm_phi->Fill(Ecm, phi3Lab * TMath::RadToDeg());
-      hEcn->Fill(Ecn);
+      hEcn->Fill(EcnRec);
+      if (layer0 == "f0")
+      {
+        hEcnFr->Fill(EcnRec);
+        hSilSP[layer0]->Fill(silPoint0.Y(), silPoint0.Z());
+        hTheta3CMfront->Fill(theta3CMEff);
+        hTheta3Labfront->Fill(theta3Lab * TMath::RadToDeg());
+      }
+      else
+      {
+        hEcnLat->Fill(EcnRec);
+        hSilSP[layer0]->Fill(silPoint0.X(), silPoint0.Z());
+        hTheta3CMside->Fill(theta3CMEff);
+        hTheta3Labside->Fill(theta3Lab * TMath::RadToDeg());
+      }
+      hTestEcm->Fill(Ecm, EcmRecon);
 
-      hEexAfter->Fill(EexAfter, weight);
-      hSP->Fill(silPoint0InMM.Y(), silPoint0InMM.Z());
+      hEexAfter->Fill(EexRec, weight);
+      // hSP->Fill(silPoint0.Y(), silPoint0.Z());
 
       // Fill histogram of SP with thetaCM as weight
-      hSPTheta->Fill(silPoint0InMM.Y(), silPoint0InMM.Z(),
-                     theta3CM * TMath::RadToDeg());
+      hSPTheta->Fill(silPoint0.Y(), silPoint0.Z(), theta3CMRec * TMath::RadToDeg());
       // RP histogram
       hRP->Fill(vertex.X(), vertex.Y());
       // Beam energy at RP
@@ -433,10 +510,10 @@ void Simulation_S2029(const std::string &beam, const std::string &target,
       hECM->Fill(Ecm);
 
       // write to TTree
-      Eex_tree = EexAfter;
+      Eex_tree = EexRec;
       weight_tree = weight;
-      theta3CM_tree = theta3CM * TMath::RadToDeg();
-      EVertex_tree = T3Recon;
+      theta3CM_tree = theta3CMRec * TMath::RadToDeg();
+      EVertex_tree = T3Rec;
       theta3Lab_tree = theta3Lab * TMath::RadToDeg();
       rpx_tree = vertex.X();
       hRPxSimu->Fill(vertex.X());
@@ -474,9 +551,21 @@ void Simulation_S2029(const std::string &beam, const std::string &target,
     }
   }
 
-  // Efficiencies as quotient of histograms in TEfficiency class
-  auto *eff{new TEfficiency(*hThetaCM, *hThetaCMAll)};
-  eff->SetNameTitle("eff", TString::Format("#theta_{CM} eff E_{x} = %.2f MeV", Ex));
+  // Compute efficiency side, front, and total
+  auto *effCM{new TEfficiency{*hTheta3CM, *hThetaCMAll}};
+  effCM->SetNameTitle("effCM", " #epsilon_{TOT} (#theta_{CM});#epsilon;#theta_{CM} [#circ]");
+  auto *effLab{new TEfficiency{*hTheta3Lab, *hThetaLabAll}};
+  effLab->SetNameTitle("effLab", "#epsilon_{TOT} (#theta_{Lab});#epsilon;#theta_{Lab} [#circ]");
+
+  auto *effCMside{new TEfficiency{*hTheta3CMside, *hThetaCMAll}};
+  effCMside->SetNameTitle("effCMside", " #epsilon_{side} (#theta_{CM});#epsilon;#theta_{CM} [#circ]");
+  auto *effLabside{new TEfficiency{*hTheta3Labside, *hThetaLabAll}};
+  effLabside->SetNameTitle("effLabside", "#epsilon_{side} (#theta_{Lab});#epsilon;#theta_{Lab} [#circ]");
+
+  auto *effCMfront{new TEfficiency{*hTheta3CMfront, *hThetaCMAll}};
+  effCMfront->SetNameTitle("effCMfront", " #epsilon_{front} (#theta_{CM});#epsilon;#theta_{CM} [#circ]");
+  auto *effLabfront{new TEfficiency{*hTheta3Labfront, *hThetaLabAll}};
+  effLabfront->SetNameTitle("effLabfront", "#epsilon_{front} (#theta_{Lab});#epsilon;#theta_{Lab} [#circ]");
 
   // SAVING
   outFile->cd();
@@ -484,7 +573,12 @@ void Simulation_S2029(const std::string &beam, const std::string &target,
   hnorm_phi->Write();
   hprojection->Write();
   outTree->Write();
-  eff->Write();
+  effCM->Write();
+  effLab->Write();
+  effCMside->Write();
+  effLabside->Write();
+  effCMfront->Write();
+  effLabfront->Write();
   outFile->Close();
   delete outFile;
   outFile = nullptr;
@@ -499,19 +593,38 @@ void Simulation_S2029(const std::string &beam, const std::string &target,
     set_plot_style();
     auto *c0{new TCanvas("c0", "PID")};
     c0->DivideSquare(4);
-    c0->cd(1);
-    hSilPID[layer]->Fit("fit");
-    hSilPID[layer]->DrawClone("colz");
-
+    auto *c2{new TCanvas("c2", "SP")};
+    c2->DivideSquare(4);
+    int canvas{1};
+    for (auto l : silLayers)
+    {
+      c0->cd(canvas);
+      hSilPID[l]->Fit("fit");
+      hSilPID[l]->DrawClone("colz");
+      c2->cd(canvas);
+      hSilSP[l]->DrawClone("colz");
+      makeGrid(l, smAll);
+      canvas++;
+    }
     auto *c1{new TCanvas("cAfter", "Canvas for inspection 1")};
     c1->DivideSquare(4);
     c1->cd(1);
-    hSP->DrawClone("col");
+    // hSP->DrawClone("col");
     c1->cd(2);
     hSPCut->SetTitle("SP for particles not reaching sils");
     hSPCut->DrawClone("colz");
     c1->cd(3);
-    hEcn->DrawClone();
+    auto htot = (TH1 *)hEcn->DrawClone();
+    hEcnFr->SetLineColor(kMagenta);
+    auto hfront = (TH1 *)hEcnFr->DrawClone("same");
+    hEcnLat->SetLineColor(kOrange);
+    auto hlat = (TH1 *)hEcnLat->DrawClone("same");
+    auto leg = new TLegend(0.6, 0.1, 0.9, 0.3);
+    leg->AddEntry(htot, "All", "l");
+    leg->AddEntry(hlat, "Lateral", "l");
+    leg->AddEntry(hfront, "Front", "l");
+    leg->Draw();
+
     c1->cd(4);
     hEcnThetaCM->DrawClone("col");
   }

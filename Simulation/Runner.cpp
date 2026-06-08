@@ -4,8 +4,9 @@
 #include <string>
 #include <vector>
 
-// #include "./Plotter.cpp"
+// #include "./Plotter.cxx"
 #include "./Simulation_S2029.cxx"
+
 // what
 // if simu = runs simulation
 // if plot = plots results
@@ -23,38 +24,16 @@ void Runner(TString what = "simu", bool standalone = true)
   // Phase space reactions: when the heavy decays by proton or neutron emission
   // So we have something like: 4He + n + 17N (needs to be simulated to be
   // included as background in fits)
-  int neutronPS{0};  // number of neutrons in final state
-  int protonPS{0};   // number of protons in final state
-  double T1{};       // Beam energy at entrance of pad plane // 1.525 with 1.8 //1.486
-                     // with 1.774
+  // int neutronPS{0};  // number of neutrons in final state
+  // int protonPS{0};   // number of protons in final state
+  double T1{3.84};   // Beam energy at entrance of pad plane
   int pressure{760}; // mbar
-  T1 = 3.84;         // MeV/u
-
-  std::vector<double> Eexs;
-  if (neutronPS == 0 && protonPS == 0)
-    Eexs = {0};
-  else if (neutronPS > 0 && protonPS == 0)
-    Eexs = {0}; // only gs for n phase space
-  else if (neutronPS == 0 && protonPS > 0)
-    Eexs = {0};
-  else
-    throw std::runtime_error(
-        "No confs with neutronPS and protonPS enabled at the same time");
 
   if (what.Contains("simu"))
-  {
-    for (const auto &Eex : Eexs)
-    {
-      Simulation_S2029(beam, target, light, heavy, neutronPS, protonPS, T1, Eex,
-                       pressure, standalone);
-      if (standalone)
-        break;
-    }
-  }
+    Simulation_S2029(beam, target, light, heavy, T1, 0, pressure, standalone);
   if (what.Contains("plot"))
   {
-    throw std::runtime_error(
-        "Runner for E837 hasn't implemented yet a Plotter function");
-    // Plotter(Eexs, beam, target, light, heavy, T1, neutronPS, protonPS);
+    throw std::runtime_error("I'll work on the plotter, maybe");
+    // Plotter({0.}, beam, target, light, T1, pressure);
   }
 }

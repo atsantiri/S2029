@@ -154,7 +154,7 @@ void Pipe2_ESil_BSP(const std::string& beam, const std::string& target, const st
         {"BSP", "MergerData", "ModularData"});
 
     // Draw
-    auto* c21 {new TCanvas("c21", "Ep vs BSP - L1ok", 900, 600)};
+    auto* c21 {new TCanvas("c21", "Pipe2: Ep vs BSP - L1ok", 900, 600)};
     c21->DivideSquare(hsEpBSP.size());
 
     int j = 0;
