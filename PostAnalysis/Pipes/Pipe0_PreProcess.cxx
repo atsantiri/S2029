@@ -15,81 +15,6 @@
 
 // PreProcessing for S2029
 // First step is to find events that hit the pad plane, by calculating the dZ distribution of the voxel with highest Z from the RP and removing the edge peak
-// Second step is to try and remove the events triggered on noise caused from the spread of the beam. This can't be done by increasing maxVoxeln cause I'll lose tiny alpha tracks
-
-struct BeamCone
-{
-    std::vector<std::pair<double, double>> yzWidth;
-    double x0, xMax, dxStep;
-    ActRoot::Line line;
-    bool Contains(ActRoot::Voxel &v) const;
-    double GetDistfromCone(ActRoot::Voxel &v) const;
-};
-
-BeamCone GetBeamCone(const ActRoot::Cluster &cl)
-{
-    BeamCone cone;
-
-    auto c = cl;
-    c.SortAlongDir();
-
-    int nBins = 12;
-
-    cone.x0 = c.GetVoxels().front().GetPosition().X();
-    cone.xMax = c.GetVoxels().back().GetPosition().X();
-    cone.dxStep = (cone.xMax - cone.x0) / nBins;
-    cone.line = c.GetRefToLine(); // cone center axis is the beam axis
-    cone.yzWidth.resize(nBins, {0.0, 0.0});
-
-    for (const auto &v : c.GetVoxels())
-    {
-        double x = v.GetPosition().X();
-        double y = v.GetPosition().Y();
-        double z = v.GetPosition().Z();
-
-        int i = (x - cone.x0) / cone.dxStep;
-        if (i < 0 || i >= nBins)
-            continue;
-
-        auto lineProjection = cone.line.ProjectionPointOnLine(v.GetPosition()); // project voxel on beamline
-        double yLine = lineProjection.Y();
-        double zLine = lineProjection.Z();
-
-        // width of cone will be the max distance of each voxel from the
-        cone.yzWidth[i].first = std::max(cone.yzWidth[i].first, std::abs(y - yLine));
-        cone.yzWidth[i].second = std::max(cone.yzWidth[i].second, std::abs(z - zLine));
-    }
-
-    return cone;
-}
-
-bool BeamCone::Contains(ActRoot::Voxel &v) const
-{
-    auto vPos = v.GetPosition();
-    int i = (vPos.X() - x0) / dxStep;
-    if (i < 0 || i >= (int)yzWidth.size())
-        return false;
-
-    auto [dy, dz] = yzWidth[i];
-    auto lineProjection = line.ProjectionPointOnLine(vPos);
-
-    return std::abs(vPos.Y() - lineProjection.Y()) <= dy &&
-           std::abs(vPos.Z() - lineProjection.Z()) <= dz;
-}
-
-double BeamCone::GetDistfromCone(ActRoot::Voxel &v) const
-{
-    auto vPos = v.GetPosition();
-    int i = (vPos.X() - x0) / dxStep;
-    auto [dy, dz] = yzWidth[i];
-
-    auto lineProjection = line.ProjectionPointOnLine(vPos);
-
-    double yDistfromLine = std::abs(vPos.Y() - lineProjection.Y());
-    double zDistfromLine = std::abs(vPos.Z() - lineProjection.Z());
-
-    return std::max(yDistfromLine - dy, zDistfromLine - dz);
-}
 
 void Pipe0_PreProcess(const std::string &beam = "17F")
 {
@@ -167,13 +92,6 @@ void Pipe0_PreProcess(const std::string &beam = "17F")
                           [](ActRoot::MergerData &m) -> int
                           { return m.fRun; },
                           {"MergerData"})
-                //   .Define("BeamCone", [&](ActRoot::TPCData &tpc, ActRoot::MergerData &m, int gatconf)
-                //           {
-                //             if (gatconf!=8)
-                //              return BeamCone{};
-                //             if (m.fBeamIdx < 0)
-                //                 throw std::runtime_error("Invalid beamId");
-                //             return GetBeamCone(tpc.fClusters[m.fBeamIdx]); }, {"TPCData", "MergerData", "GATCONF"})
                 ;
 
     auto hZdrift = df.Histo1D({"hZdrift", "Z drift distribution;Z drift [mm];Counts", 300, -200, 200}, "zDrift");
@@ -192,44 +110,7 @@ void Pipe0_PreProcess(const std::string &beam = "17F")
                                     if (gatconf != 8)
                                         return true;
                                     return zdrift >= (minZ_mean + 2 * minZ_sig) && zdrift <= (maxZ_mean - 2 * maxZ_sig); },
-                                {"zDrift", "GATCONF"})
-                          //   .Filter([&](int gatconf, const ActRoot::TPCData &tpc, const ActRoot::MergerData &m)
-                        //   .Filter([&](int gatconf, const ActRoot::TPCData &tpc, const BeamCone beamCone, const ActRoot::MergerData &m)
-                        //           {
-                        //               if (gatconf != 8)
-                        //                   return true;
-
-                        //               if (m.fLightIdx < 0 || m.fLightIdx >= (int)tpc.fClusters.size())
-                        //               {
-                        //                   std::cerr << "Invalid light index: "
-                        //                             << m.fLightIdx
-                        //                             << "  clusters size = "
-                        //                             << tpc.fClusters.size()
-                        //                             << std::endl;
-                        //                   return false;
-                        //               }
-                        //               //   std::cout<< "idx=" << m.fLightIdx<< " size=" << tpc.fClusters.size()<< std::endl;
-
-                        //               auto &lightCluster = tpc.fClusters[m.fLightIdx];
-                        //               int voxelsOutOfCone = 0;
-                        //               double maxDistFromCone{0};
-                        //               auto &voxels = lightCluster.GetVoxels();
-                        //               for ( auto v : voxels)
-                        //               {
-                        //                   if (!beamCone.Contains(v))
-                        //                   {
-                        //                       voxelsOutOfCone++;
-                        //                       maxDistFromCone = std::max(beamCone.GetDistfromCone(v), maxDistFromCone);
-                        //                   }
-                        //               }
-                        //               return (voxelsOutOfCone > 0);
-                        //               //             bool isInBeamCone{voxelsOutOfCone <= 5};
-                        //               //             bool isNearBeamCone{maxDistFromCone <= 5};
-                        //               //             return (!isInBeamCone && !isNearBeamCone);
-                        //           },
-                        //           {"GATCONF", "TPCData", "BeamCone", "MergerData"});
-    //   {"GATCONF", "TPCData", "MergerData"})
-    ;
+                                {"zDrift", "GATCONF"});
 
     auto hZdriftFiltered = dZFiltered.Histo1D({"hZdriftFiltered", "Z drift distribution;Z drift [mm];Counts", 300, -200, 200}, "zDrift");
     hZdriftFiltered->SetLineColor(2);
