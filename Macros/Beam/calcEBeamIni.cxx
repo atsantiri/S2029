@@ -22,8 +22,8 @@
 void calcEBeamIni()
 {
     ActRoot::DataManager dataman {"../../configs/data.conf", ActRoot::ModeType::EMerge};
-    // dataman.SetRuns(49, 65);
-    dataman.SetRuns(49, 49);
+    dataman.SetRuns(49, 65);
+    // dataman.SetRuns(49, 49);
     auto chain {dataman.GetChain()};
     auto chain2 {dataman.GetChain(ActRoot::ModeType::EFilter)};
     auto chain3 {dataman.GetChain(ActRoot::ModeType::EReadSilMod)};
@@ -70,18 +70,18 @@ void calcEBeamIni()
         },
         {"TPCData"});
 
-    auto* c1 {new TCanvas {"c1", "c1", 1400, 1400}};
-    c1->DivideSquare(4);
+    auto* c1 {new TCanvas {"c1", "c1", 1200, 1000}};
+    c1->DivideSquare(2);
     c1->cd(1);
     h2d->DrawClone("colz");
 
-    ROOT::TThreadedObject<TH1D> hEini {"hEini", "beam E initial; ELab [MeV/u];Counts", 100, 2.5, 4.5};
-    ROOT::TThreadedObject<TH1D> hres {"hres", "Resonance location; x [mm];Counts", 100, 0, 256};
+    ROOT::TThreadedObject<TH1D> hEini {"hEini", "beam E initial; ELab [MeV/u];Counts", 50, 3.2, 4.5};
+    ROOT::TThreadedObject<TH1D> hres {"hres", "Resonance location; x [mm];Counts", 100, 70, 150};
 
     auto* srim {new ActPhysics::SRIM()};
     ActPhysics::Particle beam {"17F"};
     ActPhysics::Particle target {"p"};
-    srim->ReadTable("beamInGas", "../../Simulation/SRIM/17F_H2-iC4H10_95-5_760mbar.txt");
+    srim->ReadTable("beamInGas", "../../Simulation/SRIM/17F_H2-iC4H10_95-5_775mbar.txt");
 
     auto qval {3.9231};
     auto resonance {6.150};
@@ -102,22 +102,24 @@ void calcEBeamIni()
         {"fLxy"});
 
     c1->cd(2);
-    TF1* fE = new TF1("fE", "gaus(0)", 3.5, 4);
-    fE->SetParameters(2400, 3.8, 0.06);
-    hEini->Fit(fE, "Q");
+    TF1* fE = new TF1("fE", "gaus(0)", 3.8,4.);
+    // fE->SetParameters(2400, 3.8, 0.06);
+    hEini->Fit(fE, "QR");
     auto meanEne {fE->GetParameter(1)};
     std::cout << "Initial Beam Energy: " << std::fixed << std::setprecision(3) << meanEne << " +- "
-              << 2.355 * fE->GetParameter(2) << " (" << 2.355 * fE->GetParameter(2) / meanEne * 100
-              << " %) or in CMS ECM = "<< meanEne*beam.GetAMU()*LStoCMS << std::endl;
+              << fE->GetParameter(2) << std::endl;
+
+            //   << 2.355 * fE->GetParameter(2) << " (" << 2.355 * fE->GetParameter(2) / meanEne * 100
+            //   << " %) or in CMS ECM = "<< meanEne*beam.GetAMU()*LStoCMS << std::endl;
     hEini->DrawClone();
 
-    c1->cd(3);
-    TF1* fdist = new TF1("fE", "gaus(0)", 120, 160);
-    fdist->SetParameters(2400, 150, 0.06);
-    hres->Fit(fdist, "Q");
-    auto meanRP {fdist->GetParameter(1)};
-    std::cout << "Resonance will be around: " << std::fixed << std::setprecision(3) << fdist->GetParameter(1) << " +- "
-              << 2.355 * fdist->GetParameter(2) << std::endl;
-    hres->DrawClone();
+    // c1->cd(3);
+    // TF1* fdist = new TF1("fE", "gaus(0)", 120, 160);
+    // fdist->SetParameters(2400, 150, 0.06);
+    // hres->Fit(fdist, "QR");
+    // auto meanRP {fdist->GetParameter(1)};
+    // std::cout << "Resonance will be around: " << std::fixed << std::setprecision(3) << fdist->GetParameter(1) << " +- "
+    //           << 2.355 * fdist->GetParameter(2) << std::endl;
+    // hres->DrawClone();
 
 }
