@@ -215,10 +215,12 @@ void Simulation_S2029(const std::string &beam, const std::string &target,
   auto *hRPxSimu{HistConfig::RP.GetHistogram()->ProjectionX("hRPxSimu")};
   auto *hRPxRange{new TH2D{"hRPxRange", "Light range vs dist to sil wall;Dist to wall [mm];Light range [mm]", 300, 0, 500, 300, 0, 500}};
   auto *hEBeam{new TH2D{"hEBeam", "Range angle", 300, 0, 180, 300, 0, 500}};
-  auto *hEx2{new TH2D{"hEx2", "#theta_{Lab} vs E_{CN};E_{CN} [MeV];#theta_{CM} [#circ]", 200, 4, 9, 200, 90, 180}};
-  auto *hnorm{new TH2D{"hnorm", "geometric efficiency;E*_{^{18}Ne,elastic} [MeV];#theta_{CM} [#circ]", 90, 4, 9, 90, 90, 180}};
+  auto *hEx2{new TH2D{"hEx2", "#theta_{Lab} vs E_{CN};E_{CN} [MeV];#theta_{CM} [#circ]", 200, 0, 9, 200, 90, 180}};
+  // auto *hnorm{new TH2D{"hnorm", "geometric efficiency;E*_{^{17}F,elastic} [MeV];#theta_{CM} [#circ]", 90, 4, 9, 90, 90, 180}};
+  auto hnorm{HistConfig::ChangeTitle(HistConfig::EcmThetaCM, "geometric efficiency").GetHistogram()};
   auto hKin{HistConfig::Kin.GetHistogram()};
-  auto *hnorm_phi{new TH2D{"hnorm_phi", "geometric efficiency;E*_{^{18}Ne} [MeV];#Phi_{Lab} [#circ]", 90, 4, 9, 90, 0, 200}};
+  // auto *hnorm_phi{new TH2D{"hnorm_phi", "geometric efficiency;E*_{^{17}F} [MeV];#Phi_{Lab} [#circ]", 90, 0, 9, 90, 0, 200}};
+  auto hnorm_phi{HistConfig::ChangeTitle(HistConfig::EcmPhiLab, "geometric efficiency").GetHistogram()};
   auto hECM{HistConfig::ECM.GetHistogram()};
   auto *hprojection{new TH1D{"hprojection", "Ex;E_{x} [MeV]; Counts", 80, 11, 13}};
   auto *htrack{new TH2D{"htrack", "trackslength;#theta_{heavy lab} [#circ];track length [mm]", 90, 0, 100, 90, 0, 250}};
@@ -288,6 +290,8 @@ void Simulation_S2029(const std::string &beam, const std::string &target,
   outTree->Branch("theta3Lab", &theta3Lab_tree);
   double rpx_tree{};
   outTree->Branch("RPx", &rpx_tree);
+  double ecn_tree{};
+  outTree->Branch("ECN", &ecn_tree);
 
   //---- SIMULATION STARTS HERE
   ROOT::EnableImplicitMT();
@@ -467,7 +471,7 @@ void Simulation_S2029(const std::string &beam, const std::string &target,
       auto Ex_calc = T3Lab * ((2 * TMath::Cos(theta3Lab) * TMath::Sqrt((TBeam * p3.GetAMU()) / (T3Lab * p4.GetAMU()))) - ((p3.GetAMU() / p4.GetAMU()) + 1));
 
       // fill histograms
-      hTheta3CM->Fill(theta3CMEff);
+      hTheta3CM->Fill(theta3CMEff * TMath::RadToDeg());
       hThetaCM->Fill(theta3CMRec * TMath::RadToDeg());
       TF1 *fit = new TF1("fit", "[0]*(x^[1])", 10, -0.5);
       hTheta3Lab->Fill(theta3Lab * TMath::RadToDeg());
@@ -478,8 +482,8 @@ void Simulation_S2029(const std::string &beam, const std::string &target,
       hKin->Fill(theta3Lab * TMath::RadToDeg(), T3EnteringSil);
       hKinVertex->Fill(theta3Lab * TMath::RadToDeg(), Ecm); // T3Recon);
       hEcnThetaCM->Fill(EcnRec, theta3CMRec * TMath::RadToDeg());
-      hnorm->Fill(Ecm, theta3CMRec * TMath::RadToDeg());
-      hnorm_phi->Fill(Ecm, phi3Lab * TMath::RadToDeg());
+      hnorm->Fill(EcmRecon, theta3CMRec * TMath::RadToDeg());
+      hnorm_phi->Fill(EcmRecon, phi3Lab * TMath::RadToDeg());
       hEcn->Fill(EcnRec);
       if (layer0 == "f0")
       {
@@ -516,6 +520,7 @@ void Simulation_S2029(const std::string &beam, const std::string &target,
       EVertex_tree = T3Rec;
       theta3Lab_tree = theta3Lab * TMath::RadToDeg();
       rpx_tree = vertex.X();
+      ecn_tree = EcnRec;
       hRPxSimu->Fill(vertex.X());
       outTree->Fill();
     }
@@ -607,12 +612,14 @@ void Simulation_S2029(const std::string &beam, const std::string &target,
       canvas++;
     }
     auto *c1{new TCanvas("cAfter", "Canvas for inspection 1")};
-    c1->DivideSquare(4);
+    c1->DivideSquare(6);
     c1->cd(1);
-    // hSP->DrawClone("col");
+    hnorm->DrawClone("colz");
     c1->cd(2);
-    hSPCut->SetTitle("SP for particles not reaching sils");
-    hSPCut->DrawClone("colz");
+    // effCM->SetTitle("SP for particles not reaching sils");
+    hThetaCMAll->DrawClone();
+    c1->cd(5);
+    hTheta3CM->DrawClone();
     c1->cd(3);
     auto htot = (TH1 *)hEcn->DrawClone();
     hEcnFr->SetLineColor(kMagenta);
