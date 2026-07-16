@@ -11,15 +11,19 @@ void Runner(TString what = "")
     std::string beam {"17F"};
     std::string target {"p"};
     std::string light {"p"};
+    double EBeamIni {3.84}; // MeV/u
+    std::string detector {"sil"};
 
     std::cout << BOLDGREEN << "···· Runner ····" << '\n';
-    std::cout << "-> Beam   : " << beam << '\n';
-    std::cout << "-> Target : " << target << '\n';
-    std::cout << "-> Light  : " << light << '\n';
-    std::cout << "-> What   : " << what << '\n';
+    std::cout << "-> Beam     : " << beam << '\n';
+    std::cout << "-> Target   : " << target << '\n';
+    std::cout << "-> Light    : " << light << '\n';
+    std::cout << "-> EBeamIni : " << EBeamIni << '\n';
+    std::cout << "-> GateOn   : " << detector << '\n';
+    std::cout << "-> What     : " << what << '\n';
     std::cout << "······························" << RESET << '\n';
 
-    auto args {TString::Format("(\"%s\", \"%s\", \"%s\")", beam.c_str(), target.c_str(), light.c_str())};
+    auto args {TString::Format("(\"%s\", \"%s\", \"%s\", %.02f, \"%s\")", beam.c_str(), target.c_str(), light.c_str(), EBeamIni, detector.c_str())};
     TString path {"./Pipes/"};
     TString func {};
     TString ext {".cxx"};
@@ -68,5 +72,4 @@ void Runner(TString what = "")
     //     gROOT->LoadMacro(path + func + ext);
     //     gROOT->ProcessLine(func + args);
     // }
-
 }

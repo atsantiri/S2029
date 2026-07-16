@@ -11,7 +11,7 @@
 void normalizeEx()
 {
     // Pipe 3 output
-    ROOT::RDataFrame df{"Final_Tree", "../Outputs/tree_ex_17F_p_p_3.84.root"};
+    ROOT::RDataFrame df{"Final_Tree", "../Outputs/tree_ex_17F_p_p_3.84_sil.root"};
 
     // Simulation output
     TString simuFile = "../Input/Simu_1H_760mbar.root";

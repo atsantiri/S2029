@@ -76,7 +76,7 @@ double calc_ESil(double RPx, double theta3Lab, double T3Lab)
 
 
 // create theoretical line for given lab angle and Eex
-TGraph* calcTheo_pESil_vs_BSP(double theta3Lab, double Eex, EColor color, int style)
+TGraph* calcTheo_pESil_vs_BSP(double theta3Lab, double Eex, EColor color, int style, double EBeamIni)
 {
     TGraph* ret = new TGraph();
     ret->SetTitle(TString::Format("Ex=%.02f MeV", Eex));
@@ -98,7 +98,7 @@ TGraph* calcTheo_pESil_vs_BSP(double theta3Lab, double Eex, EColor color, int st
     ActPhysics::Particle pl {light};
 
     // Initial energy of beam at pad plane entrance
-    double EBeamIni {3.84}; // MeV/u
+    // double EBeamIni {3.84}; // MeV/u
 
     // calculate reaction threshold energy
     ActPhysics::Kinematics kin {pb, pt, pt, EBeamIni * pb.GetAMU(), Eex};
@@ -148,9 +148,9 @@ TGraph* calcTheo_pESil_vs_BSP(double theta3Lab, double Eex, EColor color, int st
     return ret;
 }
 
-void theoretical_pESil_vs_BPS()
+void theoretical_pESil_vs_BPS(double EBeamIni)
 {
     auto* c0 {new TCanvas("c0", "ESil vs BSP")};
-    auto gr {calcTheo_pESil_vs_BSP(17.5, 0., kRed, 1)};
+    auto gr {calcTheo_pESil_vs_BSP(17.5, 0., kRed, 1, EBeamIni)};
     gr->Draw();
 }

@@ -26,10 +26,12 @@
 #include "../Macros/theoretical_pESil_vs_BPS.cxx"
 
 
-void Pipe2_ESil_BSP(const std::string& beam, const std::string& target, const std::string& light)
+void Pipe2_ESil_BSP(const std::string& beam, const std::string& target, const std::string& light, double EBeamIni,
+                    const std::string& gateOn)
 {
     // Read data
-    auto filename {TString::Format("./Outputs/tree_pid_%s_%s_%s.root", beam.c_str(), target.c_str(), light.c_str())};
+    auto filename {TString::Format("./Outputs/tree_pid_%s_%s_%s_%.2f_%s.root", beam.c_str(), target.c_str(),
+                                   light.c_str(), EBeamIni, gateOn.c_str())};
     ROOT::EnableImplicitMT();
     ROOT::RDataFrame d {"PID_Tree", filename};
 
@@ -70,7 +72,7 @@ void Pipe2_ESil_BSP(const std::string& beam, const std::string& target, const st
     int thetaminSi {5};
     int thetamaxSi {45};
     int thetaminL1 {40};
-    int thetamaxL1 {90};
+    int thetamaxL1 {100};
     int step {10};
 
     // make histos
@@ -82,6 +84,7 @@ void Pipe2_ESil_BSP(const std::string& beam, const std::string& target, const st
     // {"^{17}F* 3.104 MeV", {3.104, kMagenta, 10, 186., 1.5}}}; // {label, Eex, linecolor, linestyle, xlabel, ylabel}
 
     int idx {0};
+
     for(double theta = thetaminSi; theta < thetamaxSi; theta += step)
     {
         // For Sil
@@ -94,7 +97,7 @@ void Pipe2_ESil_BSP(const std::string& beam, const std::string& target, const st
         for(const auto& [key, args] : theoArgs)
         {
             auto [Eex, color, mstyle, xlabel, ylabel] = args;
-            hsTheo[key].push_back(calcTheo_pESil_vs_BSP(theta + step / 2, Eex, color, mstyle));
+            hsTheo[key].push_back(calcTheo_pESil_vs_BSP(theta + step / 2, Eex, color, mstyle, EBeamIni));
         }
         idx++;
     }
@@ -148,88 +151,92 @@ void Pipe2_ESil_BSP(const std::string& beam, const std::string& target, const st
                     }
                 }
             }
-
-            
         },
         {"BSP", "MergerData", "ModularData"});
 
     // Draw
-    auto* c21 {new TCanvas("c21", "Pipe2: Ep vs BSP - L1ok", 900, 600)};
-    c21->DivideSquare(hsEpBSP.size());
-
-    int j = 0;
-    for(auto& h : hsEpBSP)
+    if(gateOn == "l1")
     {
-        c21->cd(j + 1);
-        h->Merge()->DrawClone("colz");
-        j++;
-    }
+        auto* c21 {new TCanvas("c21", "Pipe2: Ep vs BSP - L1ok", 900, 600)};
+        c21->DivideSquare(hsEpBSP.size());
 
-
-    auto* c20 {new TCanvas("c20", "ESil vs BSP", 900, 600)};
-    c20->DivideSquare(hsESilBSP.size());
-
-    int i = 0;
-    for(auto& h : hsESilBSP)
-    {
-        c20->cd(i + 1);
-        h->Merge()->DrawClone("colz");
-
-        for(const auto& [key, graphs] : hsTheo)
-            graphs[i]->DrawClone("same");
-
-        // Draw labels
-        for(const auto& [key, args] : theoArgs)
+        int j = 0;
+        for(auto& h : hsEpBSP)
         {
-            auto [Eex, color, mstyle, xlabel, ylabel] = args;
-            auto t = new TLatex(xlabel, ylabel, key.c_str());
-            t->SetTextColor(color);
-            t->Draw("same");
+            c21->cd(j + 1);
+            h->Merge()->DrawClone("colz");
+            j++;
         }
-        i++;
     }
 
-
-    // If cut on Ex=0 band present, apply
     ActRoot::CutsManager<std::string> cuts;
-    cuts.ReadCut("cut", TString::Format("./Cuts/ESil_BSP_%s_%s.root", light.c_str(), beam.c_str()).Data());
 
-    auto listOfCuts {cuts.GetListOfKeys()};
-    if(listOfCuts.size())
+    if(gateOn == "sil")
     {
-        // Apply cut and save in file
-        auto gated {df.Filter(
-            [&](double bsp, ActRoot::MergerData& m)
-            {
-                if(m.fLight.GetNLayers() == 1)
-                {
-                    if(cuts.GetCut("cut"))
-                        return cuts.IsInside("cut", bsp, m.fLight.fEs.front());
-                    else
-                        return false;
-                }
-                else if(m.fLightIdx != -1)
-                    return true;
-                else
-                    return false;
-            },
-            {"BSP", "MergerData"})};
-        auto name {
-            TString::Format("./Outputs/tree_ESil_BSP_%s_%s_%s.root", beam.c_str(), target.c_str(), light.c_str())};
-        std::cout << "Saving PID_Tree with Ex=0 in file : " << name << '\n';
-        gated.Snapshot("PID_Tree", name.Data());
+        auto* c20 {new TCanvas("c20", "ESil vs BSP", 900, 600)};
+        c20->DivideSquare(hsESilBSP.size());
 
-        // Draw the cut
-        for(int i = 0; i < hsESilBSP.size(); i++)
+        int i = 0;
+        for(auto& h : hsESilBSP)
         {
             c20->cd(i + 1);
-            cuts.DrawCut("cut");
+            h->Merge()->DrawClone("colz");
+
+            for(const auto& [key, graphs] : hsTheo)
+                graphs[i]->DrawClone("same");
+
+            // Draw labels
+            for(const auto& [key, args] : theoArgs)
+            {
+                auto [Eex, color, mstyle, xlabel, ylabel] = args;
+                auto t = new TLatex(xlabel, ylabel, key.c_str());
+                t->SetTextColor(color);
+                t->Draw("same");
+            }
+            i++;
+        }
+
+
+        // If cut on Ex=0 band present, apply
+        cuts.ReadCut("cut", TString::Format("./Cuts/ESil_BSP_%s_%s.root", light.c_str(), beam.c_str()).Data());
+
+        auto listOfCuts {cuts.GetListOfKeys()};
+        if(listOfCuts.size())
+        {
+            // Apply cut and save in file
+            auto gated {df.Filter(
+                [&](double bsp, ActRoot::MergerData& m)
+                {
+                    if(m.fLight.GetNLayers() == 1)
+                    {
+                        if(cuts.GetCut("cut"))
+                            return cuts.IsInside("cut", bsp, m.fLight.fEs.front());
+                        else
+                            return false;
+                    }
+                    else if(m.fLightIdx != -1)
+                        return true;
+                    else
+                        return false;
+                },
+                {"BSP", "MergerData"})};
+            auto name {TString::Format("./Outputs/tree_ESil_BSP_%s_%s_%s_%.2f_%s.root", beam.c_str(), target.c_str(),
+                                       light.c_str(), EBeamIni, gateOn.c_str())};
+            std::cout << "Saving PID_Tree with Ex=0 in file : " << name << '\n';
+            gated.Snapshot("PID_Tree", name.Data());
+
+            // Draw the cut
+            for(int i = 0; i < hsESilBSP.size(); i++)
+            {
+                c20->cd(i + 1);
+                cuts.DrawCut("cut");
+            }
         }
     }
-    else
+    else if(gateOn == "l1")
     { // there is no cut but i still want the file
-        auto name {
-            TString::Format("./Outputs/tree_ESil_BSP_%s_%s_%s.root", beam.c_str(), target.c_str(), light.c_str())};
+        auto name {TString::Format("./Outputs/tree_ESil_BSP_%s_%s_%s_%.2f_%s.root", beam.c_str(), target.c_str(),
+                                   light.c_str(), EBeamIni, gateOn.c_str())};
         std::cout << "Saving PID_Tree with Ex=0 in file : " << name << '\n';
         df.Snapshot("PID_Tree", name.Data());
     }
