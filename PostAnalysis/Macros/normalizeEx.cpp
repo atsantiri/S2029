@@ -1,70 +1,85 @@
-#include "ROOT/RDataFrame.hxx"
-#include "AngFitter.h"
-#include "AngGlobals.h"
-#include "AngIntervals.h"
-#include "FitInterface.h"
-#include "Interpolators.h"
-#include "../HistConfig.h"
+#include "ActKinematics.h"
+#include "ActParticle.h"
 
+#include "ROOT/RDataFrame.hxx"
+
+#include "TCanvas.h"
 #include "TLine.h"
+
+#include "../HistConfig.h"
 
 void normalizeEx()
 {
+    double EBeamIni {3.84};
+    std::string beam {"17F"};
+    ActPhysics::Particle pb {beam};
+    ActPhysics::Particle pt {"1H"};
+
     // Pipe 3 output
-    ROOT::RDataFrame df{"Final_Tree", "../Outputs/tree_ex_17F_p_p_3.84_sil.root"};
+    ROOT::RDataFrame df {"Final_Tree",
+                         TString::Format("../Outputs/tree_ex_%s_p_p_%.02f_sil.root", beam.c_str(), EBeamIni)};
 
     // Simulation output
-    TString simuFile = "../Input/Simu_1H_760mbar.root";
-    ROOT::RDataFrame dsim{"SimulationTTree", simuFile};
+    auto simuFile {
+        std::make_unique<TFile>(TString::Format("../../Simulation/Outputs/Simu_%s_p_p_760mbar.root", beam.c_str()))};
+    auto heff {simuFile->Get<TH2D>("hEff2D")};
+    heff->SetTitle("Simu eff");
+    heff->SetDirectory(nullptr);
+    auto heffCN {simuFile->Get<TH2D>("hEffECN2D")};
+    heffCN->SetTitle("Simu eff E_{^{18}Ne}");
+    heffCN->SetDirectory(nullptr);
+    simuFile->Close();
+
+    // Kinematics
+    ActPhysics::Kinematics kin {pb, pt, pt, EBeamIni * pb.GetAMU()};
+
+    // Number of beam particles from Pipe_Beam
+    double Nb {176922 * 300}; // counter of gatconf == 64 * div factor
+
+    // Target density: tbd from LISE++
+    double rho {1.};
 
     // Book histograms
-    auto hEx{df.Histo1D({"hEx", TString::Format("Excitation energy;E_{x} [MeV];Counts / %.f keV", (4. - (-2.)) / 200 * 1e3), 200, -2, 4}, "RecEx")};
-    auto hCM{df.Histo2D(HistConfig::EcnThetaCM, "RecThetaCM", "RecECN")};
+    auto hEx {
+        df.Histo1D({"hEx", TString::Format("Excitation energy;E_{x} [MeV];Counts / %.f keV", (4. - (-2.)) / 200 * 1e3),
+                    200, -2, 4},
+                   "RecEx")};
+    auto h2DECN {df.Histo2D(HistConfig::EcnThetaCM, "RecECN", "RecThetaCM")};
+    h2DECN->SetTitle("Experiment");
+    auto h2DECM {df.Histo2D(HistConfig::Eff2D, "RecECM", "RecThetaCM")};
+    h2DECM->SetTitle("Experiment");
 
-    // Init intervals
-    double thetaMin{40};
-    double thetaMax{170};
-    double thetaStep{10};
-    Angular::Intervals ivsEx{thetaMin, thetaMax, HistConfig::Ex, thetaStep, 0};
-    df.Foreach([&](double thetacm, double ex)
-               { ivsEx.Fill(thetacm, ex); }, {"RecThetaCM", "RecEx"});
-    ivsEx.Draw();
+    // Normalize
+    auto hnorm = (TH2D*)h2DECM->Clone("hnorm");
+    hnorm->SetTitle("Efficiency corrected");
+    hnorm->Sumw2();
+    heff->Sumw2();
+    hnorm->Divide(heff);
 
-    Angular::Intervals ivsEcm{thetaMin, thetaMax, HistConfig::ECN, thetaStep, 0};
-    df.Foreach([&](double thetacm, double ecn)
-               { ivsEcm.Fill(thetacm, ecn); }, {"RecThetaCM", "RecECN"});
-    ivsEcm.Draw();
-    TCanvas *c1 = gPad->GetCanvas();
-    // Overlay known states
-    std::vector<double> states{{4519, 4561, 4590, 5090, 5146, 5453, 6150, 6297, 6353, 7059, 7350, 7713, 7910, 7950}};
-    double qval{3.923}; // qvalue of 17F+p
+    auto hnormCN = (TH2D*)h2DECN->Clone("hnormCN");
+    hnormCN->SetTitle("Efficiency Corrected CN");
+    hnormCN->Sumw2();
+    heffCN->Sumw2();
+    hnormCN->Divide(heffCN);
 
-    for (auto &s : states)
-    {
-        TLine *st = new TLine(s*1e-3, 0, s*1e-3, 150);
-        st->SetLineColorAlpha(16, 0.2);
-        st->SetLineStyle(2);
-        for (int i = 1; i <= ivsEcm.GetHistos().size(); i++)
-        {
-            c1->cd(i);
-            st->Draw("same");
-        }
-    }
-
-    // Init fitter
-    // Angular::Fitter fitter{&ivs};
-    // fitter.SetAllowFreeMean(false);
-    // // fitter.SetFreeMeanRange(0.1);
-    // fitter.Configure("./Outputs/fit_pp.root");
-    // fitter.Run();
-    // fitter.Draw();
-    // fitter.DrawCounts();
-
-    // Efficiency
-    Interpolators::Efficiency eff;
-    eff.Add("g0", simuFile.Data(), "effCM");
-    // Draw to check is fine
-    eff.Draw();
+    // Draw
+    auto* c0 {new TCanvas("c0", "Canvas for inspection 0", 1500, 1000)};
+    c0->DivideSquare(6);
+    c0->cd(1);
+    h2DECN->DrawClone("colz");
+    c0->cd(2);
+    heffCN->DrawClone("colz");
+    c0->cd(3);
+    hnorm->DrawClone("colz");
+    c0->cd(4);
+    h2DECM->DrawClone("colz");
+    c0->cd(5);
+    heff->DrawClone("colz");
+    c0->cd(6);
+    hnormCN->DrawClone("colz");
 
 
+    TH1D* hECN = hnormCN->ProjectionX("hCN");
+    auto* c1 {new TCanvas("c1", "Canvas for inspection 1", 900, 600)};
+    hECN->DrawClone("hist");
 }

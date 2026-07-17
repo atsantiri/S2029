@@ -255,7 +255,7 @@ void Simulation_S2029(const std::string& beam, const std::string& target, const 
     auto hEffAfter {HistConfig::ChangeTitle(HistConfig::Eff2D, "Efficiency ~ E_{CM}").GetHistogram()};
     auto hEffDirAll {HistConfig::Eff2D.GetHistogram()};
     auto hEffDirAfter {HistConfig::Eff2D.GetHistogram()};
-    hEffDirAfter->SetTitle("Efficiency;#theta_{3, Lab}^{dir} [#circ];T_{Beam}^{Dir} [MeV]");
+    hEffDirAfter->SetTitle("Efficiency;T_{Beam}^{Dir} [MeV];#theta_{3, Lab}^{dir} [#circ]");
     auto hEffECNAll {HistConfig::ChangeTitle(HistConfig::EcnThetaCM, "Efficiency ~ E_{^{18}Ne} All").GetHistogram()};
     auto hEffECNAfter {HistConfig::ChangeTitle(HistConfig::EcnThetaCM, "Efficiency ~ E_{^{18}Ne}").GetHistogram()};
 
@@ -316,7 +316,7 @@ void Simulation_S2029(const std::string& beam, const std::string& target, const 
     // reactions, weight = 1
     // 4-> Energy at vertex
     // 5-> Theta in Lab frame
-    auto* outFile {new TFile(TString::Format("Outputs/Simu_%s_%dmbar.root", light.c_str(), pressure), "recreate")};
+    auto* outFile {new TFile(TString::Format("Outputs/Simu_17F_p_p_%dmbar.root", pressure), "recreate")};
     auto* outTree {new TTree("SimulationTTree", "A TTree containing only our Eex obtained by simulation")};
 
     double theta3CM_tree {};
@@ -425,10 +425,10 @@ void Simulation_S2029(const std::string& beam, const std::string& target, const 
         hThetaCMAll->Fill(thetaCMEff * TMath::RadToDeg());
         hThetaLabAll->Fill(theta3LabEff * TMath::RadToDeg());
         hPhiAll->Fill(phi3Lab * TMath::RadToDeg());
-        hEffDirAll->Fill(TBeamDir, theta3LabDir);
-        hEffAll->Fill(ECM, thetaCMEff * TMath::RadToDeg());
+        hEffDirAll->Fill(theta3LabDir, TBeamDir);
+        hEffAll->Fill(thetaCMEff * TMath::RadToDeg(), ECM);
         hRP->Fill(vertex.X(), vertex.Y());
-        hEffECNAll->Fill(ECN, thetaCMEff * TMath::RadToDeg());
+        hEffECNAll->Fill(thetaCMEff * TMath::RadToDeg(),ECN);
 
         ////////////////////////////////////////////////////////////////////////////////
         // 4-> Include thetaLab resolution to compute thetaCM and Ex afterwards
@@ -632,9 +632,9 @@ void Simulation_S2029(const std::string& beam, const std::string& target, const 
             hThetaCM->Fill(thetaCMEff * TMath::RadToDeg());
             hTheta3Lab->Fill(theta3Lab * TMath::RadToDeg());
             hPhiLab->Fill(phi3Lab * TMath::RadToDeg());
-            hEffAfter->Fill(ECM, thetaCMEff * TMath::RadToDeg());
-            hEffDirAfter->Fill(TBeamDir, theta3LabDir);
-            hEffECNAfter->Fill(ECN, thetaCMEff * TMath::RadToDeg());
+            hEffAfter->Fill(thetaCMEff * TMath::RadToDeg(), ECM);
+            hEffDirAfter->Fill(theta3LabDir,TBeamDir);
+            hEffECNAfter->Fill(thetaCMEff * TMath::RadToDeg(),ECN);
             hECN->Fill(ECN);
             // ECN histograms from front and lateral, for comparison
             if(layer0 == "f0")
@@ -691,25 +691,23 @@ void Simulation_S2029(const std::string& beam, const std::string& target, const 
     hEffECN2D->Divide(hEffECNAll.get());
 
     // SAVING
-    if(!standalone)
-    {
-        outFile->cd();
-        outTree->Write();
-        eff->Write();
-        effLab->Write();
-        effPhi->Write();
-        for(auto& [_, h] : hSilSP)
-            h->Write();
-        hRP->Write("hRP");
-        hEff2D->Write("hEff2D");
-        hEffDir2D->Write("hEffDir2D");
-        hEffECN2D->Write("hEffECN2D");
-        hECMRes->Write("hECMRes");
-        hTBeamDirRes->Write("hTBeamDirRes");
-        outFile->Close();
-        delete outFile;
-        outFile = nullptr;
-    }
+    outFile->cd();
+    outTree->Write();
+    eff->Write();
+    effLab->Write();
+    effPhi->Write();
+    for(auto& [_, h] : hSilSP)
+        h->Write();
+    hRP->Write("hRP");
+    hEff2D->Write("hEff2D");
+    hEffDir2D->Write("hEffDir2D");
+    hEffECN2D->Write("hEffECN2D");
+    hECMRes->Write("hECMRes");
+    hTBeamDirRes->Write("hTBeamDirRes");
+    outFile->Close();
+    delete outFile;
+    outFile = nullptr;
+
 
     // plotting
     if(standalone)
