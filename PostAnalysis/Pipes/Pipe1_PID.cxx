@@ -198,7 +198,7 @@ void Pipe1_PID(const std::string& beam, const std::string& target, const std::st
         for(auto& [cut, counter] : cutCounts)
             std::cout << cut << " : " << counter.GetValue() << '\n';
     }
-    
+
     // Draw
     if(gateOn == "sil")
     {
@@ -220,6 +220,13 @@ void Pipe1_PID(const std::string& beam, const std::string& target, const std::st
             ActPhysics::Kinematics(TString::Format("%s(p,p)@65.2", beam.c_str()).Data()).GetKinematicLine3()};
         gtheoKin->SetLineColor(kMagenta);
         gtheoKin->Draw("l");
+        // auto* c13 {new TCanvas {"c13", "Pipe 1 PID Si - pretty plot", 900, 600}};
+        // auto h = (TH2D*)hsgas["f0"]->Clone("hpid");
+        // h->SetStats(false);
+        // h->GetXaxis()->SetRangeUser(0, 32);
+        // h->GetYaxis()->SetRangeUser(0, 1500);
+        // h->SetTitle("PID Front Silicon;E_{Sil} [MeV];#DeltaE_{gas} [arb. units]");
+        // h->DrawClone("colz");
     }
 
     if(gateOn == "l1")

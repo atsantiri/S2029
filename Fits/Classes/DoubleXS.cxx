@@ -28,7 +28,7 @@ DoubleXS::DoubleXS(TH2* hData, TH2* hEff, ActPhysics::SRIM* srim, double nb, dou
     fHist->SetTitle("Cross section");
     fHist->GetZaxis()->SetTitle("d#sigma/d#Omega [mb/sr]");
     fHist->GetZaxis()->SetMaxDigits(2);
-    fHist->Sumw2();
+    fHist->Sumw2(); // store sum of squares of weights
     ApplyEff();
     ApplySolidAngle();
     ApplyThickness();
@@ -139,13 +139,13 @@ void DoubleXS::ApplyNormalisation()
     fHist->Scale(1. / fDensity);
     // Divide by Nbeams
     fHist->Scale(1. / fNbeams);
-    // Apply convert to [mb/sr]
+    // Convert to [mb/sr]
     fHist->Scale(1e27);
 }
 
 void DoubleXS::Draw()
 {
-    auto* c0 {new TCanvas {"cxsCalc", "Double XS calculations"}};
+    auto* c0 {new TCanvas {"cxsCalc", "Double XS calculations", 1000,800}};
     c0->DivideSquare(6);
     c0->cd(1);
     fOriginal->Draw("colz");
@@ -223,7 +223,7 @@ void DoubleXS::DrawProjectionsThetaCM(const std::function<void(TH1*)>& apply)
 
 void DoubleXS::DrawProjectionsECM(const std::function<void(TH1*)>& apply)
 {
-    auto* c {new TCanvas {"cxsE", "E projection canvas"}};
+    auto* c {new TCanvas {"cxsE", "E projection canvas",1500,1000}};
     c->DivideSquare(fProjsECM.size());
     for(int i = 0; i < fProjsECM.size(); i++)
     {
@@ -248,7 +248,7 @@ TH1D* DoubleXS::GetProjectionECM(double thetamin, double thetamax)
 
 void DoubleXS::WriteInAzureFormat(int idx, const TString& file, TH1D* pout, const std::pair<double, double>& ivs)
 {
-    // Ensure projecition exists
+    // Ensure projection exists
     TH1D* p {};
     if(pout)
         p = pout;

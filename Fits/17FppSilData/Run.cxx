@@ -26,9 +26,9 @@ void Run()
         df.Histo1D({"hEx", TString::Format("Excitation energy;E_{x} [MeV];Counts / %.f keV", (4. - (-2.)) / 200 * 1e3),
                     200, -2, 4},
                    "RecEx")};
-    auto h2DECN {df.Histo2D(HistConfig::EcnThetaCM, "RecECN", "RecThetaCM")};
+    auto h2DECN {df.Histo2D(HistConfig::EcnThetaCM, "RecThetaCM", "RecECN")};
     h2DECN->SetTitle("Experiment");
-    auto h2DECM {df.Histo2D(HistConfig::Eff2D, "RecECM", "RecThetaCM")};
+    auto h2DECM {df.Histo2D({"h2D","17F(p,p');#theta_{CM};E_{CM} [MeV]", 18, 0, 180, 100, 0, 5}, "RecThetaCM", "RecECM")};
     h2DECM->SetTitle("Experiment");
 
     // Simulation output
@@ -44,18 +44,19 @@ void Run()
 
     // Read srim
     auto srim {new ActPhysics::SRIM};
-    srim->ReadTable("beam", TString::Format("../../Simulation/SRIM/%s_H2-iC4H10_95-5_%.0fmbar.txt", beam.c_str(),pressure).Data());
+    srim->ReadTable(
+        "beam", TString::Format("../../Simulation/SRIM/%s_H2-iC4H10_95-5_%.0fmbar.txt", beam.c_str(), pressure).Data());
 
     // Kinematics
     // ActPhysics::Kinematics kin {pb, pt, pt, EBeamIni * pb.GetAMU()};
-    auto kin {new ActPhysics::Kinematics {TString::Format("%s(p,p)@%.0f",beam.c_str(),EBeamIni*pb.GetAMU()).Data()}};
+    auto kin {
+        new ActPhysics::Kinematics {TString::Format("%s(p,p)@%.0f", beam.c_str(), EBeamIni * pb.GetAMU()).Data()}};
 
     // Number of beam particles from Pipe_Beam
     double Nb {176922 * 300}; // counter of gatconf == 64 * div factor
 
     // Target density: tbd from LISE++
-    double rho {1.};
-
+    double rho {1.5E21};//for 308 mm of gas at 760 mbar
 
     // Draw
     auto* c0 {new TCanvas("c0", "Canvas for inspection 0", 1500, 1000)};
@@ -71,8 +72,19 @@ void Run()
     c0->cd(5);
     heff->DrawClone("colz");
     c0->cd(6);
+    hEx->DrawClone();
     // hnormCN->DrawClone("colz");
 
-    DoubleXS xs {h2DECM.GetPtr(), heff, srim, Nb, rho, kin};
+    DoubleXS xs {h2DECM.GetPtr(), heff, srim, Nb, rho, kin,"CM"};
     xs.Draw();
+    xs.Project(40);
+    // xs.DrawProjectionsThetaCM(
+    //     [](TH1* p)
+    //     {
+    //         p->SetLineColor(9);
+    //         p->GetXaxis()->SetRangeUser(100, 180);
+    //     });
+    xs.DrawProjectionsECM([](TH1* p) { p->SetLineColor(46); });
+
+    xs.WriteInAzureFormat(11,"Outputs/doubleXS_150-160deg.dat");
 }
