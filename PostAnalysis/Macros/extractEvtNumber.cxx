@@ -10,18 +10,19 @@ void extractEvtNumber()
 {
     std::string beam{"17F"};
     std::string target{"p"};
-    std::string light{"4He"};
+    std::string light{"p"};
     // auto filename {TString::Format("../Outputs/tree_pid_%s_%s_%s.root", beam.c_str(), target.c_str(),
     // light.c_str())};
 
 
     // std::string cutname{"tree_pid_l1_veryLowQevents"};
-    std::string cutname{"pid_l1_lowQ_alphas"};
+    // std::string cutname{"pid_l1_lowQ_alphas"};
+    std::string cutname{"pid_sil"};
     std::ofstream streamer{TString::Format("Outputs/events_%s.dat",cutname.c_str())};
 
 
-    auto filename{TString::Format("../Outputs/tree_%s.root", cutname.c_str())};
-    // auto filename {TString::Format("../Outputs/tree_pid_17F_p_4He.root")};
+    // auto filename{TString::Format("../Outputs/tree_%s.root", cutname.c_str())};
+    auto filename {TString::Format("../Outputs/tree_pid_17F_p_p_3.84_sil.root")};
     std::cout << filename << std::endl;
     ROOT::RDataFrame df("PID_Tree", filename);
     // auto cols = df.GetColumnNames();
