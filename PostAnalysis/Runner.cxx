@@ -12,7 +12,7 @@ void Runner(TString what = "")
     std::string target {"p"};
     std::string light {"p"};
     double EBeamIni {3.84}; // MeV/u
-    std::string detector {"sil"};
+    std::string detector {"sil"}; // "sil" or "l1"
 
     std::cout << BOLDGREEN << "···· Runner ····" << '\n';
     std::cout << "-> Beam     : " << beam << '\n';

@@ -29,7 +29,7 @@ void Pipe1_PID(const std::string& beam, const std::string& target, const std::st
     // chain->AddFriend(chain2.get());
 
     // // RDataFrame
-    // ROOT::EnableImplicitMT();
+    ROOT::EnableImplicitMT();
     // ROOT::RDataFrame df {*chain};
     auto filename {TString::Format("./Outputs/tree_preProcessed_%s.root", beam.c_str())};
     // ROOT::EnableImplicitMT();
@@ -176,28 +176,28 @@ void Pipe1_PID(const std::string& beam, const std::string& target, const std::st
         // std::cout << "Counts in cut " << cutname << " " << tot.GetValue() << std::endl;
     }
 
-    if(gateOn == "l1")
-    {
-        std::map<std::string, ROOT::RDF::RResultPtr<ULong64_t>> cutCounts;
-        for(const auto& cut : cuts.GetListOfKeys())
-        {
-            cutCounts[cut] =
-                df.Filter(
-                      [&, cut](ActRoot::MergerData& m, ActRoot::ModularData& mod)
-                      {
-                          if(cut == "l1" || cut == "l1p" || cut == "l1bad")
-                          {
-                              return lambdaIsL1(m, mod) && cuts.IsInside(cut, m.fLight.fRawTL, m.fLight.fQtotal);
-                          }
-                          return false;
-                      },
-                      {"MergerData", "ModularData"})
-                    .Count();
-        }
-        std::cout << "\n==== COUNTS PER CUT ====\n";
-        for(auto& [cut, counter] : cutCounts)
-            std::cout << cut << " : " << counter.GetValue() << '\n';
-    }
+    // count events for debugging
+    // if(gateOn == "l1")
+    // {
+        // std::map<std::string, ROOT::RDF::RResultPtr<ULong64_t>> cutCounts;
+        // for(const auto& cut : cuts.GetListOfKeys())
+        // {
+            // cutCounts[cut] =
+                // df.Filter(
+                    //   [&, cut](ActRoot::MergerData& m, ActRoot::ModularData& mod)
+                    //   {
+                        //   if(cut == "l1" || cut == "l1p" || cut == "l1bad")
+                            //   return lambdaIsL1(m, mod) && cuts.IsInside(cut, m.fLight.fRawTL, m.fLight.fQtotal);
+                        //   else
+                            //   return false;
+                    //   },
+                    //   {"MergerData", "ModularData"})
+                    // .Count();
+        // }
+        // std::cout << "\n==== COUNTS PER CUT ====\n";
+        // for(auto& [cut, counter] : cutCounts)
+            // std::cout << cut << " : " << counter.GetValue() << '\n';
+    // }
 
     // Draw
     if(gateOn == "sil")
