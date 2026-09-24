@@ -14,6 +14,7 @@ void makeGrid(std::string layer)
     specs.ReadFile("../../configs/silspecs.conf");
     auto sm {specs.GetLayer(layer).GetSilMatrix()->Clone()};
     auto& cuts = sm->GetGraphs();
+    std::cout<<specs.GetLayer("f0").GetPoint().X()<<std::endl;
     for(const auto& [id, cut] : cuts)
         cut->Draw("same");
 }
@@ -60,7 +61,7 @@ void plotAllSP()
                     }
                     else
                     {
-                        zOffset = 152;
+                        zOffset = 153;
                         hs[layer][n].Get()->Fill(sp.X(), sp.Z() - zOffset);
                         (layer == "l0") ? lstat++
                                         : rstat++; // keep track of stats for L and R to check they're symmetric
@@ -97,7 +98,7 @@ void plotAllSP()
             idx++;
         }
         makeGrid(layer);
-        c->SaveAs(Form("../Outputs/SPs_%s.png", lname.Data()));
+        // c->SaveAs(Form("../Outputs/SPs_%s.png", lname.Data()));
     }
     std::cout << "Number of counts for R0: " << rstat << " and L0: " << lstat << std::endl;
 }

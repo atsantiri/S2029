@@ -29,6 +29,7 @@ void Run()
     auto h2DECN {df.Histo2D(HistConfig::EcnThetaCM, "RecThetaCM", "RecECN")};
     h2DECN->SetTitle("Experiment");
     auto h2DECM {df.Histo2D({"h2D","17F(p,p');#theta_{CM};E_{CM} [MeV]", 18, 0, 180, 100, 0, 5}, "RecThetaCM", "RecECM")};
+    h2DECM->SetStats(false);
     h2DECM->SetTitle("Experiment");
 
     // Simulation output
@@ -39,6 +40,7 @@ void Run()
     heff->SetDirectory(nullptr);
     auto heffCN {simuFile->Get<TH2D>("hEffECN2D")};
     heffCN->SetTitle("Simu eff E_{^{18}Ne}");
+    heffCN->SetStats(false);
     heffCN->SetDirectory(nullptr);
     simuFile->Close();
 
@@ -74,6 +76,11 @@ void Run()
     c0->cd(6);
     hEx->DrawClone();
     // hnormCN->DrawClone("colz");
+
+    auto* c1 {new TCanvas("c1", "temp", 1500, 1000)};
+    c1->cd();
+    h2DECM->DrawClone("colz");
+
 
     DoubleXS xs {h2DECM.GetPtr(), heff, srim, Nb, rho, kin,"CM"};
     xs.Draw();

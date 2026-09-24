@@ -1,5 +1,3 @@
-// Code from s2384 to calculate drift velocity
-
 #include "ActCluster.h"
 #include "ActCutsManager.h"
 #include "ActDataManager.h"
@@ -10,25 +8,48 @@
 #include "ActVoxel.h"
 
 #include <ROOT/RDataFrame.hxx>
+#include <random>
 
 #include "TCanvas.h"
+#include "TEllipse.h"
 #include "TF1.h"
 #include "TFile.h"
-#include "TGraph.h"
-#include "TGraphErrors.h"
 #include "TLatex.h"
-#include "TLegend.h"
 #include "TLine.h"
+#include "TMarker.h"
 #include "TMath.h"
 
-#include <fstream>
-
-void vDriftfromAlpha()
+bool LineIntersection(double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4,
+                      double& ix, double& iy)
 {
-    // ROOT::EnableImplicitMT();
-    // Get the data run 123
-    // auto df{ROOT::RDataFrame("GETTree", "../../RootFiles/Cluster/Clusters_Run_0021.root")};
-    auto df {ROOT::RDataFrame("GETTree", "../../RootFiles/Cluster/Clusters_Run_0062.root")};
+    // Solving A1x + B1y = C1
+    //         A2x + B2y = C2
+    //  Using Kramer's method
+
+    double det = (y1 - y2) * (x4 - x3) - (y3 - y4) * (x2 - x1);
+
+    // Parallel (or nearly parallel)
+    if(std::abs(det) < 1e-12)
+        return false;
+
+    ix = ((x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4)) / det;
+    iy = ((x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4)) / det;
+
+    // Check that the intersection lies on both segments
+    auto between = [](double a, double b, double c)
+    { return c >= std::min(a, b) - 1e-12 && c <= std::max(a, b) + 1e-12; };
+
+    if(between(x1, x2, ix) && between(y1, y2, iy) && between(x3, x4, ix) && between(y3, y4, iy))
+        return true;
+
+    return false;
+}
+
+std::pair<double, double> vDriftfromAlpha(int run = 24, bool plotting = true)
+{
+    ROOT::EnableImplicitMT();
+
+    auto df {ROOT::RDataFrame("GETTree", TString::Format("../../RootFiles/Cluster/Clusters_Run_00%d.root", run))};
 
     // Define last point of cluster in x y z, as the projection of the alpha track
     auto dfLastPoint = df.Define("fLastPoint",

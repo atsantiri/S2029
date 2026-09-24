@@ -128,30 +128,47 @@ void Simulation_S2029(const std::string& beam, const std::string& target, const 
     if(!standalone)
         gROOT->SetBatch(true);
 
-    double angle_min {130.};
-    double angle_max {140.};
     double qval {3.923}; // qvalue of 17F+p
 
     TRandom random;
 
     // Resolutions
-    const double sigmaSil {0.05}; // AT: To change, get sigma from calibrations
+    const double sigmaSil {
+        0.03}; // AT: F0 has ~20keV sigma, while L0 and R0 have ~40keV sigma, I'll take 30keV sigma for average
     const double sigmaPercentBeam {0};
     const double sigmaAngleLight {0.95 / 2.355};
     // Parameters of beam in mm
     // Beam has to be manually placed in the simulation
-    // Centered in Z and Y with a width of 4 mm
     // Center in Z
     // AT: note that in simue756 zVertexMean is coming from silicon matrices
-    const double zVertexMean {128. + 18.}; // beam not centered in chamber, upwards
-                                           //    double zVertexMean {silCentre + beamOffset}; // in Miguel's
+    // get fDriftFactor to convert pos.Z to mm
+    ActRoot::InputParser parser {"../../configs/detector.conf"};
+    auto block {parser.GetBlock("Merger")};
+    auto fDriftFactor {block->GetDouble("DriftFactor")};
 
-    const double zVertexSigma {4}; // AT, to get from beam
-    // Center in Y - miguel's simu doesn't have Yvertex?
-    const double yVertexMean {128.};
-    const double yVertexSigma {4};
-    // const double zVertexMean {83.59};
-    // const double zVertexSigma {3.79};
+    const double zVertexMean {84.5 * fDriftFactor};   // average z pos from ../Macros/Silicons/calcZOffset.cxx
+    const double zVertexSigma {0.7 * fDriftFactor}; // sigma from ../Macros/Silicons/calcZOffset.cxx
+    
+    // Center in Y - similarly from ../Macros/Silicons/calcZOffset.cxx
+    const double yVertexMean {61.5*2.};
+    const double yVertexSigma {1.1*2.};
+
+    // Silicon specs
+    ActPhysics::SilSpecs specs;
+    specs.ReadFile("../configs/silspecs.conf");
+
+    // Silicon EFFECTIVE matrix
+    double silCentre {};
+    std::vector<std::string> silLayers {"f0", "l0", "r0"};
+    TString secondLayer {"f1"};
+    std::unordered_map<std::string, ActPhysics::SilMatrix*> smAll;
+    for(const auto& l : silLayers){
+        auto tempSilMatrix = specs.GetLayer(l).GetSilMatrix();
+        auto silCentre = tempSilMatrix->GetMeanZ({4,7});
+        tempSilMatrix->MoveZTo(zVertexMean,{4});
+        smAll[l]=tempSilMatrix->Clone();
+    }
+
 
     // THRESHOLDS FOR SILICONS -- AT double check from calibration files
     const double thresholdSi0 {1.};
@@ -160,7 +177,7 @@ void Simulation_S2029(const std::string& beam, const std::string& target, const 
     // number of iterations
     const int iterations {static_cast<int>(1e6)};
 
-    // ACTIVATE STRAGGLING OR NOT
+    // ACTIVATE STRAGGLING OR NOTCalibration
     bool stragglingInGas {true};
     bool stragglingInSil {true};
     bool silResolution {true};
@@ -182,19 +199,6 @@ void Simulation_S2029(const std::string& beam, const std::string& target, const 
 
     // Get threshold
     auto T1Thresh {ActPhysics::Kinematics(p1, p2, p3, p4, -1, Ex).GetT1Thresh()};
-
-
-    // Silicon specs
-    ActPhysics::SilSpecs specs;
-    specs.ReadFile("../configs/silspecs.conf");
-
-    // Silicon EFFECTIVE matrix
-    double silCentre {};
-    std::vector<std::string> silLayers {"f0", "l0", "r0"};
-    TString secondLayer {"f1"};
-    std::unordered_map<std::string, ActPhysics::SilMatrix*> smAll;
-    for(const auto& l : silLayers)
-        smAll[l] = specs.GetLayer(l).GetSilMatrix()->Clone();
 
     /////////////////////////////////////////////////////////////////////////////
     // need to move silicons around, like Ivan's lines 304 - 334 of s2384/Simulation/do_simu.cxx
@@ -428,7 +432,7 @@ void Simulation_S2029(const std::string& beam, const std::string& target, const 
         hEffDirAll->Fill(theta3LabDir, TBeamDir);
         hEffAll->Fill(thetaCMEff * TMath::RadToDeg(), ECM);
         hRP->Fill(vertex.X(), vertex.Y());
-        hEffECNAll->Fill(thetaCMEff * TMath::RadToDeg(),ECN);
+        hEffECNAll->Fill(thetaCMEff * TMath::RadToDeg(), ECN);
 
         ////////////////////////////////////////////////////////////////////////////////
         // 4-> Include thetaLab resolution to compute thetaCM and Ex afterwards
@@ -633,8 +637,8 @@ void Simulation_S2029(const std::string& beam, const std::string& target, const 
             hTheta3Lab->Fill(theta3Lab * TMath::RadToDeg());
             hPhiLab->Fill(phi3Lab * TMath::RadToDeg());
             hEffAfter->Fill(thetaCMEff * TMath::RadToDeg(), ECM);
-            hEffDirAfter->Fill(theta3LabDir,TBeamDir);
-            hEffECNAfter->Fill(thetaCMEff * TMath::RadToDeg(),ECN);
+            hEffDirAfter->Fill(theta3LabDir, TBeamDir);
+            hEffECNAfter->Fill(thetaCMEff * TMath::RadToDeg(), ECN);
             hECN->Fill(ECN);
             // ECN histograms from front and lateral, for comparison
             if(layer0 == "f0")
