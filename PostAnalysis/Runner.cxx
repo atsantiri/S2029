@@ -6,12 +6,14 @@
 #include <iostream>
 #include <string>
 
+#include "./Settings.h"
+
 void Runner(TString what = "")
 {
     std::string beam {"17F"};
     std::string target {"p"};
     std::string light {"p"};
-    double EBeamIni {3.84}; // MeV/u
+    auto EBeamIni {S2029::EBeamIni}; // MeV/u
     std::string detector {"sil"}; // "sil" or "l1"
 
     std::cout << BOLDGREEN << "···· Runner ····" << '\n';

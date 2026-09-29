@@ -18,6 +18,7 @@
 #include "TLegend.h"
 #include "TROOT.h"
 
+#include "../../PostAnalysis/Settings.h"
 
 void calcEBeamIni()
 {
@@ -81,7 +82,7 @@ void calcEBeamIni()
     auto* srim {new ActPhysics::SRIM()};
     ActPhysics::Particle beam {"17F"};
     ActPhysics::Particle target {"p"};
-    srim->ReadTable("beamInGas", "../../Simulation/SRIM/17F_H2-iC4H10_95-5_775mbar.txt");
+    srim->ReadTable("beamInGas", Form("../../Simulation/SRIM/17F_H2-iC4H10_95-5_%.0fmbar.txt",S2029::pressure));
 
     auto qval {3.9231};
     auto resonance {6.150};

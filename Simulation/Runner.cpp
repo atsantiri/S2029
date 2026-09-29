@@ -5,6 +5,7 @@
 #include <vector>
 
 // #include "./Plotter.cxx"
+#include "../PostAnalysis/Settings.h"
 #include "./Simulation_S2029.cxx"
 
 // what
@@ -15,25 +16,25 @@
 // if false, runs all Ex simulations but doesn't plot
 void Runner(TString what = "simu", bool standalone = true)
 {
-  // Settings
-  // Names of particles
-  std::string beam{"17F"};
-  std::string target{"1H"};
-  std::string light{"1H"};
-  std::string heavy{"17F"};
-  // Phase space reactions: when the heavy decays by proton or neutron emission
-  // So we have something like: 4He + n + 17N (needs to be simulated to be
-  // included as background in fits)
-  // int neutronPS{0};  // number of neutrons in final state
-  // int protonPS{0};   // number of protons in final state
-  double T1{3.84};   // Beam energy at entrance of pad plane
-  int pressure{760}; // mbar
+    // Settings
+    // Names of particles
+    std::string beam {"17F"};
+    std::string target {"1H"};
+    std::string light {"1H"};
+    std::string heavy {"17F"};
+    // Phase space reactions: when the heavy decays by proton or neutron emission
+    // So we have something like: 4He + n + 17N (needs to be simulated to be
+    // included as background in fits)
+    // int neutronPS{0};  // number of neutrons in final state
+    // int protonPS{0};   // number of protons in final state
+    auto T1 {S2029::EBeamIni};   // Beam energy at entrance of pad plane
+    auto pressure {S2029::pressure}; // mbar
 
-  if (what.Contains("simu"))
-    Simulation_S2029(beam, target, light, heavy, T1, 0, pressure, standalone);
-  if (what.Contains("plot"))
-  {
-    throw std::runtime_error("I'll work on the plotter, maybe");
-    // Plotter({0.}, beam, target, light, T1, pressure);
-  }
+    if(what.Contains("simu"))
+        Simulation_S2029(beam, target, light, heavy, T1, 0, pressure, standalone);
+    if(what.Contains("plot"))
+    {
+        throw std::runtime_error("I'll work on the plotter, maybe");
+        // Plotter({0.}, beam, target, light, T1, pressure);
+    }
 }

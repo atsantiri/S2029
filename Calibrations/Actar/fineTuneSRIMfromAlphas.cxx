@@ -9,11 +9,14 @@
 #include "TCanvas.h"
 #include "TF1.h"
 #include "TFile.h"
+#include "TGraphErrors.h"
 #include "TLatex.h"
+#include "TLegend.h"
 #include "TLine.h"
 #include "TMarker.h"
 
-// I want to fine tune my SRIM tables so the energy of the alphas gets reproduced.
+// I want to fine tune my SRIM tables so the energy of the alphas gets reproduced. Find source location and plot TL vs
+// expected E for drift run and from SRIM for different pressures. Aurora's Fig 5.21
 
 ROOT::Math::XYZPointF
 findStartVoxel(ActRoot::Cluster& c, bool returnStart) // compute the distance to the center mass of the charge. The one
@@ -117,7 +120,6 @@ void fineTuneSRIMfromAlphas()
     auto drift {bl1->GetDouble("DriftFactor")};
 
     auto* srim {new ActPhysics::SRIM()};
-    srim->ReadTable("HeInGas", "../../Simulation/SRIM/4He_H2-iC4H10_95-5_755mbar.txt");
 
     auto d {ROOT::RDataFrame("GETTree", "../../RootFiles/Cluster/Clusters_Run_0062.root")};
     auto df {d.Filter([](ActRoot::TPCData& tpc) { return (tpc.fClusters.size() == 1); }, {"TPCData"})};
@@ -223,7 +225,7 @@ void fineTuneSRIMfromAlphas()
     }
     p2->cd();
     hIx->Draw();
-    TF1* fitIx = new TF1("fitIx", "gaus", -32, -26);
+    TF1* fitIx = new TF1("fitIx", "gaus", -35, -25);
     hIx->Fit(fitIx, "QR");
     double sourceX = fitIx->GetParameter(1);
     double sigmaIx = fitIx->GetParameter(2);
@@ -239,9 +241,7 @@ void fineTuneSRIMfromAlphas()
 
 
     // with a better constrained source location, calculate TL from last voxel
-    auto dfFinal {
-        dfPoints
-            .Define("TL",
+    auto dfFinal {dfPoints.Define("TL",
                     [&](ActRoot::TPCData& tpc, ROOT::Math::XYZPointF& lastPoint)
                     {
                         auto cl {tpc.fClusters[0]};
@@ -251,147 +251,58 @@ void fineTuneSRIMfromAlphas()
                         double TL = calcTLfromVoxel(source, lastPoint, l, drift);
                         return TL;
                     },
-                    {"TPCData", "lastPoint"})
-            .Define("Ene", [&](double TL) { return srim->EvalInitialEnergy("HeInGas", 0, TL) * 1000.; }, {"TL"})
-            .Define("TLmin",
-                    [&](ActRoot::TPCData& tpc, ROOT::Math::XYZPointF& lastPoint)
-                    {
-                        auto cl {tpc.fClusters[0]};
-                        auto l {cl.GetRefToLine()};
-                        auto sourceZ {l.MoveToX(sourceX).Z()};
-                        ROOT::Math::XYZPointF source(sourceX+sigmaIx, sourceY, sourceZ);
-                        double TL = calcTLfromVoxel(source, lastPoint, l, drift);
-                        return TL;
-                    },
-                    {"TPCData", "lastPoint"})
-            .Define("Enemin", [&](double TL) { return srim->EvalInitialEnergy("HeInGas", 0, TL) * 1000.; }, {"TLmin"})
-            .Define("TLmax",
-                    [&](ActRoot::TPCData& tpc, ROOT::Math::XYZPointF& lastPoint)
-                    {
-                        auto cl {tpc.fClusters[0]};
-                        auto l {cl.GetRefToLine()};
-                        auto sourceZ {l.MoveToX(sourceX).Z()};
-                        ROOT::Math::XYZPointF source(sourceX-sigmaIx, sourceY, sourceZ);
-                        double TL = calcTLfromVoxel(source, lastPoint, l, drift);
-                        return TL;
-                    },
-                    {"TPCData", "lastPoint"})
-            .Define("Enemax", [&](double TL) { return srim->EvalInitialEnergy("HeInGas", 0, TL) * 1000.; }, {"TLmax"})};
-    TCanvas* c1 = new TCanvas("c1", "Energy Reconstruction", 1200, 900);
-    auto hEne {dfFinal.Histo1D({"hEne", "Reconstructed alpha energy; Energy [keV];Counts", 150, 3000, 7000}, "Ene")};
-    auto hEneMin {dfFinal.Histo1D({"hEneMin", "Reconstructed alpha energy; Energy [keV];Counts", 150, 3000, 7000}, "Enemin")};
-    auto hEneMax {dfFinal.Histo1D({"hEneMax", "Reconstructed alpha energy; Energy [keV];Counts", 150, 3000, 7000}, "Enemax")};
-    hEneMax->DrawClone();
-    // hEneMin->SetLineColor(kMagenta);
-    // hEneMin->DrawClone("same");
-    // hEneMax->SetLineColor(kOrange);
-    // hEneMax->DrawClone("same");
+                                  {"TPCData", "lastPoint"})};
 
     std::vector<double> energies {{5156.59, 5485.56, 5804.77}};
-    int i = 0;
-    for(auto& s : energies)
+
+    TCanvas* c2 = new TCanvas("c2", "TL Dist", 800, 600);
+    auto hTL {dfFinal.Histo1D({"hTL", "TL;TL [mm];Counts", 150, 50, 200}, "TL")};
+    hTL->DrawClone();
+
+
+    TF1* fTL = new TF1("fTL", "gaus(0)+gaus(3)+gaus(6)", 120, 180);
+    fTL->SetParameters(1300, 140, 2, 1000, 155, 2, 720, 170, 2);
+    hTL->Fit(fTL, "RQ");
+    hTL->DrawClone();
+    std::vector<double> TLvalues;
+    for(double TL = 50; TL <= 200; TL += 1)
+        TLvalues.push_back(TL);
+
+    std::vector<double> TLs = {fTL->GetParameter(1), fTL->GetParameter(4), fTL->GetParameter(7)};
+    std::vector<double> TLerr = {fTL->GetParameter(2), fTL->GetParameter(5), fTL->GetParameter(8)};
+    auto c3 = new TCanvas("c3", "Energy vs TL", 1000, 700);
+    c3->cd();
+    auto* grTL = new TGraphErrors();
+    for(size_t i = 0; i < TLs.size(); ++i)
     {
-        TLine* st = new TLine(s, 0, s, 1600 - i * 200);
-        st->SetLineColor(2);
-        st->SetLineStyle(2);
-        st->Draw("same");
-        auto t = new TLatex(s + 50, 1450 - i * 200, Form("%.2f", s));
-        t->SetTextColor(2);
-        t->SetTextSize(0.03);
-        t->Draw("same");
-        i++;
+        grTL->SetPoint(i, TLs[i], energies[i]);
+        grTL->SetPointError(i, TLerr[i], 0);
     }
+    grTL->SetMarkerStyle(20);
+    grTL->SetTitle(";TL [mm];Energy [keV]");
+    grTL->Draw("AP");
+    int colors[] = {kBlue,      kOrange + 7, kGreen + 2,  kRed + 1,  kViolet + 1, kCyan + 1, kMagenta + 1,
+                    kAzure + 2, kOrange + 1, kSpring + 5, kPink + 5, kTeal + 3,   kGray + 2};
+    int k = 0;
+    auto* legend = new TLegend(0.7, 0.15, 0.9, 0.5);
+    for(int p = 740; p <= 780; p += 5)
+    {
+        std::string file = Form("../../Simulation/SRIM/4He_H2-iC4H10_95-5_%dmbar.txt", p);
+        auto* srim = new ActPhysics::SRIM();
+        srim->ReadTable(Form("HeInGas%d", p), file);
 
+        auto* gr = new TGraph();
 
-    // c->cd(2);
-    // auto gdZLxy = dfPoints.Graph("dZ", "Lxy");
-    // gdZLxy->SetTitle("Delta Z vs Lxy;#Delta Z [#mus]; Lxy [mm]");
-    // gdZLxy->GetXaxis()->SetRangeUser(-20, 10);
-    // gdZLxy->GetYaxis()->SetRangeUser(-0, 200);
-    // gdZLxy->DrawClone("AP");
-
-
-    // // Get horizontal tracks so I don't need a Z correction and define a total accumulated charge column
-    // auto dfconstZ = dfPoints
-    //                     .Filter([&](double dZ, float dY)
-    //                             { return (dZ >= dzmin && dZ <= dzmax && dY >= dymin && dY <= dymax); }, {"dZ",
-    //                             "dY"})
-    //                     .Define("Qtot",
-    //                             [](ActRoot::TPCData& tpc)
-    //                             {
-    //                                 auto cl {tpc.fClusters[0]};
-    //                                 auto vxs {cl.GetVoxels()};
-    //                                 auto qtot {0.};
-    //                                 for(const auto& vx : vxs)
-    //                                     qtot += vx.GetCharge();
-    //                                 return qtot;
-    //                             },
-    //                             {"TPCData"});
-
-
-    // auto hLxy {dfconstZ.Histo1D(
-    //     {"hLxy", TString::Format("dZ in (%.1f,%.1f) & dY in (%.1f,%.1f);Range [mm];Counts", dzmin, dzmax, dymin,
-    //     dymax),
-    //      100, 0, 200},
-    //     "Lxy")};
-    // c->cd(3);
-
-    // TF1* fLxy = new TF1("fLxy", "gaus(0)+gaus(3)+gaus(6)", 120, 180);
-    // fLxy->SetParameters(160, 140, 2, 120, 150, 2, 50, 170, 2);
-    // hLxy->Fit(fLxy, "Q");
-
-    // hLxy->DrawClone();
-    // // if(fLxy)
-    // //     fLxy->Draw("same");
-
-    // auto hQtot {dfconstZ.Histo1D({"hQtot",
-    //                               TString::Format("dZ in (%.1f,%.1f) & dY in (%.1f,%.1f);Total Charge
-    //                               [a.u.];Counts",
-    //                                               dzmin, dzmax, dymin, dymax),
-    //                               200, 0, 120000},
-    //                              "Qtot")};
-    // c->cd(4);
-    // TF1* fQ = new TF1("fQ", "gaus(0)+gaus(3)+gaus(6)", 65000, 95000);
-    // fQ->SetParameters(70, 72000, 1200, 40, 82000, 1400, 25, 90000, 1400);
-    // hQtot->Fit(fQ, "Q");
-
-    // hQtot->DrawClone();
-    // // if(fQ)
-    // //     fQ->Draw("same");
-
-    // c->SaveAs("./Outputs/alphas_chargeResolution_trackLengthResolution.png");
-
-    // std::cout << "Range spectrum resolution: " << std::setprecision(2)
-    //           << 2.355 * fLxy->GetParameter(2) / fLxy->GetParameter(1) * 100 << " %, "
-    //           << 2.355 * fLxy->GetParameter(5) / fLxy->GetParameter(4) * 100 << " %, and "
-    //           << 2.355 * fLxy->GetParameter(8) / fLxy->GetParameter(7) * 100 << " %" << std::endl;
-
-
-    // std::cout << "Charge spectrum resolution: " << std::setprecision(2)
-    //           << 2.355 * fQ->GetParameter(2) / fQ->GetParameter(1) * 100 << " %, "
-    //           << 2.355 * fQ->GetParameter(5) / fQ->GetParameter(4) * 100 << " %, and "
-    //           << 2.355 * fQ->GetParameter(8) / fQ->GetParameter(7) * 100 << " %" << std::endl;
-
-    // // Express track length as energy with SRIM
-    // auto* srim {new ActPhysics::SRIM()};
-    // srim->ReadTable("alphasInGas", "../../Simulation/SRIM/4He_H2-iC4H10_95-5_755mbar.txt");
-
-    // auto dfEne = dfconstZ.Define("Ene",
-    //                              [&](double Lxy)
-    //                              {
-    //                                  double eneMeV {srim->EvalInitialEnergy("alphasInGas", 0, Lxy)};
-    //                                  return eneMeV * 1000.;
-    //                              },
-    //                              {"Lxy"});
-    // auto hEne {dfEne.Histo1D({"hEne", "Reconstructed alpha energy; Energy [keV];Counts", 150, 3000, 7000},
-    // "Ene")}; auto c1 = new TCanvas("c1", "c1"); c1->cd(); TF1* fEne = new TF1("fEne", "gaus(0)+gaus(3)+gaus(6)",
-    // 4800, 6000); fEne->SetParameters(100, 5100, 10, 60, 5400, 10, 50, 5700, 10); hEne->Fit(fEne, "Q");
-    // hEne->DrawClone();
-    // std::cout << "Alpha Energy: " << std::fixed << std::setprecision(0) << fEne->GetParameter(1) << " ("
-    //           << std::setprecision(2) << 2.355 * fEne->GetParameter(2) / fEne->GetParameter(1) * 100 << " %), "
-    //           << std::setprecision(0) << fEne->GetParameter(4) << " (" << std::setprecision(2)
-    //           << 2.355 * fEne->GetParameter(5) / fEne->GetParameter(4) * 100 << " %), and " <<
-    //           std::setprecision(0)
-    //           << fEne->GetParameter(7) << " (" << std::setprecision(2)
-    //           << 2.355 * fEne->GetParameter(8) / fEne->GetParameter(7) * 100 << " %)" << std::endl;
+        for(size_t i = 0; i < TLvalues.size(); ++i)
+        {
+            double E = srim->EvalInitialEnergy(Form("HeInGas%d", p), 0, TLvalues[i]) * 1000.;
+            gr->SetPoint(i, TLvalues[i], E);
+        }
+        gr->SetTitle(Form("%s;TL [mm];Energy [keV]", file.c_str()));
+        gr->SetLineWidth(2);
+        gr->SetLineColor(colors[k++]);
+        gr->Draw("L same");
+        legend->AddEntry(gr, Form("%d mbar", p), "l");
+    }
+    legend->Draw();
 }

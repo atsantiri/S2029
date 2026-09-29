@@ -36,6 +36,7 @@
 #include <string>
 #include <utility>
 
+#include "../PostAnalysis/Utils.cxx"
 #include "../PostAnalysis/HistConfig.h"
 
 void set_plot_style()
@@ -111,18 +112,9 @@ void ApplyNaN(double& val, double thresh = 0, const std::string& comment = "stop
         val = std::nan(comment.c_str());
 }
 
-void makeGrid(std::string layer, std::unordered_map<std::string, ActPhysics::SilMatrix*> smAll)
-{
-    auto& cuts = smAll[layer]->GetGraphs();
-    for(const auto& [id, cut] : cuts)
-    {
-        if(cut)
-            cut->Draw("same");
-    }
-}
 
 void Simulation_S2029(const std::string& beam, const std::string& target, const std::string& light,
-                      const std::string& heavy, double T1, double Ex, int pressure, bool standalone)
+                      const std::string& heavy, double T1, double Ex, double pressure, bool standalone)
 {
     // set batch mode if not an independent function
     if(!standalone)
@@ -133,8 +125,7 @@ void Simulation_S2029(const std::string& beam, const std::string& target, const 
     TRandom random;
 
     // Resolutions
-    const double sigmaSil {
-        0.03}; // AT: F0 has ~20keV sigma, while L0 and R0 have ~40keV sigma, I'll take 30keV sigma for average
+    const double sigmaSil {0.03}; // AT: F0 has ~20keV sigma, while L0 and R0 have ~40keV sigma
     const double sigmaPercentBeam {0};
     const double sigmaAngleLight {0.95 / 2.355};
     // Parameters of beam in mm
@@ -142,33 +133,43 @@ void Simulation_S2029(const std::string& beam, const std::string& target, const 
     // Center in Z
     // AT: note that in simue756 zVertexMean is coming from silicon matrices
     // get fDriftFactor to convert pos.Z to mm
-    ActRoot::InputParser parser {"../../configs/detector.conf"};
+    ActRoot::InputParser parser {"../configs/detector.conf"};
     auto block {parser.GetBlock("Merger")};
     auto fDriftFactor {block->GetDouble("DriftFactor")};
 
-    const double zVertexMean {84.5 * fDriftFactor};   // average z pos from ../Macros/Silicons/calcZOffset.cxx
+    const double zVertexMean {84.5 * fDriftFactor}; // average z pos from ../Macros/Silicons/calcZOffset.cxx
     const double zVertexSigma {0.7 * fDriftFactor}; // sigma from ../Macros/Silicons/calcZOffset.cxx
-    
+
     // Center in Y - similarly from ../Macros/Silicons/calcZOffset.cxx
-    const double yVertexMean {61.5*2.};
-    const double yVertexSigma {1.1*2.};
+    const double yVertexMean {61.5 * 2.};
+    const double yVertexSigma {1.1 * 2.};
 
     // Silicon specs
-    ActPhysics::SilSpecs specs;
-    specs.ReadFile("../configs/silspecs.conf");
+    auto* specs {new ActPhysics::SilSpecs};
+    specs->ReadFile("../configs/silspecs.conf");
 
     // Silicon EFFECTIVE matrix
-    double silCentre {};
+    // double silCentre {};
     std::vector<std::string> silLayers {"f0", "l0", "r0"};
+    // std::unordered_map<std::string, ActPhysics::SilMatrix*> smAll;
+    // for(const auto& l : silLayers){
+    //     auto tempSilMatrix = specs.GetLayer(l).GetSilMatrix();
+    //     auto silCentre = tempSilMatrix->GetMeanZ({4,7});
+    //     tempSilMatrix->MoveZTo(zVertexMean,{4});
+    //     smAll[l]=tempSilMatrix->Clone();
+    // }
+    auto* f0sm {S2029::GetFrontMatrix()};
+    auto silCentre = f0sm->GetMeanZ({4, 7});
+    specs->GetLayer("f0").ReplaceWithMatrix(f0sm);
     TString secondLayer {"f1"};
-    std::unordered_map<std::string, ActPhysics::SilMatrix*> smAll;
-    for(const auto& l : silLayers){
-        auto tempSilMatrix = specs.GetLayer(l).GetSilMatrix();
-        auto silCentre = tempSilMatrix->GetMeanZ({4,7});
-        tempSilMatrix->MoveZTo(zVertexMean,{4});
-        smAll[l]=tempSilMatrix->Clone();
-    }
-
+    // Left silicons
+    auto* l0sm {S2029::GetLeftMatrix()};
+    l0sm->MoveZTo(zVertexMean, {4});
+    specs->GetLayer("l0").ReplaceWithMatrix(l0sm);
+    // Right silicons
+    auto* r0sm {S2029::GetRightMatrix()};
+    r0sm->MoveZTo(zVertexMean, {4});
+    specs->GetLayer("r0").ReplaceWithMatrix(r0sm);
 
     // THRESHOLDS FOR SILICONS -- AT double check from calibration files
     const double thresholdSi0 {1.};
@@ -203,7 +204,7 @@ void Simulation_S2029(const std::string& beam, const std::string& target, const 
     /////////////////////////////////////////////////////////////////////////////
     // need to move silicons around, like Ivan's lines 304 - 334 of s2384/Simulation/do_simu.cxx
     /////////////////////////////////////////////////////////////////////////////
-    specs.DrawGeo();
+    specs->DrawGeo();
 
     // // CUTS ON SILICON ENERGY, depending on particle and layer
     // not needed here, since only protons make it to the Silicons. If I had multiple particles in my pid this would be
@@ -300,8 +301,8 @@ void Simulation_S2029(const std::string& beam, const std::string& target, const 
     // Load SRIM tables
     // The name of the file sets particle + medium
     auto* srim {new ActPhysics::SRIM()};
-    srim->ReadTable("light", TString::Format("SRIM/%s_H2-iC4H10_95-5_%dmbar.txt", light.c_str(), pressure).Data());
-    srim->ReadTable("beam", TString::Format("SRIM/%s_H2-iC4H10_95-5_%dmbar.txt", beam.c_str(), pressure).Data());
+    srim->ReadTable("light", TString::Format("SRIM/%s_H2-iC4H10_95-5_%.0fmbar.txt", light.c_str(), pressure).Data());
+    srim->ReadTable("beam", TString::Format("SRIM/%s_H2-iC4H10_95-5_%.0fmbar.txt", beam.c_str(), pressure).Data());
     srim->ReadTable("lightInSil", TString::Format("SRIM/%s_silicon.txt", light.c_str()).Data());
 
     // Random generator
@@ -320,7 +321,7 @@ void Simulation_S2029(const std::string& beam, const std::string& target, const 
     // reactions, weight = 1
     // 4-> Energy at vertex
     // 5-> Theta in Lab frame
-    auto* outFile {new TFile(TString::Format("Outputs/Simu_17F_p_p_%dmbar.root", pressure), "recreate")};
+    auto* outFile {new TFile(TString::Format("Outputs/Simu_17F_p_p_%.0fmbar.root", pressure), "recreate")};
     auto* outTree {new TTree("SimulationTTree", "A TTree containing only our Eex obtained by simulation")};
 
     double theta3CM_tree {};
@@ -472,13 +473,13 @@ void Simulation_S2029(const std::string& beam, const std::string& target, const 
 
         for(auto layer : silLayers)
         {
-            auto [index, sp] = specs.FindSPInLayer(layer, vertex, dirWorldFrame);
+            auto [index, sp] = specs->FindSPInLayer(layer, vertex, dirWorldFrame);
             if(index != -1)
             {
                 silIndex0 = index;
                 silPoint0 = sp;
                 layer0 = layer;
-                sm = specs.GetLayer(layer).GetSilMatrix();
+                sm = specs->GetLayer(layer).GetSilMatrix();
                 break;
             }
         }
@@ -514,15 +515,15 @@ void Simulation_S2029(const std::string& beam, const std::string& target, const 
             continue;
 
         // SILICON0
-        ROOT::Math::XYZVector normal {specs.GetLayer(layer0).GetNormal()};
+        ROOT::Math::XYZVector normal {specs->GetLayer(layer0).GetNormal()};
         auto angleNormal0 {AngleWithNormal(dirWorldFrame, normal)};
         double T3AfterSil0 {-1};
         if(stragglingInSil)
             T3AfterSil0 = srim->SlowWithStraggling("lightInSil", T3EnteringSil,
-                                                   specs.GetLayer(layer0).GetUnit().GetThickness(), angleNormal0);
+                                                   specs->GetLayer(layer0).GetUnit().GetThickness(), angleNormal0);
         else
             T3AfterSil0 =
-                srim->Slow("lightInSil", T3EnteringSil, specs.GetLayer(layer0).GetUnit().GetThickness(), angleNormal0);
+                srim->Slow("lightInSil", T3EnteringSil, specs->GetLayer(layer0).GetUnit().GetThickness(), angleNormal0);
 
         auto eLoss0 {T3EnteringSil - T3AfterSil0};
 
@@ -534,7 +535,7 @@ void Simulation_S2029(const std::string& beam, const std::string& target, const 
             T3AfterSil0 = T3EnteringSil - eLoss0;
         }
         // ApplyNaN(eLoss0, thresholdSi0, "thresh");
-        ApplyNaN(eLoss0, specs.GetLayer(layer0).GetThresholds().at(silIndex0));
+        ApplyNaN(eLoss0, specs->GetLayer(layer0).GetThresholds().at(silIndex0));
 
         // nan if bellow threshold
         if(!std::isfinite(eLoss0))
@@ -552,7 +553,7 @@ void Simulation_S2029(const std::string& beam, const std::string& target, const 
         if(T3AfterSil0 > 0 && (layer0 == "f0"))
         {
             // first, propagate in gas
-            auto [silIndex1, silPoint1] {specs.FindSPInLayer(secondLayer.Data(), vertex, dirWorldFrame)};
+            auto [silIndex1, silPoint1] {specs->FindSPInLayer(secondLayer.Data(), vertex, dirWorldFrame)};
             if(silIndex1 == -1)
                 continue;
 
@@ -572,17 +573,18 @@ void Simulation_S2029(const std::string& beam, const std::string& target, const 
                 auto angleNormal1 {angleNormal0};
                 if(stragglingInSil)
                     T3AfterSil1 = srim->SlowWithStraggling("lightInSil", T3AfterInterGas,
-                                                           specs.GetLayer(secondLayer.Data()).GetUnit().GetThickness(),
+                                                           specs->GetLayer(secondLayer.Data()).GetUnit().GetThickness(),
                                                            angleNormal1);
                 else
-                    T3AfterSil1 = srim->Slow("lightInSil", T3AfterInterGas,
-                                             specs.GetLayer(secondLayer.Data()).GetUnit().GetThickness(), angleNormal1);
+                    T3AfterSil1 =
+                        srim->Slow("lightInSil", T3AfterInterGas,
+                                   specs->GetLayer(secondLayer.Data()).GetUnit().GetThickness(), angleNormal1);
 
                 auto eLoss1 {T3AfterInterGas - T3AfterSil1};
                 if(silResolution)
                     eLoss1 = gRandom->Gaus(eLoss1, sigmaSil * TMath::Sqrt(eLoss1 / 5.5));
                 T3AfterSil1 = T3AfterInterGas - eLoss1;
-                ApplyNaN(eLoss1, specs.GetLayer(secondLayer.Data()).GetThresholds().at(silIndex1));
+                ApplyNaN(eLoss1, specs->GetLayer(secondLayer.Data()).GetThresholds().at(silIndex1));
                 isPunch = true;
             }
         }
@@ -749,10 +751,14 @@ void Simulation_S2029(const std::string& beam, const std::string& target, const 
             hSilPID[l]->DrawClone("colz");
             c2->cd(canvas);
             hSilSP[l]->DrawClone("colz");
-            makeGrid(l, smAll);
             canvas++;
         }
-
+        c2->cd(1);
+        f0sm->Draw("same");
+        c2->cd(2);
+        l0sm->Draw("same");
+        c2->cd(3);
+        r0sm->Draw("same");
 
         auto* c3 {new TCanvas {"c3", "2D Eff canvas"}};
         c3->DivideSquare(6);

@@ -24,6 +24,7 @@
 #include <vector>
 
 #include "../HistConfig.h"
+#include "../Settings.h"
 
 void Pipe3_Ex(const std::string& beam, const std::string& target, const std::string& light, const double EBeamIni,
               const std::string gateOn)
@@ -52,9 +53,12 @@ void Pipe3_Ex(const std::string& beam, const std::string& target, const std::str
         srimName = "1H";
     else if(light == "4He")
         srimName = "4He";
-    srim->ReadTable(light,
-                    TString::Format("../Simulation/SRIM/%s_H2-iC4H10_95-5_760mbar.txt", srimName.c_str()).Data());
-    srim->ReadTable(beam, TString::Format("../Simulation/SRIM/%s_H2-iC4H10_95-5_760mbar.txt", beam.c_str()).Data());
+    srim->ReadTable(
+        light,
+        TString::Format("../Simulation/SRIM/%s_H2-iC4H10_95-5_%.0fmbar.txt", srimName.c_str(), S2029::pressure).Data());
+    srim->ReadTable(
+        beam,
+        TString::Format("../Simulation/SRIM/%s_H2-iC4H10_95-5_%.0fmbar.txt", beam.c_str(), S2029::pressure).Data());
     // srim->ReadTable("heavy", "../Simulation/SRIM/14O_H2-iC4H10_95-5_760mbar.txt");
 
     // Build energy at vertex
@@ -63,9 +67,20 @@ void Pipe3_Ex(const std::string& beam, const std::string& target, const std::str
                               {
                                   double ret {};
                                   if(d.fLight.IsFilled())
+                                  {
+                                      if(!std::isfinite(d.fLight.fEs.front()) || !std::isfinite(d.fLight.fTL))
+                                          std::cout << "BAD INPUT TO EvalInitialEnergy: "
+                                                    << "E = " << d.fLight.fEs.front() << ", TL = " << d.fLight.fTL
+                                                    << '\n';
                                       ret = srim->EvalInitialEnergy(light, d.fLight.fEs.front(), d.fLight.fTL);
-                                  else // L1 trigger
+                                  }
+                                  else
+                                  { // L1 trigger
+                                      if(!std::isfinite(d.fLight.fTL))
+                                          std::cout << "BAD INPUT TO EvalInitialEnergy: TL = " << d.fLight.fTL << '\n';
                                       ret = srim->EvalEnergy(light, d.fLight.fTL);
+                                  }
+
                                   return ret;
                               },
                               {"MergerData"});
@@ -74,9 +89,6 @@ void Pipe3_Ex(const std::string& beam, const std::string& target, const std::str
     ActPhysics::Particle pb {beam};
     ActPhysics::Particle pt {target};
     ActPhysics::Particle pl {light};
-
-    // Initial energy of beam at pad plane entrance
-    // double EBeamIni{3.84}; // MeV/u
 
     // // Filter on heavy particle hit in the telescope
     auto def {dfVertex};

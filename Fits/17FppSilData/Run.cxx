@@ -7,6 +7,7 @@
 #include "TLine.h"
 
 #include "../../PostAnalysis/HistConfig.h"
+#include "../../PostAnalysis/Settings.h"
 #include "../Classes/DoubleXS.cxx"
 #include "../Classes/DoubleXS.h"
 
