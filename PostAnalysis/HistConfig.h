@@ -23,7 +23,7 @@ const TH2DModel RP {"hRP", "RP;X [mm];Y [mm]", 200, -10, 300, 200, -10, 300};
 
 const TH2DModel PID {"hPID", "PID;E_{Sil} [MeV];Q_{ave} [mm^{-1}]", 400, 0, 40, 800, 0, 1000};
 const TH2DModel PIDTwo {"hPIDTwo", "PID with two silicons;E_{1} [MeV];E_{0} [MeV]", 800, 0, 40, 800, 0, 40};
-const TH2DModel SP {"hSP", "SP;X or Y [mm];Z [mm]", 200, -10, 300, 200, -10, 300};
+const TH2DModel SP {"hSP", "SP;X or Y [mm];Z [mm]", 200, -10, 300, 200, -10, 400};
 const TH1DModel TL {"hTL", "Track length; TL [mm]", 300, 0, 600};
 
 const TH1DModel ThetaCM {"hThetaCM", "ThetaCM;#theta_{CM} [#circ]", 600, 0, 180};

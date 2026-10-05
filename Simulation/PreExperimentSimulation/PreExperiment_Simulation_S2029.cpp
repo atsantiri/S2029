@@ -24,32 +24,32 @@
 #include <TH2D.h>
 #include <TLine.h>
 
-#include "../PostAnalysis/HistConfig.h"
+#include "../../PostAnalysis/HistConfig.h"
 
 
-double dEthroughIC(const ActPhysics::Particle& particle, double energy, bool applyStraggling, ActPhysics::SRIM* srim) {
-    if (!applyStraggling) return energy;
+// double dEthroughIC(const ActPhysics::Particle& particle, double energy, bool applyStraggling, ActPhysics::SRIM* srim) {
+//     if (!applyStraggling) return energy;
 
-    // Choose the right SRIM table key based on particle name
-    TString tableKey1, tableKey2;
-    if (particle.GetName() == "17F" || particle.GetName() == "20Mg") {
-        tableKey1 = "beamInMylar";
-        tableKey2 = "beamInCF4";
-    } else if (particle.GetName() == "17O" || particle.GetName() == "20Na") {
-        tableKey1 = "ContaminantInMylar";
-        tableKey2 = "ContaminantInCF4";
-    } else {
-        std::cerr << "Unknown particle in dEthroughIC: " << particle.GetName() << '\n';
-        return energy; 
-    }
+//     // Choose the right SRIM table key based on particle name
+//     TString tableKey1, tableKey2;
+//     if (particle.GetName() == "17F" || particle.GetName() == "20Mg") {
+//         tableKey1 = "beamInMylar";
+//         tableKey2 = "beamInCF4";
+//     } else if (particle.GetName() == "17O" || particle.GetName() == "20Na") {
+//         tableKey1 = "ContaminantInMylar";
+//         tableKey2 = "ContaminantInCF4";
+//     } else {
+//         std::cerr << "Unknown particle in dEthroughIC: " << particle.GetName() << '\n';
+//         return energy; 
+//     }
     
-    // 11.5 um mylar
-    auto eneAfterMylar {srim->Slow(tableKey1.Data(), energy, 11.5e-3)}; // 11.5 um mylar in IC 
-    // 36 mm CF4 gas
-    auto eneAfterIC {srim->Slow(tableKey2.Data(), eneAfterMylar, 36)};
+//     // 11.5 um mylar
+//     auto eneAfterMylar {srim->Slow(tableKey1.Data(), energy, 11.5e-3)}; // 11.5 um mylar in IC 
+//     // 36 mm CF4 gas
+//     auto eneAfterIC {srim->Slow(tableKey2.Data(), eneAfterMylar, 36)};
     
-    return eneAfterIC;
-}
+//     return eneAfterIC;
+// }
 
 double dEthroughCFA(const ActPhysics::Particle& particle, double energy, bool applyStraggling, ActPhysics::SRIM* srim) {
     if (!applyStraggling) return energy;
@@ -63,7 +63,7 @@ double dEthroughCFA(const ActPhysics::Particle& particle, double energy, bool ap
         tableKey1 = "ContaminantInMylar";
         tableKey2 = "ContaminantIniC4H10";
     } else {
-        std::cerr << "Unknown particle in dEthroughIC: " << particle.GetName() << '\n';
+        std::cerr << "Unknown particle in dEthroughCFA: " << particle.GetName() << '\n';
         return energy; 
     }
     
@@ -77,7 +77,7 @@ double dEthroughCFA(const ActPhysics::Particle& particle, double energy, bool ap
 
 
 
-void PreExperiment_Simulation_S2029(const std::string& beam = "17F", double T1 = 5.5, double Ex = 0){
+void PreExperiment_Simulation_S2029(const std::string& beam = "17F", double T1 = 5.0, double Ex = 0){
 
     // Set number of iterations
     const int iterations {static_cast<int>(1e6)};
@@ -87,8 +87,8 @@ void PreExperiment_Simulation_S2029(const std::string& beam = "17F", double T1 =
 
 
     // Set parameters to include
-    bool stragglingInIC {false};   // If true beam will be propagated through IC
-    double pressureIC {70}; // Pressure in mbar    
+    // bool stragglingInIC {false};   // If true beam will be propagated through IC
+    // double pressureIC {70}; // Pressure in mbar    
     bool stragglingInCFA {true};  // If true beam will be propagated through CFA
     double pressureCFA {6}; // Pressure in mbar    
     double pressureACTAR {760}; // Pressure in mbar    
@@ -97,28 +97,16 @@ void PreExperiment_Simulation_S2029(const std::string& beam = "17F", double T1 =
     // Initialize detectors
     // TPC
     ActRoot::TPCParameters tpc {"Actar"};
-    // Silicons
-    // auto* sils {new ActPhysics::SilSpecs};
-    // sils->ReadFile("../configs/silspecs.conf");
-    // sils->Print();
+
 
     // Resolutions
-    const double sigmaSil {0.060 / 2.355};
     const double sigmaPercentBeam {0.005};
-    const double sigmaAngleLight {0.95 / 2.355};
 
     // Kinematics
     ActPhysics::Particle p1 {beam};
     ActPhysics::Particle p1c {"17O"}; // Contaminant 
     ActPhysics::Particle p2 {"1H"};
-    // ActPhysics::Particle p3 {arglight};
-    // // Automatically compute 4th particle
-    // ActPhysics::Kinematics kaux {p1, p2, p3};
-    // ActPhysics::Particle p4 {kaux.GetParticle(4)};
-    // // Binary kinematics generator
-    // ActSim::KinematicGenerator kingen {
-    //     p1, p2, p3, p4, (protonPS > 0 ? protonPS : 0), (neutronPS > 0 ? neutronPS : (pdphase || dtphase ? 1 : 0))};
-    // kingen.Print();
+
 
 
     // // Load SRIM Tables
@@ -135,10 +123,10 @@ void PreExperiment_Simulation_S2029(const std::string& beam = "17F", double T1 =
     };
 
     std::vector<std::pair<const char*, TString>> tables = {
-        {"beamInMylar", TString::Format("./SRIM/%s_mylar.txt", beam.c_str())},
-        {"beamInCF4", TString::Format("./SRIM/%s_CF4_%.0fmbar.txt", beam.c_str(), pressureIC)},
-        {"beamIniC4H10", TString::Format("./SRIM/%s_iC4H10_%.0fmbar.txt", beam.c_str(), pressureCFA)},
-        {"beamInACTARgas", TString::Format("./SRIM/%s_H2-iC4H10_95-5_%.0fmbar.txt", beam.c_str(), pressureACTAR)},
+        {"beamInMylar", TString::Format("../SRIM/%s_mylar.txt", beam.c_str())},
+        // {"beamInCF4", TString::Format("../SRIM/%s_CF4_%.0fmbar.txt", beam.c_str(), pressureIC)},
+        {"beamIniC4H10", TString::Format("../SRIM/%s_iC4H10_%.0fmbar.txt", beam.c_str(), pressureCFA)},
+        {"beamInACTARgas", TString::Format("../SRIM/%s_H2-iC4H10_95-5_%.0fmbar.txt", beam.c_str(), pressureACTAR)},
         // {"ContaminantInMylar", TString::Format("./SRIM/%s_mylar.txt", p1c.GetName().c_str())},
         // {"ContaminantInCF4", TString::Format("./SRIM/%s_CF4_%.0fmbar.txt", p1c.GetName().c_str(), pressureIC)},
         // {"ContaminantIniC4H10", TString::Format("./SRIM/%s_iC4H10_%.0fmbar.txt", p1c.GetName().c_str(), pressureCFA)},
@@ -174,7 +162,6 @@ void PreExperiment_Simulation_S2029(const std::string& beam = "17F", double T1 =
     std::map<std::string, TH1*> hSRIMC; // to follow the contaminant
     std::vector<std::string> hSRIMLabels = {
         "TInitial",
-        "TAfterIC",
         "TAfterCFA",
         "TAfterFoil",
         "TActiveAreaEntrance",
@@ -211,12 +198,8 @@ void PreExperiment_Simulation_S2029(const std::string& beam = "17F", double T1 =
         // hT1Initial->Fill(T1Initial/p1.GetAMU());
         hSRIM["TInitial"]->Fill(T1Initial/p1.GetAMU());
 
-        // Pass beam through IC
-        auto T1AfterIC {dEthroughIC(p1, T1Initial, stragglingInIC, srim)};
-        hSRIM["TAfterIC"]->Fill(T1AfterIC/p1.GetAMU());
-
         // Pass beam through CFA
-        auto T1AfterCFA {dEthroughCFA(p1, T1AfterIC, stragglingInCFA, srim)};
+        auto T1AfterCFA {dEthroughCFA(p1, T1Initial, stragglingInCFA, srim)};
         hSRIM["TAfterCFA"]->Fill(T1AfterCFA/p1.GetAMU());
 
         // Entrance mylar foil of ACTAR
@@ -224,8 +207,8 @@ void PreExperiment_Simulation_S2029(const std::string& beam = "17F", double T1 =
         hSRIM["TAfterFoil"]->Fill(T1AfterEntranceWindow/p1.GetAMU());
 
         // Space before field cage
-        auto T1FieldCageEntrance {srim->Slow("beamInACTARgas", T1AfterEntranceWindow, 35)}; // 35 mm space before field cage 
-        auto T1ActiveAreaEntrance {srim->Slow("beamInACTARgas", T1FieldCageEntrance, 18)}; // 18 mm space before field cage 
+        auto T1FieldCageEntrance {srim->Slow("beamInACTARgas", T1AfterEntranceWindow, 31.6)}; // 35 mm space before field cage 
+        auto T1ActiveAreaEntrance {srim->Slow("beamInACTARgas", T1FieldCageEntrance, 12.8+7.6)}; // 18 mm space before field cage 
         hSRIM["TActiveAreaEntrance"]->Fill(T1ActiveAreaEntrance/p1.GetAMU());
 
         auto T1ActiveAreaMid {srim->Slow("beamInACTARgas", T1ActiveAreaEntrance, 128)};
@@ -238,11 +221,8 @@ void PreExperiment_Simulation_S2029(const std::string& beam = "17F", double T1 =
         if (trackContamination){
             auto TCInitial {runner.RandomizeBeamEnergy( T1 * p1c.GetAMU(), sigmaPercentBeam * T1 * p1c.GetAMU())}; 
             hSRIMC["TInitial"]->Fill(TCInitial/p1c.GetAMU());
-        
-            auto TCAfterIC {dEthroughIC(p1c, TCInitial, stragglingInIC, srim)};
-            hSRIMC["TAfterIC"]->Fill(TCAfterIC/p1c.GetAMU());
 
-            auto TCAfterCFA {dEthroughCFA(p1c, TCAfterIC, stragglingInCFA, srim)};
+            auto TCAfterCFA {dEthroughCFA(p1c, TCInitial, stragglingInCFA, srim)};
             hSRIMC["TAfterCFA"]->Fill(TCAfterCFA/p1c.GetAMU());
 
             auto TCAfterEntranceWindow {srim->Slow("ContaminantInMylar", TCAfterCFA, 12e-3)}; // 12 um mylar in ACTAR entrance window

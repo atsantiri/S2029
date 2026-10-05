@@ -14,8 +14,8 @@
 void Run()
 {
     ROOT::EnableImplicitMT();
-    double EBeamIni {3.84};
-    double pressure {760};
+    double EBeamIni {S2029::EBeamIni};
+    double pressure {S2029::pressure};
     std::string beam {"17F"};
     ActPhysics::Particle pb {beam};
     ActPhysics::Particle pt {"1H"};

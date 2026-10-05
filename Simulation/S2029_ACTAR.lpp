@@ -2,9 +2,9 @@ Version 17.12.7
 
 {============================= Main Part ======================================}
 [general]
-                    File = /home/artemis/Documents/LISEcute/files/S2029_ACTAR.lpp
-                    Date = 30-07-2025
-                    Time = 18:03:56
+                    File = /home/artemis/ACTAR/S2029/Simulation/S2029_ACTAR.lpp
+                    Date = 05-10-2026
+                    Time = 13:42:58
            Configuration = NSCL/A1900_2019.lcn
              Optionsfile = FRIB_2024.lopt
                    Title = NSCL A1900 Fragment Separator 2019
@@ -12,12 +12,12 @@ Version 17.12.7
           NumberOfBlocks = 11
 
 [settings]
-                   A,Z,Q = 17O 8+                                ; Mass ElementName Charge+ Beam
-                  Energy = 5.5                  MeV/u            
+                   A,Z,Q = 17F 9+                                ; Mass ElementName Charge+ Beam
+                  Energy = 5                    MeV/u            
                Intensity = 1                    kW               ; enA,pna,pps,kW
             RF frequency = 20                   MHz              
             Bunch length = 1                    ns               
-         Settings on A,Z = 17O                                   ; Mass ElementName Charge+ Beam
+         Settings on A,Z = 17F                                   ; Mass ElementName Charge+ Beam
            ReglageOnBeam = 1
 
 [OpticsBeam]
@@ -360,7 +360,7 @@ Binding Energy for Vf/Vp = 8                    MeV              ; Binding energ
                    Pr_n0 = 0
                    Pr_n1 = 200
                    Dr_z0 = 1
-                   Dr_z1 = 12
+                   Dr_z1 = 9
                    Dr_n0 = 0
                    Dr_n1 = 8
 
@@ -448,7 +448,7 @@ Binding Energy for Vf/Vp = 8                    MeV              ; Binding energ
 [M1_General]
                     Name = IC_Mylar,1                            ; Name of Block, Constant name 1/0
                 Official = IC_Mylar
-               Available = 1
+               Available = 0
                   Length = 0                    m                ; Length block for optical blocks
 
 [M1_Compound]
@@ -475,7 +475,7 @@ Binding Energy for Vf/Vp = 8                    MeV              ; Binding energ
 
 [M2_General]
                     Name = IC_gas_CF4,1                          ; Name of Block, Constant name 1/0
-               Available = 1
+               Available = 0
                   Length = 0                    m                ; Length block for optical blocks
 
 [M2_Compound]
@@ -500,18 +500,16 @@ Binding Energy for Vf/Vp = 8                    MeV              ; Binding energ
 {============================= BLOCK M3 - Material ======================================}
 
 [M3_General]
-                    Name = CFA_Mylar,1                           ; Name of Block, Constant name 1/0
+                    Name = Graphite stripper foil,1              ; Name of Block, Constant name 1/0
                Available = 1
                   Length = 0                    m                ; Length block for optical blocks
 
 [M3_Compound]
-               contents1 = 0,1,8,1.008                           ; Nomer,Z,Atoms,Mass
-               contents2 = 1,6,10,12.011                         ; Nomer,Z,Atoms,Mass
-               contents3 = 2,8,4,15.999                          ; Nomer,Z,Atoms,Mass
-               thickness = 0,4.8,1.397,0,0,0                     ; State,Thickness,density,angle,SolidGas,..
-                  Defect = 1,0.5                                 ; [0] choice - % or micron at 0 degree,  [1]=value; 
+               contents1 = 0,6,1,12.011                          ; Nomer,Z,Atoms,Mass
+               thickness = 0,0.09,2.253,0,0,0                    ; State,Thickness,density,angle,SolidGas,..
+                  Defect = 1,0                                   ; [0] choice - % or micron at 0 degree,  [1]=value; 
         Use for Q-states = 1
-             ResolutionE = 0,0.5                                 ; [0] choice - % or MeV,  [1]=value; 
+             ResolutionE = 1,0.2                                 ; [0] choice - % or MeV,  [1]=value; 
              Resolution2 = 0.1,0.3,0.3          ns,mm,mm         ; Time&X&Y space
 
 [M3_BlockCalibration]
@@ -527,15 +525,16 @@ Binding Energy for Vf/Vp = 8                    MeV              ; Binding energ
 {============================= BLOCK M4 - Material ======================================}
 
 [M4_General]
-                    Name = CFA_gas_iC4H10,1                      ; Name of Block, Constant name 1/0
+                    Name = CFA_Mylar,1                           ; Name of Block, Constant name 1/0
                Available = 1
                   Length = 0                    m                ; Length block for optical blocks
 
 [M4_Compound]
-               contents1 = 0,1,10,1.008                          ; Nomer,Z,Atoms,Mass
-               contents2 = 1,6,4,12.011                          ; Nomer,Z,Atoms,Mass
-               thickness = 4,9.6,1.431e-5,0,1,0                  ; State,Thickness,density,angle,SolidGas,..
-                  Defect = 1,1                                   ; [0] choice - % or micron at 0 degree,  [1]=value; 
+               contents1 = 0,1,8,1.008                           ; Nomer,Z,Atoms,Mass
+               contents2 = 1,6,10,12.011                         ; Nomer,Z,Atoms,Mass
+               contents3 = 2,8,4,15.999                          ; Nomer,Z,Atoms,Mass
+               thickness = 0,4.8,1.397,0,0,0                     ; State,Thickness,density,angle,SolidGas,..
+                  Defect = 1,0.5                                 ; [0] choice - % or micron at 0 degree,  [1]=value; 
         Use for Q-states = 1
              ResolutionE = 0,0.5                                 ; [0] choice - % or MeV,  [1]=value; 
              Resolution2 = 0.1,0.3,0.3          ns,mm,mm         ; Time&X&Y space
@@ -553,15 +552,14 @@ Binding Energy for Vf/Vp = 8                    MeV              ; Binding energ
 {============================= BLOCK M5 - Material ======================================}
 
 [M5_General]
-                    Name = Entrance_window,1                     ; Name of Block, Constant name 1/0
+                    Name = CFA_gas_iC4H10,1                      ; Name of Block, Constant name 1/0
                Available = 1
                   Length = 0                    m                ; Length block for optical blocks
 
 [M5_Compound]
-               contents1 = 0,1,8,1.008                           ; Nomer,Z,Atoms,Mass
-               contents2 = 1,6,10,12.011                         ; Nomer,Z,Atoms,Mass
-               contents3 = 2,8,4,15.999                          ; Nomer,Z,Atoms,Mass
-               thickness = 0,12,1.397,0,0,0                      ; State,Thickness,density,angle,SolidGas,..
+               contents1 = 0,1,10,1.008                          ; Nomer,Z,Atoms,Mass
+               contents2 = 1,6,4,12.011                          ; Nomer,Z,Atoms,Mass
+               thickness = 4,9.6,1.431e-5,0,1,0                  ; State,Thickness,density,angle,SolidGas,..
                   Defect = 1,1                                   ; [0] choice - % or micron at 0 degree,  [1]=value; 
         Use for Q-states = 1
              ResolutionE = 0,0.5                                 ; [0] choice - % or MeV,  [1]=value; 
@@ -580,17 +578,16 @@ Binding Energy for Vf/Vp = 8                    MeV              ; Binding energ
 {============================= BLOCK M6 - Material ======================================}
 
 [M6_General]
-                    Name = Space_Before_Field_Cage,1             ; Name of Block, Constant name 1/0
+                    Name = Entrance_window,1                     ; Name of Block, Constant name 1/0
                Available = 1
                   Length = 0                    m                ; Length block for optical blocks
 
 [M6_Compound]
-               contents1 = 0,1,10,1.008                          ; Nomer,Z,Atoms,Mass
-               contents2 = 1,6,4,12.011                          ; Nomer,Z,Atoms,Mass
-               contents3 = 2,1,38,1.008                          ; Nomer,Z,Atoms,Mass
-               thickness = 4,35,0.00014,0,1,1                    ; State,Thickness,density,angle,SolidGas,..
+               contents1 = 0,1,8,1.008                           ; Nomer,Z,Atoms,Mass
+               contents2 = 1,6,10,12.011                         ; Nomer,Z,Atoms,Mass
+               contents3 = 2,8,4,15.999                          ; Nomer,Z,Atoms,Mass
+               thickness = 0,12,1.397,0,0,0                      ; State,Thickness,density,angle,SolidGas,..
                   Defect = 1,1                                   ; [0] choice - % or micron at 0 degree,  [1]=value; 
-            MixMolarMass = 4.820
         Use for Q-states = 1
              ResolutionE = 0,0.5                                 ; [0] choice - % or MeV,  [1]=value; 
              Resolution2 = 0.1,0.3,0.3          ns,mm,mm         ; Time&X&Y space
@@ -608,7 +605,7 @@ Binding Energy for Vf/Vp = 8                    MeV              ; Binding energ
 {============================= BLOCK M7 - Material ======================================}
 
 [M7_General]
-                    Name = Empty_before_Active_Area,1            ; Name of Block, Constant name 1/0
+                    Name = Before_Active_Area,1                  ; Name of Block, Constant name 1/0
                Available = 1
                   Length = 0                    m                ; Length block for optical blocks
 
@@ -616,7 +613,7 @@ Binding Energy for Vf/Vp = 8                    MeV              ; Binding energ
                contents1 = 0,1,10,1.008                          ; Nomer,Z,Atoms,Mass
                contents2 = 1,6,4,12.011                          ; Nomer,Z,Atoms,Mass
                contents3 = 2,1,38,1.008                          ; Nomer,Z,Atoms,Mass
-               thickness = 4,18,0.00014,0,1,1                    ; State,Thickness,density,angle,SolidGas,..
+               thickness = 4,52,0.00014,0,1,1                    ; State,Thickness,density,angle,SolidGas,..
                   Defect = 1,1                                   ; [0] choice - % or micron at 0 degree,  [1]=value; 
             MixMolarMass = 4.820
         Use for Q-states = 1
@@ -721,7 +718,7 @@ Binding Energy for Vf/Vp = 8                    MeV              ; Binding energ
 
 [M11_General]
                     Name = F2_Si,1                               ; Name of Block, Constant name 1/0
-               Available = 1
+               Available = 0
                   Length = 0                    m                ; Length block for optical blocks
 
 [M11_Compound]
@@ -741,8 +738,3 @@ Binding Energy for Vf/Vp = 8                    MeV              ; Binding energ
 [M11_ProdTarget]
               ProdTarget = 0
 
-
-{============================= Calculations ======================================}
-
-[Calculations]
-17O  8+ =6.6754e+13,6.6754e+13,0,6.6754e+13,1,0,1,5.5000e+00,7.5869e-03,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,0

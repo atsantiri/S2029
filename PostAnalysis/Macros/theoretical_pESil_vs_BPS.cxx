@@ -8,6 +8,7 @@
 #include "TCanvas.h"
 #include "TMath.h"
 
+#include "../Settings.h"
 // function to propagate proton track from vertex to Si wall and return ESil - based on Simulation_E796.cpp
 // note that I have full paths instead of relative paths, as this macro can be executed from different scripts
 double calc_ESil(double RPx, double theta3Lab, double T3Lab)
@@ -30,7 +31,8 @@ double calc_ESil(double RPx, double theta3Lab, double T3Lab)
     // specify track frame relative to the beam frame
     double phi {0};                               // make life easy for now, will revisit later if needed
     ROOT::Math::XYZVector beamDir(1.0, 0.0, 0.0); // assume beam goes along the x axis for simplicity
-    ROOT::Math::XYZPoint vertex(RPx, 122, 135);   // assume beam is centered on Z, Y is an approximation from what I saw in Macros/Beam/beamEmittance.cxx
+    ROOT::Math::XYZPoint vertex(RPx, 122, 135);   // assume beam is centered on Z, Y is an approximation from what I saw
+                                                  // in Macros/Beam/beamEmittance.cxx
 
     ROOT::Math::XYZVector dirBeamFrame {TMath::Cos(theta3Lab * TMath::DegToRad()),
                                         TMath::Sin(theta3Lab * TMath::DegToRad()) * TMath::Sin(phi),
@@ -89,16 +91,16 @@ TGraph* calcTheo_pESil_vs_BSP(double theta3Lab, double Eex, EColor color, int st
     // Correct SRIM names
     std::string light = "1H";
     std::string beam = "17F";
-    srim->ReadTable(beam, TString::Format("../Simulation/SRIM/%s_H2-iC4H10_95-5_760mbar.txt", beam.c_str()).Data());
-    // srim->ReadTable(beam, TString::Format("/home/artemis/ACTAR/S2029/Simulation/SRIM/%s_H2-iC4H10_95-5_760mbar.txt", beam.c_str()).Data());
+    srim->ReadTable(
+        beam,
+        TString::Format("../Simulation/SRIM/%s_H2-iC4H10_95-5_%.0fmbar.txt", beam.c_str(), S2029::pressure).Data());
+    // srim->ReadTable(beam, TString::Format("/home/artemis/ACTAR/S2029/Simulation/SRIM/%s_H2-iC4H10_95-5_760mbar.txt",
+    // beam.c_str()).Data());
 
     // Init particles
     ActPhysics::Particle pb {beam};
     ActPhysics::Particle pt {light};
     ActPhysics::Particle pl {light};
-
-    // Initial energy of beam at pad plane entrance
-    // double EBeamIni {3.84}; // MeV/u
 
     // calculate reaction threshold energy
     ActPhysics::Kinematics kin {pb, pt, pt, EBeamIni * pb.GetAMU(), Eex};
@@ -133,7 +135,7 @@ TGraph* calcTheo_pESil_vs_BSP(double theta3Lab, double Eex, EColor color, int st
             double BSP {x + rangeT4};
 
             double ESil {calc_ESil(x, theta3Lab, T3Lab)};
-            if (ESil==0)
+            if(ESil == 0)
                 continue;
 
             // std::cout << std::setprecision(3) << x << "\t" << Ebeam << "\t" << T4Lab / pb.GetAMU() << "\t" << rangeT4
