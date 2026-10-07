@@ -203,7 +203,7 @@ void PreExperiment_Simulation_S2029(const std::string& beam = "17F", double T1 =
         hSRIM["TAfterCFA"]->Fill(T1AfterCFA/p1.GetAMU());
 
         // Entrance mylar foil of ACTAR
-        auto T1AfterEntranceWindow {srim->Slow("beamInMylar", T1AfterCFA, 12e-3)}; // 12 um mylar in ACTAR entrance window
+        auto T1AfterEntranceWindow {srim->Slow("beamInMylar", T1AfterCFA, 8e-3)}; // 12 um mylar in ACTAR entrance window
         hSRIM["TAfterFoil"]->Fill(T1AfterEntranceWindow/p1.GetAMU());
 
         // Space before field cage

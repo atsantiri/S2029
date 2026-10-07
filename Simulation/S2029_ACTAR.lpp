@@ -3,8 +3,8 @@ Version 17.12.7
 {============================= Main Part ======================================}
 [general]
                     File = /home/artemis/ACTAR/S2029/Simulation/S2029_ACTAR.lpp
-                    Date = 05-10-2026
-                    Time = 13:42:58
+                    Date = 06-10-2026
+                    Time = 16:22:15
            Configuration = NSCL/A1900_2019.lcn
              Optionsfile = FRIB_2024.lopt
                    Title = NSCL A1900 Fragment Separator 2019
@@ -613,7 +613,7 @@ Binding Energy for Vf/Vp = 8                    MeV              ; Binding energ
                contents1 = 0,1,10,1.008                          ; Nomer,Z,Atoms,Mass
                contents2 = 1,6,4,12.011                          ; Nomer,Z,Atoms,Mass
                contents3 = 2,1,38,1.008                          ; Nomer,Z,Atoms,Mass
-               thickness = 4,52,0.00014,0,1,1                    ; State,Thickness,density,angle,SolidGas,..
+               thickness = 4,52,0.00015,0,1,1                    ; State,Thickness,density,angle,SolidGas,..
                   Defect = 1,1                                   ; [0] choice - % or micron at 0 degree,  [1]=value; 
             MixMolarMass = 4.820
         Use for Q-states = 1
@@ -641,7 +641,7 @@ Binding Energy for Vf/Vp = 8                    MeV              ; Binding energ
                contents1 = 0,1,10,1.008                          ; Nomer,Z,Atoms,Mass
                contents2 = 1,6,4,12.011                          ; Nomer,Z,Atoms,Mass
                contents3 = 2,1,38,1.008                          ; Nomer,Z,Atoms,Mass
-               thickness = 4,128,0.00014,0,1,1                   ; State,Thickness,density,angle,SolidGas,..
+               thickness = 4,128,0.00015,0,1,1                   ; State,Thickness,density,angle,SolidGas,..
                   Defect = 1,0                                   ; [0] choice - % or micron at 0 degree,  [1]=value; 
             MixMolarMass = 4.820
         Use for Q-states = 1
@@ -669,7 +669,7 @@ Binding Energy for Vf/Vp = 8                    MeV              ; Binding energ
                contents1 = 0,1,10,1.008                          ; Nomer,Z,Atoms,Mass
                contents2 = 1,6,4,12.011                          ; Nomer,Z,Atoms,Mass
                contents3 = 2,1,38,1.008                          ; Nomer,Z,Atoms,Mass
-               thickness = 4,128,0.00014,0,1,1                   ; State,Thickness,density,angle,SolidGas,..
+               thickness = 4,128,0.00015,0,1,1                   ; State,Thickness,density,angle,SolidGas,..
                   Defect = 1,0                                   ; [0] choice - % or micron at 0 degree,  [1]=value; 
             MixMolarMass = 4.820
         Use for Q-states = 1
@@ -697,7 +697,7 @@ Binding Energy for Vf/Vp = 8                    MeV              ; Binding energ
                contents1 = 0,1,10,1.008                          ; Nomer,Z,Atoms,Mass
                contents2 = 1,6,4,12.011                          ; Nomer,Z,Atoms,Mass
                contents3 = 2,1,38,1.008                          ; Nomer,Z,Atoms,Mass
-               thickness = 4,68,0.00014,0,1,1                    ; State,Thickness,density,angle,SolidGas,..
+               thickness = 4,68,0.00015,0,1,1                    ; State,Thickness,density,angle,SolidGas,..
                   Defect = 1,0                                   ; [0] choice - % or micron at 0 degree,  [1]=value; 
             MixMolarMass = 4.820
         Use for Q-states = 1
