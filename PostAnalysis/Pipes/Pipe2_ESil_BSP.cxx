@@ -70,7 +70,7 @@ void Pipe2_ESil_BSP(const std::string& beam, const std::string& target, const st
 
 
     int thetaminSi {5};
-    int thetamaxSi {45};
+    int thetamaxSi {70};
     int thetaminL1 {40};
     int thetamaxL1 {100};
     int step {10};

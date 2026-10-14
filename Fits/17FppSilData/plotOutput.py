@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 from matplotlib.ticker import AutoMinorLocator
+import sys
 
 
 # mpl.rcParams.update({
@@ -28,14 +29,16 @@ mpl.rcParams.update({
     "ytick.direction": "in",
 })
 
-fname = '150-160deg'
+idx = int(sys.argv[1])
 
-x,deg,y,yerr = np.loadtxt(f'Outputs/doubleXS_{fname}.dat').T
+x,deg,y,yerr = np.loadtxt(f'Outputs/doubleXS_{idx}.dat').T
 ecn=x+3.92
 plt.errorbar(ecn, y, yerr=yerr, fmt='.', capsize=3,color='black')
 plt.xlabel(r'$E_{^{18}\mathrm{{Ne}}}$ [MeV]')
 plt.ylabel(r'$\frac{d\sigma}{d\Omega}$ [$\frac{\mathrm{mb}}{\mathrm{sr}}$]')
-plt.text(4.5,75,fr'$\theta_{{\mathrm{{CM}}}}$ = {deg[0]:.0f}$^o$ $\pm$ 5$^o$')
+plt.xlim(4,8)
+plt.ylim(0, 1.1 * np.max(y + yerr))
+plt.text(4.5,.8 * np.max(y + yerr),fr'$\theta_{{\mathrm{{CM}}}}$ = {deg[0]:.0f}$^o$ $\pm$ 5$^o$')
 
 ax = plt.gca()
 ax.xaxis.set_minor_locator(AutoMinorLocator())
@@ -44,5 +47,5 @@ ax.yaxis.set_minor_locator(AutoMinorLocator())
 ax.tick_params(which='both', direction='in')
 
 plt.tight_layout()
-plt.savefig(f'Outputs/xs_{fname}.png')
+plt.savefig(f'Outputs/xs_{idx}.png')
 plt.show()

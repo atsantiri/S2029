@@ -3,12 +3,16 @@
 #include "TCanvas.h"
 #include "TGraph.h"
 #include "TLegend.h"
+#include "TAxis.h"
 #include "TMultiGraph.h"
 
+#include "../PostAnalysis/Settings.h"
 void compKin()
 {
-    ActPhysics::Kinematics kp {"17F(p,p)@65.5"};
-    ActPhysics::Kinematics ka {"17F(p,a)@65.5"};
+    ActPhysics::Particle pb {"17F"};
+    auto Ebeam = S2029::EBeamIni * pb.GetAMU();
+    ActPhysics::Kinematics kp {TString::Format("17F(p,p)@%.2f",Ebeam).Data()};
+    ActPhysics::Kinematics ka {TString::Format("17F(p,a)@%.2f",Ebeam).Data()};
 
     auto* mg {new TMultiGraph};
     mg->SetTitle("Kin comparison;#theta_{Lab} [#circ];E_{Lab} [MeV]");
@@ -27,11 +31,18 @@ void compKin()
     l->Draw();
 
     auto* c1 {new TCanvas {"c1", "Theta Lab vs CM elastic"}};
+    c1->DivideSquare(2);
+    c1->cd(1);
     auto* gThetaLabvsCM {kp.GetThetaLabvsThetaCMLine()};
-    gThetaLabvsCM->Draw();
+    gThetaLabvsCM->GetYaxis()->SetRangeUser(0,90);
+    c1->cd(1)->SetGridx();
+    c1->cd(1)->SetGridy();
+    gThetaLabvsCM->Draw("AL");
+
 
     auto* c2 {new TCanvas {"c2", "Particle 3 vs Particle 4"}};
-    c2->DivideSquare(3);
+    c2->DivideSquare(2);
+
     // c2->cd(1);
     // auto* gTheoTheta3vsTheta4 {kp.GetTheta3vs4Line()};
     // gTheoTheta3vsTheta4->Draw();
@@ -44,8 +55,8 @@ void compKin()
 
     for(int i = 0; i < 10; i++)
     {
-        double ene = 65.5 - double(i) * 2.5;
-        std::cout<<ene<<std::endl;
+        double ene = Ebeam - double(i) * 2.5;
+        std::cout << ene << std::endl;
         ActPhysics::Kinematics kin {TString::Format("17F(p,p)@%f", ene).Data()};
         c2->cd(1);
         auto* gTheoTheta3vsTheta4 {kin.GetTheta3vs4Line()};
@@ -56,18 +67,19 @@ void compKin()
             gTheoTheta3vsTheta4->Draw("apl plc pmc same");
 
         c2->cd(2);
-        auto* gp {kin.GetKinematicLine3()};
-        gp->SetLineColor(i + 1);
-        if(i == 0)
-            gp->Draw();
-        else
-            gp->Draw("same");
-        c2->cd(3);
         auto* gp4 {kin.GetKinematicLine4()};
         gp4->SetLineColor(i + 1);
         if(i == 0)
             gp4->Draw();
         else
             gp4->Draw("same");
+
+        c1->cd(2);
+        auto* gp {kin.GetKinematicLine3()};
+        gp->SetLineColor(i + 1);
+        if(i == 0)
+            gp->Draw();
+        else
+            gp->Draw("same");
     }
 }

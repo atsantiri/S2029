@@ -103,10 +103,11 @@ void calcEBeamIni()
         {"fLxy"});
 
     c1->cd(2);
-    TF1* fE = new TF1("fE", "gaus(0)", 3.8,4.);
+    TF1* fE = new TF1("fE", "gaus(0)", 3.6,4.1);
     // fE->SetParameters(2400, 3.8, 0.06);
     hEini->Fit(fE, "QR");
     auto meanEne {fE->GetParameter(1)};
+    std::cout<<"For pressure = "<<S2029::pressure<<" mbar:"<<std::endl;
     std::cout << "Initial Beam Energy: " << std::fixed << std::setprecision(3) << meanEne << " +- "
               << fE->GetParameter(2) << std::endl;
 

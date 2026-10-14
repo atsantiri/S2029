@@ -11,6 +11,8 @@
 
 #include "../PostAnalysis/HistConfig.h"
 
+// I want to plot the Ex for different theta lab values
+
 void plotEx_thetaLabIntervals()
 {
     // Read Pipe 3 output
@@ -63,6 +65,7 @@ void plotEx_thetaLabIntervals()
     gStyle->SetPalette(91);
     hExTotal->DrawClone();
     auto* hs {new THStack};
+    hs->SetTitle(TString::Format("Excitation energy;E_{x} [MeV];Counts / %.f keV",(hExModel.fXUp - hExModel.fXLow) / hExModel.fNbinsX * 1e3));
 
     for(auto& h : hEx)
     {

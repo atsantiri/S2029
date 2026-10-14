@@ -207,6 +207,18 @@ void Pipe3_Ex(const std::string& beam, const std::string& target, const std::str
     auto hRecExSil {def.Filter([](ActRoot::MergerData& m) { return m.fLight.GetNLayers() == 1; }, {"MergerData"})
                         .Histo1D(HistConfig::Ex, "RecEx")};
     hRecExSil->SetTitle("Reconstructed Ex with silicons");
+    auto hRecExSiFront {def.Filter([](ActRoot::MergerData& m)
+                                   { return m.fLight.GetNLayers() == 1 && m.fLight.GetLayer(0) == "f0"; },
+                                   {"MergerData"})
+                            .Histo1D(HistConfig::Ex, "RecEx")};
+    hRecExSiFront->SetTitle("Front");
+    auto hRecExSiLat {
+        def.Filter(
+               [](ActRoot::MergerData& m)
+               { return m.fLight.GetNLayers() == 1 && (m.fLight.GetLayer(0) == "r0" || m.fLight.GetLayer(0) == "l0"); },
+               {"MergerData"})
+            .Histo1D(HistConfig::Ex, "RecEx")};
+    hRecExSiLat->SetTitle("Lat");
     auto hRecExSilRPx {def.Filter([](ActRoot::MergerData& m) { return m.fLight.GetNLayers() == 1; }, {"MergerData"})
                            .Histo2D(HistConfig::ExRPx, "fRP.fCoordinates.fX", "RecEx")};
     hRecExSilRPx->GetYaxis()->SetRangeUser(-5., 5.);
@@ -271,7 +283,20 @@ void Pipe3_Ex(const std::string& beam, const std::string& target, const std::str
     {
         c31->cd(1);
         // gPad->SetLogy();
-        hRecExSil->DrawClone();
+        auto hctot = (TH1*)hRecExSil->Clone();
+        hctot->Draw();
+        auto hcfr = (TH1*)hRecExSiFront->Clone();
+        hcfr->SetLineColor(kMagenta);
+        hcfr->Draw("same");
+        auto hclat = (TH1*)hRecExSiLat->Clone();
+        hclat->SetLineColor(kOrange-3);
+        hclat->Draw("same");
+        auto leg = new TLegend(0.6, 0.7, 0.88, 0.88);
+        leg->AddEntry(hctot, "All", "l");
+        leg->AddEntry(hclat, "Lateral", "l");
+        leg->AddEntry(hcfr, "Front", "l");
+        leg->Draw();
+
         c31->cd(2);
         hRecExSilRPx->DrawClone("colz");
         c31->cd(3);

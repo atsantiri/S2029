@@ -21,6 +21,7 @@
 #include "TROOT.h"
 
 #include <fstream>
+#include "../../PostAnalysis/Settings.h"
 
 TH1D* make_dE(int run, TCanvas* c, TLegend* l, int pad)
 {
@@ -110,7 +111,7 @@ TH1D* do_simu(const std::string p, TCanvas* c, TLegend* l, int color)
     std::vector<std::pair<const char*, TString>> tables = {
         {"beamInMylar", TString::Format("../../Simulation/SRIM/%s_mylar.txt", p.c_str())},
         {"beamIniC4H10", TString::Format("../../Simulation/SRIM/%s_iC4H10_6mbar.txt", p.c_str())},
-        {"beamInACTARgas", TString::Format("../../Simulation/SRIM/%s_H2-iC4H10_95-5_700mbar.txt", p.c_str())}};
+        {"beamInACTARgas", TString::Format("../../Simulation/SRIM/%s_H2-iC4H10_95-5_%dmbar.txt", p.c_str(), S2029::pressure)}};
 
     for(const auto& [label, path] : tables)
     {

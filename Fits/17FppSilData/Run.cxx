@@ -14,11 +14,13 @@
 void Run()
 {
     ROOT::EnableImplicitMT();
-    double EBeamIni {S2029::EBeamIni};
-    double pressure {S2029::pressure};
     std::string beam {"17F"};
     ActPhysics::Particle pb {beam};
     ActPhysics::Particle pt {"1H"};
+    double EBeamIni {S2029::EBeamIni};
+    double pressure {S2029::pressure};
+    double Nb {S2029::CFADiv * 300}; // counter of gatconf == 64 * div factor
+    double rho {S2029::Nt};
 
     // Pipe 3 output
     ROOT::RDataFrame df {"Final_Tree", TString::Format("../../PostAnalysis/Outputs/tree_ex_%s_p_p_%.02f_sil.root",
@@ -29,7 +31,8 @@ void Run()
                    "RecEx")};
     auto h2DECN {df.Histo2D(HistConfig::EcnThetaCM, "RecThetaCM", "RecECN")};
     h2DECN->SetTitle("Experiment");
-    auto h2DECM {df.Histo2D({"h2D","17F(p,p');#theta_{CM};E_{CM} [MeV]", 18, 0, 180, 100, 0, 5}, "RecThetaCM", "RecECM")};
+    auto h2DECM {
+        df.Histo2D({"h2D", "17F(p,p');#theta_{CM};E_{CM} [MeV]", 18, 0, 180, 100, 0, 5}, "RecThetaCM", "RecECM")};
     h2DECM->SetStats(false);
     h2DECM->SetTitle("Experiment");
 
@@ -55,12 +58,6 @@ void Run()
     auto kin {
         new ActPhysics::Kinematics {TString::Format("%s(p,p)@%.0f", beam.c_str(), EBeamIni * pb.GetAMU()).Data()}};
 
-    // Number of beam particles from Pipe_Beam
-    double Nb {176922 * 300}; // counter of gatconf == 64 * div factor
-
-    // Target density: tbd from LISE++
-    double rho {1.5E21};//for 308 mm of gas at 760 mbar
-
     // Draw
     auto* c0 {new TCanvas("c0", "Canvas for inspection 0", 1500, 1000)};
     c0->DivideSquare(6);
@@ -83,7 +80,7 @@ void Run()
     h2DECM->DrawClone("colz");
 
 
-    DoubleXS xs {h2DECM.GetPtr(), heff, srim, Nb, rho, kin,"CM"};
+    DoubleXS xs {h2DECM.GetPtr(), heff, srim, Nb, rho, kin, "CM"};
     xs.Draw();
     xs.Project(40);
     // xs.DrawProjectionsThetaCM(
@@ -94,5 +91,7 @@ void Run()
     //     });
     xs.DrawProjectionsECM([](TH1* p) { p->SetLineColor(46); });
 
-    xs.WriteInAzureFormat(11,"Outputs/doubleXS_150-160deg.dat");
+    xs.WriteInAzureFormat(11, "Outputs/doubleXS_150-160deg.dat");
+    for(int idx = 0; idx < (int)xs.GetNProjsECM(); idx++)
+        xs.WriteInAzureFormat(idx, TString::Format("Outputs/doubleXS_%d.dat", idx));
 }

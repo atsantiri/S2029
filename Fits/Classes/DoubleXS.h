@@ -48,6 +48,7 @@ public:
     void
     WriteInAzureFormat(int idx, const TString& file, TH1D* pout = nullptr, const std::pair<double, double>& ivs = {-1, -1});
     TH2* GetHist() { return fHist; }
+    size_t GetNProjsECM() const { return fProjsECM.size(); }
 
 private:
     void ApplyEff();

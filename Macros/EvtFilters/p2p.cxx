@@ -15,6 +15,8 @@
 
 #include <fstream>
 
+#include "../../PostAnalysis/Settings.h"
+
 void p2p()
 {
     // the three body vertices exist only in the filter data. So we start from there.
@@ -62,7 +64,7 @@ void p2p()
     // auto mtarget {pt.GetMass()};
     // ActPhysics::Particle pl {"p"};
 
-    // double EBeam {3.84}; // MeV/u from SRIM interpolation of exp. 17F range
+    // double EBeam {S2029::EBeamIni}; // MeV/u from SRIM interpolation of exp. 17F range
 
     // // srim files
     // auto* srim {new ActPhysics::SRIM};
