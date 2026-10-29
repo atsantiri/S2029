@@ -53,8 +53,8 @@ std::pair<double, double> ReconstructExcitationEnergyFromProducts(const ActPhysi
         Ex = exNew;
         if(done)
             break;
-        if (i>20)
-            std::cout<<"Something's off, fixed point iteration can't converge."<<std::endl;
+        if(i > 20)
+            std::cout << "Something's off, fixed point iteration can't converge." << std::endl;
     }
     ret = {Ex, E1 - fm1};
     return ret;
