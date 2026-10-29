@@ -24,6 +24,7 @@
 #include <vector>
 
 #include "../HistConfig.h"
+#include "../Macros/testKinematics.cxx"
 #include "../Settings.h"
 
 void Pipe3_Ex(const std::string& beam, const std::string& target, const std::string& light, const double EBeamIni,
@@ -59,7 +60,6 @@ void Pipe3_Ex(const std::string& beam, const std::string& target, const std::str
     srim->ReadTable(
         beam,
         TString::Format("../Simulation/SRIM/%s_H2-iC4H10_95-5_%.0fmbar.txt", beam.c_str(), S2029::pressure).Data());
-    // srim->ReadTable("heavy", "../Simulation/SRIM/14O_H2-iC4H10_95-5_760mbar.txt");
 
     // Build energy at vertex
     auto dfVertex = df.Define("EVertex",
@@ -155,7 +155,19 @@ void Pipe3_Ex(const std::string& beam, const std::string& target, const std::str
                           },
                           {"MergerData", "EVertex"})
               .Define("RecECM", [&](double rec_EBeam) { return lab_to_com * rec_EBeam; }, {"RecEBeam"})
-              .Define("RecECN", [&](double rec_ECM) { return rec_ECM + qval; }, {"RecECM"});
+              .Define("RecECN", [&](double rec_ECM) { return rec_ECM + qval; }, {"RecECM"})
+              .DefineSlot("RecoilTest",
+                          [&](unsigned int slot, const ActRoot::MergerData& d, double EVertex)
+                          {
+                              auto T4 {srim->EvalEnergy(beam, d.fHeavy.fTL)}; // the test is on the p,p' data
+                              auto ret {ReconstructExcitationEnergyFromProducts(vkins[slot], EVertex,
+                                                                                d.fThetaLight * TMath::DegToRad(), T4,
+                                                                                d.fThetaHeavy * TMath::DegToRad())};
+                              return ret;
+                          },
+                          {"MergerData", "EVertex"})
+              .Define("ExTest", [](const std::pair<double, double>& p) { return p.first; }, {"RecoilTest"})
+              .Define("T1Test", [](const std::pair<double, double>& p) { return p.second; }, {"RecoilTest"});
 
     // // Book new histograms
     // auto hKin {def.Histo2D(HistConfig::KinEl, "fThetaLight", "EVertex")};
@@ -289,7 +301,7 @@ void Pipe3_Ex(const std::string& beam, const std::string& target, const std::str
         hcfr->SetLineColor(kMagenta);
         hcfr->Draw("same");
         auto hclat = (TH1*)hRecExSiLat->Clone();
-        hclat->SetLineColor(kOrange-3);
+        hclat->SetLineColor(kOrange - 3);
         hclat->Draw("same");
         auto leg = new TLegend(0.6, 0.7, 0.88, 0.88);
         leg->AddEntry(hctot, "All", "l");
@@ -409,13 +421,41 @@ void Pipe3_Ex(const std::string& beam, const std::string& target, const std::str
     //     st->Draw("same");
     // }
 
+    // Test to try and reconstruct Ex from products only, not beam
+    auto* ct {new TCanvas("ct", "Pipe 3 Canvas Test Ex", 800, 800)};
+    ct->DivideSquare(4);
+    // auto htestEx {def.Filter([](ActRoot::MergerData& m) { return m.fLight.GetNLayers() == 1; }, {"MergerData"})
+    //                   .Histo1D({"hEx", "Excitation energy;E_{x} [MeV];Counts", 500, -20000, 50000}, "ExTest")};
+    auto htestEx {def.Filter([](ActRoot::MergerData& m) { return m.fLight.GetNLayers() == 1; }, {"MergerData"})
+                      .Histo1D(HistConfig::Ex, "ExTest")};
+    htestEx->SetTitle("Ex reconstructed from reaction products");
+    auto htestT1 {def.Histo2D(HistConfig::EBeamCompare, "EBeam", "T1Test")};
+    ct->cd(1);
+    auto htestExt = (TH1*)htestEx->DrawClone();
+    auto hctot = (TH1*)hRecExSil->Clone();
+    hctot->SetLineColor(2);
+    hctot->Draw("same");
+    auto ll = new TLegend(0.6, 0.7, 0.88, 0.88);
+    ll->AddEntry(htestExt, "from p3 + p4", "l");
+    ll->AddEntry(hctot, "from p1 + p3", "l");
+    ll->Draw();
+
+    ct->cd(2);
+    htestT1->DrawClone();
+    ct->cd(3);
+    auto hExRPxTest {def.Histo2D(HistConfig::ExRPx, "fRP.fCoordinates.fX", "ExTest")};
+    hExRPxTest->SetTitle("Ex from products vs RPx");
+    hExRPxTest->GetYaxis()->SetRangeUser(-5., 5.);
+    hExRPxTest->DrawClone();
+
+
     // Save!
     // auto outfile {TString::Format("./Outputs/tree_ex_%s_%s_%s_phi_lt2.root", beam.c_str(), target.c_str(),
     // light.c_str())};
-    auto outfile {TString::Format("./Outputs/tree_ex_%s_%s_%s_%.2f_%s.root", beam.c_str(), target.c_str(),
-                                  light.c_str(), EBeamIni, gateOn.c_str())};
-    def.Snapshot("Final_Tree", outfile);
-    std::cout << "Saving Final_Tree in " << outfile << '\n';
+    // auto outfile {TString::Format("./Outputs/tree_ex_%s_%s_%s_%.2f_%s.root", beam.c_str(), target.c_str(),
+    //                               light.c_str(), EBeamIni, gateOn.c_str())};
+    // def.Snapshot("Final_Tree", outfile);
+    // std::cout << "Saving Final_Tree in " << outfile << '\n';
 
     // ActRoot::CutsManager<std::string> cuts;
     // cuts.ReadCut("cut", TString::Format("./Cuts/eVertexRpx_side_wall2.root").Data());

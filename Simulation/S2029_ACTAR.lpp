@@ -3,8 +3,8 @@ Version 17.12.7
 {============================= Main Part ======================================}
 [general]
                     File = /home/artemis/ACTAR/S2029/Simulation/S2029_ACTAR.lpp
-                    Date = 06-10-2026
-                    Time = 16:22:15
+                    Date = 15-10-2026
+                    Time = 08:16:31
            Configuration = NSCL/A1900_2019.lcn
              Optionsfile = FRIB_2024.lopt
                    Title = NSCL A1900 Fragment Separator 2019
@@ -114,7 +114,7 @@ Binding Energy for Vf/Vp = 8                    MeV              ; Binding energ
            Charge method = 3                                     ; charge calculations method  0-5
       EPAX Cross Section = 2                                     ; cross section calculations method 0-4
         SR Cross Section = 1                                     ; EPAX for SR  0-2
-             Energy Loss = 4                                     ; energy loss calculation method 0-3
+             Energy Loss = 1                                     ; energy loss calculation method 0-3
      Anglular straggling = 1
         AngStragInOptics = 0                                     ; 0-LISE, 1-ATIMA
          StragglingCoef1 = 0.217
