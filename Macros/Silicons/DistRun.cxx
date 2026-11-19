@@ -23,14 +23,15 @@
 
 void DistRun(TString mode)
 {
-    mode.ToLower();
+    mode.ToLower(); // Ensure lower-case input
     bool isSide {mode.Contains("f") ? false : true};
     std::cout << "isSide ? " << std::boolalpha << isSide << '\n';
 
     ROOT::EnableImplicitMT();
 
-    ActRoot::DataManager data {"../../configs/data.conf", ActRoot::ModeType::EMerge};
+    ActRoot::DataManager data {"../../configs/data_all.conf", ActRoot::ModeType::EMerge};
     auto chain {data.GetJoinedData()};
+    std::cout<<data.GetRunList().size()<<std::endl;
 
     ROOT::RDataFrame df {*chain};
 
@@ -53,7 +54,7 @@ void DistRun(TString mode)
     std::vector<double> dists;
     if(!isSide)
     {
-        for(double d = 50; d < 110; d += 2)
+        for(double d = 55; d < 85; d += 1.5)
             dists.push_back(base + d);
     }
     else if(mode == "l0")
@@ -68,9 +69,10 @@ void DistRun(TString mode)
     }
 
     int xbins {280};
-    std::pair<double, double> xlims {-20, 400};
+    std::pair<double, double> xlims {-20, 300};
     int zbins {280};
     std::pair<double, double> zlims {-20, 400};
+
     // Save
     auto f {std::make_unique<TFile>(TString::Format("../Outputs/histos_%s.root", mode.Data()), "recreate")};
     std::cout << "Saving in : " << f->GetName() << '\n';
@@ -85,9 +87,9 @@ void DistRun(TString mode)
                                 [&, dist](ActRoot::MergerData& d)
                                 {
                                     // Reconstruct line from BP and SP
-                                    auto p {d.fBP};
+                                    auto p {d.fBP}; 
                                     auto dir {(d.fSP - d.fBP)};
-                                    ActRoot::Line line {p, dir, 0};
+                                    ActRoot::Line line {p, dir, 0}; // Line(XYZPointF point, XYZVectorF direction, float chi)
                                     return isSide ? line.MoveToY(dist) : line.MoveToX(dist);
                                 },
                                 {"MergerData"})};

@@ -216,6 +216,15 @@ void Pipe3_Ex(const std::string& beam, const std::string& target, const std::str
     // Ex
     auto hExESi {def.Filter([](ActRoot::MergerData& m) { return m.fLight.GetNLayers() == 1; }, {"MergerData"})
                      .Histo2D(HistConfig::ExESi, "fLight.fEs", "RecEx")};
+    auto hExESiFront {def.Filter([](ActRoot::MergerData& m) { return (m.fLight.GetNLayers() == 1 && m.fLight.GetLayer(0)=="f0"); }, {"MergerData"})
+                     .Histo2D(HistConfig::ExESi, "fLight.fEs", "RecEx")};
+    hExESiFront->SetTitle("Ex vs E_Si for F0");
+
+    auto hExESiLat {def.Filter([](ActRoot::MergerData& m) { return (m.fLight.GetNLayers() == 1 && (m.fLight.GetLayer(0)=="r0" || m.fLight.GetLayer(0)=="l0")); }, {"MergerData"})
+                     .Histo2D(HistConfig::ExESi, "fLight.fEs", "RecEx")};
+    hExESiLat->SetTitle("Ex vs E_Si for Lat");
+
+
     auto hRecExSil {def.Filter([](ActRoot::MergerData& m) { return m.fLight.GetNLayers() == 1; }, {"MergerData"})
                         .Histo1D(HistConfig::Ex, "RecEx")};
     hRecExSil->SetTitle("Reconstructed Ex with silicons");
@@ -224,6 +233,8 @@ void Pipe3_Ex(const std::string& beam, const std::string& target, const std::str
                                    {"MergerData"})
                             .Histo1D(HistConfig::Ex, "RecEx")};
     hRecExSiFront->SetTitle("Front");
+
+
     auto hRecExSiLat {
         def.Filter(
                [](ActRoot::MergerData& m)
@@ -423,32 +434,39 @@ void Pipe3_Ex(const std::string& beam, const std::string& target, const std::str
 
     // Test to try and reconstruct Ex from products only, not beam
     auto* ct {new TCanvas("ct", "Pipe 3 Canvas Test Ex", 800, 800)};
-    ct->DivideSquare(4);
+    ct->DivideSquare(2);
     // auto htestEx {def.Filter([](ActRoot::MergerData& m) { return m.fLight.GetNLayers() == 1; }, {"MergerData"})
     //                   .Histo1D({"hEx", "Excitation energy;E_{x} [MeV];Counts", 500, -20000, 50000}, "ExTest")};
-    auto htestEx {def.Filter([](ActRoot::MergerData& m) { return m.fLight.GetNLayers() == 1; }, {"MergerData"})
-                      .Histo1D(HistConfig::Ex, "ExTest")};
-    htestEx->SetTitle("Ex reconstructed from reaction products");
-    auto htestT1 {def.Histo2D(HistConfig::EBeamCompare, "EBeam", "T1Test")};
+    // auto htestEx {def.Filter([](ActRoot::MergerData& m) { return m.fLight.GetNLayers() == 1; }, {"MergerData"})
+    //                   .Histo1D(HistConfig::Ex, "ExTest")};
+    // htestEx->SetTitle("Ex reconstructed from reaction products");
+    // auto htestT1 {def.Histo2D(HistConfig::EBeamCompare, "EBeam", "T1Test")};
+    // ct->cd(1);
+    // auto htestExt = (TH1*)htestEx->DrawClone();
+    // auto hctot = (TH1*)hRecExSil->Clone();
+    // hctot->SetLineColor(2);
+    // hctot->Draw("same");
+    // auto ll = new TLegend(0.6, 0.7, 0.88, 0.88);
+    // ll->AddEntry(htestExt, "from p3 + p4", "l");
+    // ll->AddEntry(hctot, "from p1 + p3", "l");
+    // ll->Draw();
+
+    // ct->cd(2);
+    // htestT1->DrawClone();
+    // ct->cd(3);
+    // auto hExRPxTest {def.Histo2D(HistConfig::ExRPx, "fRP.fCoordinates.fX", "ExTest")};
+    // hExRPxTest->SetTitle("Ex from products vs RPx");
+    // hExRPxTest->GetYaxis()->SetRangeUser(-5., 5.);
+    // hExRPxTest->DrawClone();
+    auto hESilRPx {def.Filter([](ActRoot::MergerData& m) { return m.fLight.GetNLayers() == 1; }, {"MergerData"})
+                       .Histo2D(HistConfig::ESilRPx, "fRP.fCoordinates.fX", "fLight.fEs")};
+    auto hEF0RPx {def.Filter([](ActRoot::MergerData& m)
+                             { return (m.fLight.GetNLayers() == 1 && m.fLight.GetLayer(0) == "f0"); }, {"MergerData"})
+                      .Histo2D(HistConfig::ESilRPx, "fRP.fCoordinates.fX", "fLight.fEs")};
     ct->cd(1);
-    auto htestExt = (TH1*)htestEx->DrawClone();
-    auto hctot = (TH1*)hRecExSil->Clone();
-    hctot->SetLineColor(2);
-    hctot->Draw("same");
-    auto ll = new TLegend(0.6, 0.7, 0.88, 0.88);
-    ll->AddEntry(htestExt, "from p3 + p4", "l");
-    ll->AddEntry(hctot, "from p1 + p3", "l");
-    ll->Draw();
-
+    hESilRPx->DrawClone("same");
     ct->cd(2);
-    htestT1->DrawClone();
-    ct->cd(3);
-    auto hExRPxTest {def.Histo2D(HistConfig::ExRPx, "fRP.fCoordinates.fX", "ExTest")};
-    hExRPxTest->SetTitle("Ex from products vs RPx");
-    hExRPxTest->GetYaxis()->SetRangeUser(-5., 5.);
-    hExRPxTest->DrawClone();
-
-
+    hExESiLat->DrawClone();
     // Save!
     // auto outfile {TString::Format("./Outputs/tree_ex_%s_%s_%s_phi_lt2.root", beam.c_str(), target.c_str(),
     // light.c_str())};

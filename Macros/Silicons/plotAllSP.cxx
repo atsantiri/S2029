@@ -37,7 +37,7 @@ void plotAllSP()
         }
     }
 
-    int rstat {0}, lstat {0};
+    int rstat {0}, lstat {0}, fstat {0};
     // there is a trigger delay in the acquisition that sets the delay between the Si trigger and the moment at which
     // the pad charges are read, therefore the Z axis needs to e shifted by an offset to match the Z position
     double zOffset {0};
@@ -58,6 +58,7 @@ void plotAllSP()
                     {
                         zOffset = 60;
                         hs[layer][n].Get()->Fill(sp.Y(), sp.Z() - zOffset);
+                        fstat++;
                     }
                     else
                     {
@@ -100,5 +101,6 @@ void plotAllSP()
         makeGrid(layer);
         // c->SaveAs(Form("../Outputs/SPs_%s.png", lname.Data()));
     }
-    std::cout << "Number of counts for R0: " << rstat << " and L0: " << lstat << std::endl;
+
+    std::cout << "Number of counts for R0: " << rstat << ", L0: " << lstat << ", and F0: " << fstat << std::endl;
 }

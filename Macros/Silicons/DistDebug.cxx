@@ -13,6 +13,8 @@
 #include <iostream>
 #include <vector>
 
+#include "./DistPlot.cxx"
+
 void DistDebug(TString mode)
 {
     mode.ToLower();
@@ -29,11 +31,20 @@ void DistDebug(TString mode)
         if(!sms.back())
             std::cout << "Nullptr" << '\n';
     }
-    std::vector<int> refs {1, 2, 5, 6, 9};
-    if(mode == "l0")
-        refs = {2, 5, 8, 11};
-    if(mode == "r0")
-        refs = {0, 6, 9};
+
+    // Get sil info from silspecs.conf
+    ActRoot::InputParser parser {"../../configs/silspecs.conf"};
+    auto block {parser.GetBlock(mode.Data())};
+    auto heightRef {block->GetDouble("Height")};
+    auto margin {block->GetDouble("MatchMargin")};
+
+    // std::vector<int> refs {0,1,2,3};
+    // if(mode == "l0")
+    //     refs = {2, 5, 8, 11};
+    // if(mode == "r0")
+    //     refs = {0, 6, 9};
+    // replacing this to get the same indexes as the one from DistPlot.
+    auto refs {Getidxs(mode)};
 
     // Get heights per distance
     auto* gm {new TGraphErrors};
@@ -44,13 +55,15 @@ void DistDebug(TString mode)
     for(auto& sm : sms)
     {
         std::cout << "dist : " << dists[idx] << '\n';
+        // sm->Print();
         // Compute std dev
         std::vector<double> heights, devs;
         for(const auto& sil : refs)
         {
+            // auto height {sm->GetWidth(sil)};
             auto height {sm->GetHeight(sil)};
             heights.push_back(height);
-            devs.push_back(TMath::Power(height - 50, 2)); // wrt nominal 50 mm height
+            devs.push_back(TMath::Power(height - (heightRef - margin * 2.), 2)); // wrt nominal height - 2*margin
         }
         gm->AddPoint(dists[idx], TMath::Mean(heights.begin(), heights.end()));
         auto dev {TMath::Mean(devs.begin(), devs.end())};
@@ -70,23 +83,24 @@ void DistDebug(TString mode)
     auto xmax {TMath::MaxElement(gs->GetN(), gs->GetX())};
     auto* func {new TF1 {"func", [=](double* x, double* p) { return gs->Eval(x[0], nullptr, "S"); }, xmin, xmax, 0}};
     auto min {func->GetMinimumX()};
+    std::cout<< mode <<" centre: "<<min<<" mm"<<std::endl;
     auto* text {new TPaveText {0.35, 0.7, 0.65, 0.85, "NDC"}};
     text->SetBorderSize(0);
     text->AddText(TString::Format("l_{0} = %.2f mm", min));
 
     // Draw
-    auto* c1 {new TCanvas {"c1", "SM canvas"}};
-    c1->DivideSquare(sms.size());
+    auto* c4 {new TCanvas {"c4", "SM canvas"}};
+    c4->DivideSquare(sms.size());
     for(int i = 0; i < sms.size(); i++)
     {
-        c1->cd(i + 1);
+        c4->cd(i + 1);
         sms[i]->Draw(false);
     }
-    auto* c0 {new TCanvas {"c0", "SM comparison"}};
-    c0->DivideSquare(2);
-    c0->cd(1);
+    auto* c5 {new TCanvas {"c5", "SM comparison"}};
+    c5->DivideSquare(2);
+    c5->cd(1);
     gm->Draw("ap");
-    c0->cd(2);
+    c5->cd(2);
     gs->Draw("ap");
     func->Draw("same");
     text->Draw();

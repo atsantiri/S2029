@@ -1,3 +1,6 @@
+#ifndef GET_CONTOUR_FUNCS_CXX
+#define GET_CONTOUR_FUNCS_CXX
+
 #include "ActInputParser.h"
 
 #include "TCanvas.h"
@@ -178,3 +181,6 @@ TF1* FindBestFit(TH1D* h, double width, double step, TString func = "expo")
     else
         throw std::runtime_error("FindBestFit: nullptr after fit best model");
 }
+
+#endif
+

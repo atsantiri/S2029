@@ -17,7 +17,7 @@ void DoFits(TString mode)
     std::cout << "Running for : " << mode << '\n';
 
     // Assign things depending on mode
-    std::vector<int> idxs {0, 1, 2, 3, 4, 5, 6, 7, 9, 11};
+    std::vector<int> idxs {0, 1, 2, 3};//, 4, 5, 6, 7, 9, 11};
     bool isSide {mode.Contains("f") ? false : true};
     std::cout << "isSide ? " << std::boolalpha << isSide << '\n';
     if(mode == "l0")

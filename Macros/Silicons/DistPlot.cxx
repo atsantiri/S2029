@@ -1,3 +1,6 @@
+#ifndef DIST_PLOT_CXX
+#define DIST_PLOT_CXX
+
 #include "ActSilMatrix.h"
 
 #include "TCanvas.h"
@@ -31,18 +34,25 @@ std::pair<double, double> Do(TH1D*& p)
     return points;
 }
 
+std::vector<int> Getidxs(TString mode)
+{
+    // Config idxs
+    std::vector<int> idxs {1, 3, 9}; //, 1, 2, 3}; //, 4, 5, 6, 7, 9, 11};
+    if(mode == "l0")
+        idxs = {1, 2, 4, 5, 7, 8, 10, 11};
+    if(mode == "r0")
+        idxs = {0, 1, 4, 6, 7, 9, 10};
+
+    return idxs;
+}
+
 void DistPlot(TString mode)
 {
     mode.ToLower();
     bool isSide {mode.Contains("f") ? false : true};
     std::cout << "isSide ? " << std::boolalpha << isSide << '\n';
 
-    // Config idxs
-    std::vector<int> idxs {0, 1, 2, 3, 4, 5, 6, 7, 9, 11};
-    if(mode == "l0")
-        idxs = { 1, 2, 4, 5, 7, 8, 10, 11};
-    if(mode == "r0")
-        idxs = {0, 1, 4, 6, 7, 9, 10};
+    auto idxs {Getidxs(mode)};
 
     auto f {std::make_unique<TFile>(TString::Format("../Outputs/histos_%s.root", mode.Data()))};
     auto dists {*f->Get<std::vector<double>>("dists")};
@@ -109,12 +119,22 @@ void DistPlot(TString mode)
     }
 
     // Plot Projections
-    auto* c2 {new TCanvas {"c2", "Projection canvas"}};
+    auto* c2 {new TCanvas {"c2", "Z Projection canvas"}};
     c2->DivideSquare(pzs.front().size());
     int pad {1};
     for(const auto& [_, h] : pzs.front())
     {
         c2->cd(pad);
+        pad++;
+        h->Draw();
+    }
+
+    auto* c3 {new TCanvas {"c3", "X/Y Projection canvas"}};
+    c3->DivideSquare(pxs.front().size());
+    pad = 1;
+    for(const auto& [_, h] : pxs.front())
+    {
+        c3->cd(pad);
         pad++;
         h->Draw();
     }
@@ -129,3 +149,5 @@ void DistPlot(TString mode)
         sms[i]->Write();
     }
 }
+
+#endif
